@@ -30,3 +30,4 @@ Nice to have features:
 -	Put Streetview as map option
 -	Map extension which redirects to phone’s main map app to allow user designated app for location
 -	Show students considering leftover events to see current RSVP numbers. This would allow them to make calculated decisions about which event to go to depending on availability and popularity
+- Have a live thread option for each event for people that may attend to ask specified questions that may not be included in the description that organizers can then answer
