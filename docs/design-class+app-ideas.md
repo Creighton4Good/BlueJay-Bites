@@ -2,7 +2,7 @@ Thoughts & requests for design class & art:
 -	Create logo with Creighton colors based on app name, use for notifications/branding
 -	Use Creighton colors and could create various designs for event, map, and home pages
 -	Implement something like the University of Oregon did on their Leftover Textover program [here](https://emu.uoregon.edu/leftover-textover). Showing advertising through creative design using a phone, which is how students will be able to get notified about leftover food. Could also do the same for email, etc
--	Could also use ideas like MacAlester does [here]https://www.macalester.edu/sustainability/macnav-extra-eats/, designing images that display important statistics in relation to food waste
+-	Could also use ideas like MacAlester does [here](https://www.macalester.edu/sustainability/macnav-extra-eats/), designing images that display important statistics in relation to food waste
 -	Peruse [UCLA's](https://dl.acm.org/doi/10.1145/3706599.3720309) project for more design ideas
 
 Ideas for app:
