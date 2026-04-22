@@ -6,3 +6,4 @@ Dictionary/Dependencies: https://docs.google.com/document/d/1ygg7s0HZGJRxqRbsLQy
 
 Tentative Progression Plan: https://docs.google.com/document/d/17CkUHm-WyiqS8eluAiVTSXiRfckI3Qpizgl5ySdtTi4/edit?tab=t.0
 
+Gantt Chart: https://docs.google.com/spreadsheets/d/1YYg8XweTCTSWeXGwaWbOaxI3LVyC9J31puQxN0ZwIoA/edit?usp=sharing
