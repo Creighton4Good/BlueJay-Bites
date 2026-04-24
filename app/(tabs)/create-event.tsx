@@ -9,10 +9,8 @@ import {
   View,
 } from "react-native";
 import { createEvent, NewEvent } from "@/lib/api";
-import { useUser } from "@clerk/clerk-expo";
 
-export default function AdminPost() {
-  const { user } = useUser();
+export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
@@ -21,7 +19,7 @@ export default function AdminPost() {
   const [availableUntil, setAvailableUntil] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  console.log("AdminPost screen rendered");
+  console.log("CreateEventScreen rendered");
 
   const handleSubmit = async () => {
     console.log("Post Food Event button pressed");
@@ -59,8 +57,10 @@ export default function AdminPost() {
     };
 
     setSubmitting(true);
+
     try {
       await createEvent(payload);
+
       Alert.alert("Success", "Post created successfully!");
       
       setTitle("");
@@ -84,7 +84,7 @@ export default function AdminPost() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.bigText}>Create Food Post</Text>
       <Text style={styles.subText}>
-        Logged in as: {user?.primaryEmailAddress?.emailAddress ?? "Unknown"}
+        Prototype mode: posting as test organizer
       </Text>
 
       <TextInput
