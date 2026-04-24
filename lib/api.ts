@@ -16,7 +16,17 @@ export type Event = {
 };
 
 // What we send when creating a new event/post
-export type NewEvent = Omit<Event, "id" | "createdAt" | "updatedAt">;
+export type NewEvent = {
+  userId: number;
+  title: string;
+  location: string;
+  description?: string;
+  dietarySpecification?: string;
+  availableFrom: string;
+  availableUntil: string;
+  imageUrl?: string;
+  status?: string;
+};
 
 const BASE_URL = "http://192.168.1.223:8080";
 /*
@@ -38,6 +48,11 @@ export async function fetchEvents(): Promise<Event[]> {
 }
 
 export async function createEvent(event: NewEvent): Promise<Event> {
+  const payload = {
+    ...event,
+    status: event.status ?? "active",
+  };
+  
   const res = await fetch(POSTS_URL, {
     method: "POST",
     headers: {
