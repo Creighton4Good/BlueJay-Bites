@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import {
   Alert,
   Button,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,20 +11,32 @@ import {
   View,
 } from "react-native";
 import { createEvent, NewEvent } from "@/lib/api";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [dietarySpecification, setDietarySpecification] = useState("");
-  const [availableFrom, setAvailableFrom] = useState("");
-  const [availableUntil, setAvailableUntil] = useState("");
+  const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
+  const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  console.log("CreateEventScreen rendered");
+  const formatDisplayDateTime = (date: Date | null) => {
+    if (!date) return "";
+
+    return date.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
 
   const handleSubmit = async () => {
-    console.log("Post Food Event button pressed");
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
       return;
@@ -33,10 +47,18 @@ export default function CreateEventScreen() {
     return;
     }
 
-    if (!availableFrom.trim() || !availableUntil.trim()) {
+    if (!availableFrom || !availableUntil) {
       Alert.alert(
         "Missing availability",
         "Please enter both start and end times."
+      );
+      return;
+    }
+
+    if (availableUntil <= availableFrom) {
+      Alert.alert(
+        "Invalid time range",
+        "Available until must be after available from."
       );
       return;
     }
@@ -50,8 +72,8 @@ export default function CreateEventScreen() {
       location: location.trim(),                    // required
       description: description.trim() || "",        // optional
       dietarySpecification: dietarySpecification.trim() || "",
-      availableFrom: availableFrom.trim(),          // required ISO string
-      availableUntil: availableUntil.trim(),        // required ISO string
+      availableFrom: availableFrom.toISOString(),          // required ISO string
+      availableUntil: availableUntil.toISOString(),        // required ISO string
       imageUrl: "",                                 // optional
       status: "active",
     };
@@ -67,8 +89,8 @@ export default function CreateEventScreen() {
       setLocation("");
       setDescription("");
       setDietarySpecification("");
-      setAvailableFrom("");
-      setAvailableUntil("");
+      setAvailableFrom(null);
+      setAvailableUntil(null);
     } catch (err: any) {
       console.error("Error creating event:", err);
       Alert.alert(
@@ -96,7 +118,7 @@ export default function CreateEventScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Location"
+        placeholder="Location *"
         placeholderTextColor="#999"
         value={location}
         onChangeText={setLocation}
@@ -116,22 +138,60 @@ export default function CreateEventScreen() {
         value={dietarySpecification}
         onChangeText={setDietarySpecification}
       />
-      <TextInput
+      <Pressable
         style={styles.input}
-        placeholder='Available from (e.g. 12/6/25 2:30PM)'
-        placeholderTextColor="#999"
-        value={availableFrom}
-        onChangeText={setAvailableFrom}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder='Available until (e.g. 12/6/25 4:00PM)'
-        placeholderTextColor="#999"
-        value={availableUntil}
-        onChangeText={setAvailableUntil}
-      />
+        onPress={() => setShowFromPicker(true)}
+      >
+        <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
+          {availableFrom
+            ? formatDisplayDateTime(availableFrom)
+            : "Available from * (tap to pick date & time)"}
+        </Text>
+      </Pressable>
 
-      <View style={{ marginTop: 16 }}>
+      <Pressable style={styles.input} onPress={() => setShowUntilPicker(true)}>
+        <Text
+          style={availableUntil ? styles.inputText : styles.placeholderText}
+        >
+          {availableUntil
+            ? formatDisplayDateTime(availableUntil)
+            : "Available until * (tap to pick date & time)"}
+        </Text>
+      </Pressable>
+
+      {showFromPicker && (
+        <DateTimePicker
+          value={availableFrom ?? new Date()}
+          mode="datetime"
+          display={Platform.OS === "ios" ? "inline" : "default"}
+          onChange={(_event, selectedDate) => {
+            if (Platform.OS !== "ios") {
+              setShowFromPicker(false);
+            }
+            if (selectedDate) {
+              setAvailableFrom(selectedDate);
+            }
+          }}
+        />
+      )}
+
+      {showUntilPicker && (
+        <DateTimePicker 
+          value={availableUntil ?? availableFrom ?? new Date()}
+          mode="datetime"
+          display={Platform.OS === "ios" ? "inline" : "default"}
+          onChange={(_event, selectedDate) => {
+            if (Platform.OS != "ios") {
+              setShowUntilPicker(false);
+            }
+            if (selectedDate) {
+              setAvailableUntil(selectedDate);
+            }
+          }}
+        />
+      )}
+
+      <View style={styles.buttonWrapper}>
         <Button
           title={submitting ? "Posting..." : "Post Food Event"}
           onPress={handleSubmit}
@@ -166,10 +226,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 12,
-    color: "#000000",
+    backgroundColor: "#fff",
+  },
+  inputText: {
+    color: "#000",
+    fontSize: 16,
+  },
+  placeholderText: {
+    color: "#999",
+    fontSize: 16,
   },
   multiline: {
     minHeight: 80,
     textAlignVertical: "top",
+  },
+  buttonWrapper: {
+    marginTop: 16
   },
 });
