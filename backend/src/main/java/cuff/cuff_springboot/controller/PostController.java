@@ -20,7 +20,7 @@ public class PostController {
     private PostRepository postRepository;
     
     // Get all active posts
-    @GetMapping
+    @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
         List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("active");
         return new ResponseEntity<>(posts, HttpStatus.OK);
@@ -28,7 +28,7 @@ public class PostController {
 
     // Get all closed posts
     @PreAuthorize("hasRole('admin')")
-    @GetMapping
+    @GetMapping("/closed")
     public ResponseEntity<List<Post>> getAllClosedPosts() {
         List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("closed");
         return new ResponseEntity<>(posts, HttpStatus.OK);
@@ -65,16 +65,16 @@ public class PostController {
         
         if (postData.isPresent()) {
             Post post = postData.get();
-            post.setID(postDetails.getID());
+            post.setId(postDetails.getId());
             post.setTitle(postDetails.getTitle());
             post.setDescription(postDetails.getDescription());
             post.setNotes(postDetails.getNotes());
-            post.setPhotoURL(postDetails.getPhotoURL());
-            post.setBuildingID(postDetails.getBuildingID());
+            post.setPhotoUrl(postDetails.getPhotoUrl());
+            post.setBuildingId(postDetails.getBuildingId());
             post.setDirections(postDetails.getDirections());
             post.setRoomNumber(postDetails.getRoomNumber());
-            post.setFoodTypeID(postDetails.getFoodTypeID());
-            post.setServingsMin(postDetails.getServingsMax());
+            post.setFoodTypeId(postDetails.getFoodTypeId());
+            post.setServingsMin(postDetails.getServingsMin());
             post.setServingsMax(postDetails.getServingsMax());
             post.setExpirationTime(postDetails.getExpirationTime());
             post.setCreatedBy(postDetails.getCreatedBy());
