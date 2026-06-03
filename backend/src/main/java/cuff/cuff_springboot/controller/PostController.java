@@ -27,26 +27,46 @@ public class PostController {
     }
 
     // Get all closed posts
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/closed")
     public ResponseEntity<List<Post>> getAllClosedPosts() {
         List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("closed");
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
-    
-    // Get post by ID
-    @PreAuthorize("hasRole('admin')")
+
+    // Get post by ID (active or closed)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable int id) {
         Optional<Post> post = postRepository.findById(id);
         return post.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
-    
+
+    // Get only posts that they created (for organizer)
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @GetMapping("/created")
+    public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
+
+        List<Post> posts = postRepository.findByCreatedBy_Id(userId);
+
+        return new ResponseEntity<>(posts, HttpStatus.OK);
+
+    }
+
+    // Get all posts (active and closed)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
+    public ResponseEntity<List<Post>> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        return new ResponseEntity<>(posts, HttpStatus.OK);
+
+    }
+
     // Create new post
-    @PreAuthorize("hasAnyRole('admin', 'event_organizer')")
-    @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
             Post savedPost = postRepository.save(post);
@@ -58,7 +78,7 @@ public class PostController {
     }
     
     // Update post
-    @PreAuthorize("hasAnyRole('admin', 'event_organizer')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@PathVariable int id, @RequestBody Post postDetails) {
         Optional<Post> postData = postRepository.findById(id);
@@ -89,7 +109,7 @@ public class PostController {
     }
     
     // Delete post (soft delete by changing status)
-    @PreAuthorize("hasAnyRole('admin', 'event_organizer')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@PathVariable int id) {
         try {
