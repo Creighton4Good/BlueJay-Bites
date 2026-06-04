@@ -49,7 +49,7 @@ public class PostController {
     @GetMapping("/created")
     public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
 
-        List<Post> posts = postRepository.findByCreatedBy_Id(userId);
+        List<Post> posts = postRepository.findByCreatedBy(userId);
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
