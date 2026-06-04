@@ -6,12 +6,15 @@ INSERT IGNORE INTO roles (id, role_name, description) VALUES
 
 -- Buildings (Creighton campus)
 INSERT IGNORE INTO buildings (id, building_name, latitude, longitude) VALUES
-(1, 'Harper Center', 41.2627, -95.9491),
-(2, 'Skutt Student Center', 41.2640, -95.9476),
-(3, 'Hitchcock Communication Arts Building', 41.2618, -95.9482),
-(4, 'Creighton Hall', 41.2615, -95.9498),
-(5, 'Hixson-Lied Science Building', 41.2630, -95.9510),
-(6, 'Reinert Alumni Library', 41.2622, -95.9495);
+(1, 'Harper Center', 41.2653, -95.9434),
+(2, 'Skutt Student Center', 41.2642, -95.9498),
+(3, 'Hitchcock Communication Arts Building', 41.2652, -95.9500),
+(4, 'Creighton Hall', 41.2653, -95.9478),
+(5, 'Hixson-Lied Science Building', 41.2661, -95.9505),
+(6, 'Reinert Alumni Library', 41.2654, -95.9492),
+(7, 'Criss Complex', 41.2664, -95.9508),
+(8, 'Werner Center', 41.2674, -95.9512),
+(9, 'Eppley Building', 41.2659, -95.9498);
 
 -- Food Types
 INSERT IGNORE INTO food_types (id, type_name) VALUES
@@ -27,7 +30,9 @@ INSERT IGNORE INTO food_types (id, type_name) VALUES
 (10, 'Italian'),
 (11, 'Mexican'),
 (12, 'Asian'),
-(13, 'American');
+(13, 'American'),
+(14, 'Chinese'),
+(15, 'Japanese');
 
 -- Dietary Options
 INSERT IGNORE INTO dietary_options (id, option_name) VALUES
@@ -37,4 +42,6 @@ INSERT IGNORE INTO dietary_options (id, option_name) VALUES
 (4, 'Dairy-Free'),
 (5, 'Nut-Free'),
 (6, 'Halal'),
-(7, 'Kosher');
+(7, 'Kosher'),
+(8, 'Organic'),
+(9, 'Low-Carb');
