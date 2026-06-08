@@ -10,7 +10,6 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findByStatus(String status);
    // Optional<Post> findById(int id);
-    List<Post> orderByCreatedAtDesc();
     List<Post> findByStatusOrderByCreatedAtDesc(String status);
     List<Post> findByCreatedBy_Id(Integer userId);
 }
