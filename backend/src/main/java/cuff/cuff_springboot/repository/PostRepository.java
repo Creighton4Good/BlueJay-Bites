@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findByStatus(String status);
-   // Optional<Post> findById(int id);
+    List<Post> findByOrderByCreatedAtDesc();
     List<Post> findByStatusOrderByCreatedAtDesc(String status);
     List<Post> findByCreatedBy_Id(Integer userId);
 }

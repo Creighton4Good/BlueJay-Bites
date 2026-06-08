@@ -59,7 +59,7 @@ public class PostController {
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Post>> getAllPosts() {
-        List<Post> posts = postRepository.orderByCreatedAtDesc();
+        List<Post> posts = postRepository.findByOrderByCreatedAtDesc();
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
     }
