@@ -27,7 +27,7 @@ public class PostController {
     }
 
     // Get all closed posts
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/closed")
     public ResponseEntity<List<Post>> getAllClosedPosts() {
         List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("closed");
@@ -36,7 +36,7 @@ public class PostController {
 
 
     // Get post by ID (active or closed)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable int id) {
         Optional<Post> post = postRepository.findById(id);
@@ -45,7 +45,7 @@ public class PostController {
     }
 
     // Get only posts that they created (for organizer)
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAuthority('organizer')")
     @GetMapping("/created")
     public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
 
@@ -56,7 +56,7 @@ public class PostController {
     }
 
     // Get all posts (active and closed)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Post>> getAllPosts() {
         List<Post> posts = postRepository.findAll();
@@ -65,7 +65,7 @@ public class PostController {
     }
 
     // Create new post
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
@@ -78,7 +78,7 @@ public class PostController {
     }
     
     // Update post
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@PathVariable int id, @RequestBody Post postDetails) {
         Optional<Post> postData = postRepository.findById(id);
@@ -90,13 +90,14 @@ public class PostController {
             post.setDescription(postDetails.getDescription());
             post.setNotes(postDetails.getNotes());
             post.setPhotoUrl(postDetails.getPhotoUrl());
-            post.setBuildingId(postDetails.getBuildingId());
+            post.setBuilding(postDetails.getBuilding());
             post.setDirections(postDetails.getDirections());
             post.setRoomNumber(postDetails.getRoomNumber());
-            post.setFoodTypeId(postDetails.getFoodTypeId());
+            post.setFoodType(postDetails.getFoodType());
             post.setServingsMin(postDetails.getServingsMin());
             post.setServingsMax(postDetails.getServingsMax());
-            post.setExpirationTime(postDetails.getExpirationTime());
+            post.setAvailableFrom(postDetails.getAvailableFrom());
+            post.setAvailableUntil(postDetails.getAvailableUntil());
             post.setCreatedBy(postDetails.getCreatedBy());
             post.setCreatedAt(postDetails.getCreatedAt());
             post.setUpdatedAt(postDetails.getUpdatedAt());
@@ -109,7 +110,7 @@ public class PostController {
     }
     
     // Delete post (soft delete by changing status)
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@PathVariable int id) {
         try {
@@ -126,4 +127,23 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-}
+
+    // Recover post (bring back soft deleted posts)
+    @PreAuthorize("hasAuthority('admin')")
+    @PatchMapping("/{id}/recover")
+    public ResponseEntity<HttpStatus> recoverPost(@PathVariable int id) {
+        try {
+            Optional<Post> post = postRepository.findById(id);
+            if (post.isPresent()) {
+                Post existingPost = post.get();
+                existingPost.setStatus("active");
+                postRepository.save(existingPost);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    }
