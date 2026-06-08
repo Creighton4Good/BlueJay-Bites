@@ -44,12 +44,12 @@ public class PostController {
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // Get only posts that they created (for organizer)
-    @PreAuthorize("hasAuthority('organizer')")
+    // Get only posts that they created
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/created")
     public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
 
-        List<Post> posts = postRepository.findByCreatedBy(userId);
+        List<Post> posts = postRepository.findByCreatedBy_Id(userId);
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
@@ -59,13 +59,13 @@ public class PostController {
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Post>> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
+        List<Post> posts = postRepository.orderByCreatedAtDesc();
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
     }
 
     // Create new post
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
@@ -78,7 +78,7 @@ public class PostController {
     }
     
     // Update post
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@PathVariable int id, @RequestBody Post postDetails) {
         Optional<Post> postData = postRepository.findById(id);
@@ -110,7 +110,7 @@ public class PostController {
     }
     
     // Delete post (soft delete by changing status)
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('organizer')")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@PathVariable int id) {
         try {
