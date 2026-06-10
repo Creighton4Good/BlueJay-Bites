@@ -8,4 +8,4 @@ Tentative Progression Plan: https://docs.google.com/document/d/17CkUHm-WyiqS8elu
 
 Updated Progression Plan: https://docs.google.com/document/d/1Oat-27e_Wy6vEUdHwCCT0H7TnXUX6yi_aDDBV600kUk/edit?usp=sharing
 
-Gantt Chart: https://docs.google.com/spreadsheets/d/1YYg8XweTCTSWeXGwaWbOaxI3LVyC9J31puQxN0ZwIoA/edit?usp=sharing
+Gantt Chart: https://creightonuniv-my.sharepoint.com/:x:/g/personal/emg03814_creighton_edu/IQAHHqkjki7CRbLP5eXUJZcGAVKdWsjIycZsuufrmCKH7WY?e=l9bFHK
