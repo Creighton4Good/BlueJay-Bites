@@ -28,7 +28,7 @@ public class FoodTypeController {
 
     // Create new food type
     @PreAuthorize("hasAuthority('admin')")
-    @PostMapping("/new")
+    @PostMapping("/create")
     public ResponseEntity<FoodType> createFoodType(@RequestBody FoodType foodType) {
         try {
             FoodType newFoodType = foodTypeRepository.save(foodType);
