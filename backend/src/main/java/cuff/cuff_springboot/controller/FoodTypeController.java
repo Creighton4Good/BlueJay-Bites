@@ -27,7 +27,7 @@ public class FoodTypeController {
     }
 
     // Create new food type
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @PreAuthorize("hasAuthority('admin')")
     @PostMapping("/new")
     public ResponseEntity<FoodType> createFoodType(@RequestBody FoodType foodType) {
         try {
@@ -40,7 +40,7 @@ public class FoodTypeController {
 
 
     // Delete food type
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteFoodType(@PathVariable int id) {
         try {

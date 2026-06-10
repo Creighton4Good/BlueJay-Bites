@@ -27,7 +27,7 @@ public class BuildingController {
     }
 
     // Create new building
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @PreAuthorize("hasAuthority('admin')")
     @PostMapping("/create")
     public ResponseEntity<Building> createBuilding(@RequestBody Building building) {
         try {
@@ -40,7 +40,7 @@ public class BuildingController {
     }
 
     // Delete Building
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Building> deleteBuilding(@PathVariable int id) {
         try {

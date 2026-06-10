@@ -26,7 +26,7 @@ public class DietaryOptionController {
         return new ResponseEntity<>(dietaryOptions, HttpStatus.OK); }
 
         // Create new dietary option
-        @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+        @PreAuthorize("hasAuthority('admin')")
         @PostMapping("/create")
         public ResponseEntity<DietaryOption> createDietaryOption(@RequestBody DietaryOption dietaryOption) {
             try {
@@ -38,7 +38,7 @@ public class DietaryOptionController {
             }
 
     // Delete dietary option
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteDietaryOption(@PathVariable int id) {
         try {
