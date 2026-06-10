@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/dietary")
+@RequestMapping("/api/dietary-options")
 @CrossOrigin(origins = "*")
 public class DietaryOptionController {
 
