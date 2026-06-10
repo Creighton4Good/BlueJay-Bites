@@ -1,6 +1,6 @@
 ## BlueJay Bites Contribution Guidelines
 
-This document is adapted from documentation in TeamNewPipe, licensed under GPLv3. This modified version is distributed under GPLv3. See GPLv3.md for the full license text.
+This document is adapted from documentation in TeamNewPipe, licensed under GPLv3. This modified version is distributed under GPLv3. See full license [here](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/docs/GPLv3.md).
 
 ## Code Contribution
 ### Guidelines
@@ -22,13 +22,13 @@ Make changes on a separate branch with a meaningful name (such as update-user-ro
 Please test (compile and run) your code before submitting changes! Ideally, provide test feedback in the PR description. Untested code will not be merged!
 Respond if someone requests changes or otherwise raises issues about your PRs.
 Keep each PR focused on one issue or feature. Avoid large PRs that combine unrelated changes.
-Make sure your PR is up-to-date with the rest of the code. Often, a simple click on "Update branch" will do the job, but if not, you must rebase your branch on the dev branch manually and resolve the conflicts on your own. You can find help on the NewPipe wiki. Doing this makes the maintainers' job way easier.
+Make sure your PR is up-to-date with the rest of the code. Often, a simple click on "Update branch" will do the job, but if not, you must rebase your branch on the dev branch manually and resolve the conflicts on your own. You can find help [on the NewPipe wiki](https://github.com/TeamNewPipe/NewPipe/wiki/How-to-merge-a-PR). Doing this makes the maintainers' job way easier.
 
 ## Issue reporting/feature requests
-* Already reported? Browse the existing issues to make sure your issue/feature hasn't been reported/requested.
+* Already reported? Browse the [existing issues](https://github.com/Creighton4Good/BlueJay-Bites/issues) to make sure your issue/feature hasn't been reported/requested.
 * Already fixed? Check whether your issue/feature is already fixed/implemented.
 * Still relevant? Check if the issue still exists in the latest release/beta version.
-* Can you fix it? If you are an Android/Java developer, you are always welcome to fix an issue or implement a feature yourself. PRs welcome! See Code contribution for more info.
+* Can you fix it? If you are an Android/Java developer, you are always welcome to fix an issue or implement a feature yourself. PRs welcome! See [Code contribution](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file#code-contribution) for more info.
 * Is it in English? Issues in other languages will be ignored unless someone translates them.
 * Is it one issue? Multiple issues require multiple reports that can be linked to track their statuses.
 * The template: Fill it out, everyone wins. Your issue has a chance of getting fixed.
@@ -56,14 +56,14 @@ With ownership in place, work is scheduled into a sprint or development cycle ba
 Repeat - This process is iterative. Progress should be tracked continuously using GitHub to maintain visibility into task status and ensure steady movement from initial story to completed implementation. Pull requests should be linked to tasks associated with user stories. As work progresses, if new tasks or missing stories are identified, they should be created and/or existing issues can be updated to reflect the evolving state of the project. Additionally, if you realize there is replication or redundancy in stories and tasks, you can modify or close them as duplicates.
 ## Communication
 You can use the GitHub Discussions Q/A Thread to ask/answer questions
-For more time-sensitive discussion, feel free to message a maintainer on the repo by email. Contact information can be found in the README.
+For more time-sensitive discussion, feel free to message a maintainer on the repo by email. Contact information can be found in the [README](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/README.md).
 
 ## AI Policy
 Please refrain from contributions which are heavily dependent on AI generated source code because they are usually lacking a fundamental understanding of the overall project structure and thus come with poor quality. However, you are allowed to use gen. AI if you
-are aware of the project structure,
-ensure that the generated code follows the project structure,
-fully understand the generated code, and
-review the generated code completely.
+* are aware of the project structure,
+* ensure that the generated code follows the project structure,
+* fully understand the generated code, and
+* review the generated code completely.
 Using AI to find the root cause of bugs and generating small fixes might be acceptable. However, gen. AI often does not fix the underlying problem but is trying to fix the symptoms. If you are using AI to fix bugs, ensure that the root cause is tackled.
 The use of AI to generate documentation is allowed. We ask you to thoroughly check the quality of generated documentation – wrong, misleading or uninformative documentation is useless and wastes the reader's time. Ensure that reasoning is documented.
 Using generative AI to write or fill in PR or issue templates is prohibited. Those texts are often lengthy and miss critical information.
