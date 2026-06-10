@@ -37,7 +37,7 @@ public class DietaryOptionController {
                 }
             }
 
-    // Delete food type
+    // Delete dietary option
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteDietaryOption(@PathVariable int id) {
