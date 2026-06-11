@@ -11,6 +11,7 @@ export default function HomeScreen() {
     const load = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const data = await fetchEvents();
         setEvents(data.filter((e) => e.status === "active"));
@@ -28,8 +29,7 @@ export default function HomeScreen() {
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
     try {
-      const date = new Date(value);
-      return date.toLocaleString();
+      return new Date(value).toLocaleString();
     } catch {
       return value;
     }
@@ -39,7 +39,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>BlueJay-Bites</Text>
       <Text style={styles.subtitle}>Find free food on campus</Text>
-      
+
       <View style={styles.separator} />
 
       <Text style={styles.sectionTitle}>Available Food Events</Text>
@@ -58,8 +58,10 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.title}</Text>
-              
-              {!!item.location && <Text style={styles.cardLocation}>{item.location}</Text>}
+
+              {!!item.location && (
+                <Text style={styles.cardLocation}>{item.location}</Text>
+              )}
 
               {!!item.description && (
                 <Text style={styles.cardDescription}>{item.description}</Text>
@@ -73,10 +75,10 @@ export default function HomeScreen() {
 
               {(item.availableFrom || item.availableUntil) && (
                 <Text style={styles.cardMeta}>
-                  {item.availableFrom 
+                  {item.availableFrom
                     ? `From: ${formatDateTime(item.availableFrom)} `
                     : ""}
-                  {item.availableUntil 
+                  {item.availableUntil
                     ? `To: ${formatDateTime(item.availableUntil)}`
                     : ""}
                 </Text>
@@ -90,8 +92,16 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 12 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
   subtitle: {
     fontSize: 16,
     color: "#666",
@@ -102,13 +112,24 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#eee",
   },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
   statusText: {
     fontSize: 14,
     color: "#666",
   },
-  emptyText: { fontSize: 14, color: "#888" },
-  errorText: { fontSize: 14, color: "red", marginBottom: 8 },
+  emptyText: {
+    fontSize: 14,
+    color: "#888",
+  },
+  errorText: {
+    fontSize: 14,
+    color: "red",
+    marginBottom: 8,
+  },
   listContent: {
     paddingVertical: 8,
   },
@@ -120,9 +141,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "#E9F2FB",
   },
-  cardTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 4 },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
   cardLocation: {
-    fontSize: 24,
+    fontSize: 14,
     marginBottom: 4,
   },
   cardDescription: {
