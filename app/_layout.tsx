@@ -11,7 +11,6 @@ SplashScreen.preventAutoHideAsync();
 /*
  * We need a secure place to store the user's session token.
  * `expo-secure-store` is perfect because it encrypts the data on the device.
- * This little object tells Clerk how to save and retrieve that token.
  */
 const tokenCache = {
   async getToken(key: string) {
@@ -29,14 +28,6 @@ const tokenCache = {
     }
   },
 };
-
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error(
-    "Missing Clerk Publishable Key. Did you forget to set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your env?"
-  );
-}
 
 const MyTheme = {
   ...DefaultTheme,
@@ -60,7 +51,6 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
  * deciding who gets to go where based on their login status.
  */
 function InitialLayout() {
-  // These hooks are our main tools from Clerk and Expo Router
   const segments = useSegments(); // Expo Router's hook to know where the user is
   const router = useRouter(); // Expo Router's hook to navigate the user
 
@@ -93,8 +83,6 @@ function InitialLayout() {
 
 /**
  * This is the root component of our app.
- * We wrap everything in the `ClerkProvider` so that all our components
- * can access the user's authentication state.
  */
 export default function RootLayout() {
   const scheme = useColorScheme();
