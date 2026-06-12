@@ -1,7 +1,7 @@
-package cuff.cuff_springboot.controller;
+package bjbites.bjbites_springboot.controller;
 
-import cuff.cuff_springboot.entity.DietaryOption;
-import cuff.cuff_springboot.repository.DietaryOptionRepository;
+import bjbites.bjbites_springboot.entity.DietaryOption;
+import bjbites.bjbites_springboot.repository.DietaryOptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
