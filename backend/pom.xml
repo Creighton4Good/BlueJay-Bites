@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>cuff</groupId>
-	<artifactId>cuff-springboot</artifactId>
+	<artifactId>bjbites-springboot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>cuff-springboot</name>
 	<description>Demo project for Spring Boot</description>
