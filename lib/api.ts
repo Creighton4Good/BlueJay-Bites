@@ -1,48 +1,91 @@
 import { Platform } from "react-native";
 
-export type EventStatus = "active" | "closed" | "deleted";
+export type EventStatus = "active" | "closed";
 
+// Lookup table types — match the backend entities
+export type Building = {
+  id: number;
+  buildingName: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type FoodType = {
+  id: number;
+  typeName: string;
+};
+
+export type Role = {
+  id: number;
+  roleName: string;
+  description?: string;
+};
+
+export type User = {
+  id: number;
+  email: string;
+  displayName: string;
+  role: Role;
+  entraId?: string;
+  authProvider: string;
+  createdAt?: string;
+};
+
+// Post / Event — matches backend Post entity with @ManyToOne relationships
 export type Event = {
   id: number;
-  userId: number;
   title: string;
-  location?: string;
-  description?: string;
-  dietarySpecification?: string;
-  availableFrom?: string; // ISO string from backend
-  availableUntil?: string; // ISO string from backend
-  imageUrl?: string;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: Building;
+  directions?: string;
+  roomNumber?: string;
+  foodType?: FoodType;
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string; // ISO string
+  availableUntil?: string; // ISO string
   status: EventStatus;
+  createdBy: User;
   createdAt?: string;
   updatedAt?: string;
 };
 
-// What we send when creating a new event/post
+// What we send when creating a new event
 export type NewEvent = {
   userId: number;
   title: string;
-  location: string;
-  description?: string;
-  dietarySpecification?: string;
-  availableFrom: string;
-  availableUntil: string;
-  imageUrl?: string;
-  status?: EventStatus;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: { id: number };
+  directions?: string;
+  roomNumber?: string;
+  foodType?: { id: number };
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string;
+  availableUntil?: string;
+  createdBy: { id: number };
 };
 
-const BASE_URL = 
+const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
   Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
     : "http://localhost:8080"; // iOS simulator
-
 // Use your local IP instead if testing on a physical device:
 // const BASE_URL = "http://123.456.7.890:8080";
 
 const POSTS_URL = `${BASE_URL}/api/posts`;
+const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
+const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
+const DIETARY_URL = `${BASE_URL}/api/dietary`;
 
+// Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
-  const res = await fetch(POSTS_URL);
+  const res = await fetch(`${POSTS_URL}/active`);
   if (!res.ok) {
     const text = await res.text();
     console.error("Failed to fetch events", res.status, text);
@@ -51,25 +94,46 @@ export async function fetchEvents(): Promise<Event[]> {
   return res.json();
 }
 
-export async function createEvent(event: NewEvent): Promise<Event> {
-  const payload = {
-    ...event,
-    status: event.status ?? "active",
-  };
-  
-  const res = await fetch(POSTS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+// Fetch a single event by ID
+export async function fetchEventById(id: number): Promise<Event> {
+  const res = await fetch(`${POSTS_URL}/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch event ${id}`);
+  }
+  return res.json();
+}
 
+// Create a new event
+export async function createEvent(event: NewEvent): Promise<Event> {
+  const res = await fetch(`${POSTS_URL}/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
   if (!res.ok) {
     const text = await res.text();
-    console.error("Failed to create event", res.status, text);
     throw new Error(text || "Failed to create event");
   }
+  return res.json();
+}
 
+// Fetch all buildings (for create event dropdown)
+export async function fetchBuildings(): Promise<Building[]> {
+  const res = await fetch(`${BUILDINGS_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch buildings");
+  return res.json();
+}
+
+// Fetch all food types (for create event dropdown)
+export async function fetchFoodTypes(): Promise<FoodType[]> {
+  const res = await fetch(`${FOODTYPES_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch food types");
+  return res.json();
+}
+
+// Fetch all dietary options (for create event dropdown)
+export async function fetchDietaryOptions(): Promise<{ id: number; optionName: string }[]> {
+  const res = await fetch(`${DIETARY_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch dietary options");
   return res.json();
 }

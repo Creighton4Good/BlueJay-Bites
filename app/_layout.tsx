@@ -13,20 +13,24 @@ const MyTheme = {
     border: "#005CA9",
     notification: "#005CA9",
   }
-}; 
+};
 
 export { ErrorBoundary } from "expo-router";
 export const unstable_settings = { initialRouteName: "(tabs)" };
 
+/**
+ * Main layout component. Will be expanded to handle Entra SSO
+ * authentication routing once that's wired up.
+ */
 function InitialLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor : MyTheme.colors.card },
+        headerStyle: { backgroundColor: MyTheme.colors.card },
         headerTintColor: "#FFF",
         contentStyle: { backgroundColor: MyTheme.colors.background },
       }}
-    > 
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
     </Stack>
