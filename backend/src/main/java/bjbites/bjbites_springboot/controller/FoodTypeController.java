@@ -26,6 +26,24 @@ public class FoodTypeController {
         return new ResponseEntity<>(foodTypes, HttpStatus.OK);
     }
 
+    // Get food type by id
+    @PreAuthorize("hasAuthority('admin)")
+    @GetMapping("/{id}")
+    public ResponseEntity<FoodType> getFoodTypeById(@PathVariable int id) {
+        Optional<FoodType> foodType = foodTypeRepository.findById(id);
+        return foodType.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // Get food type by name
+    @PreAuthorize("hasAuthority('admin)")
+    @GetMapping("/name/{typeName}")
+    public ResponseEntity<FoodType> getFoodTypeByName(@PathVariable String typeName) {
+        Optional<FoodType> foodType = foodTypeRepository.findByName(typeName);
+        return foodType.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     // Create new food type
     @PreAuthorize("hasAuthority('admin')")
     @PostMapping("/create")

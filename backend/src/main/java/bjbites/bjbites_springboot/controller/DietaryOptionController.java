@@ -25,6 +25,24 @@ public class DietaryOptionController {
         List<DietaryOption> dietaryOptions = dietaryOptionRepository.findAll();
         return new ResponseEntity<>(dietaryOptions, HttpStatus.OK); }
 
+    // Get dietary option by id
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/{id}")
+    public ResponseEntity<DietaryOption> getDietaryOptionById(@PathVariable int id) {
+        Optional<DietaryOption> dietaryOption = dietaryOptionRepository.findById(id);
+        return dietaryOption.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // Get dietary option by name
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/name/{optionName}")
+    public ResponseEntity<DietaryOption> getDietaryOptionByName(@PathVariable String optionName) {
+        Optional<DietaryOption> dietaryOption = dietaryOptionRepository.findByName(optionName);
+        return dietaryOption.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
         // Create new dietary option
         @PreAuthorize("hasAuthority('admin')")
         @PostMapping("/create")
