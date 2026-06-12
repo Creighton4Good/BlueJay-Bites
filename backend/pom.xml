@@ -8,10 +8,10 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>cuff</groupId>
+	<groupId>bjbites</groupId>
 	<artifactId>bjbites-springboot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>cuff-springboot</name>
+	<name>bjbites-springboot</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
