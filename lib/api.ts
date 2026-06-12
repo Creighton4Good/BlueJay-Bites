@@ -19,7 +19,6 @@ export type Event = {
 
 // What we send when creating a new event/post
 export type NewEvent = {
-<<<<<<< HEAD
   userId: number;
   title: string;
   location: string;
@@ -28,20 +27,11 @@ export type NewEvent = {
   availableFrom: string;
   availableUntil: string;
   imageUrl?: string;
-  status?: string;
-=======
-  title: string;
-  location?: string;
-  description?: string;
-  dietarySpecification?: string;
-  availableFrom?: string;
-  availableUntil?: string;
-  imageUrl?: string;
   status?: EventStatus;
->>>>>>> origin/main
 };
 
 const BASE_URL = 
+  process.env.EXPO_PUBLIC_API_URL ??
   Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
     : "http://localhost:8080"; // iOS simulator
@@ -65,18 +55,14 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   const payload = {
     ...event,
     status: event.status ?? "active",
-<<<<<<< HEAD
   };
-=======
-  }
->>>>>>> origin/main
   
   const res = await fetch(POSTS_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(event),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {

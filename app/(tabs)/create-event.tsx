@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  KeyboardAvoidingView,
 } from "react-native";
 import { createEvent, NewEvent } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -63,7 +64,7 @@ export default function CreateEventScreen() {
       return;
     }
 
-   // TEMP: hard-coded user id until we wire real users
+   // Prototype-only: hardcoded organizer until auth/user accounts are wired in
     const userId = 1;
 
     const payload: NewEvent = {
@@ -83,7 +84,7 @@ export default function CreateEventScreen() {
     try {
       await createEvent(payload);
 
-      Alert.alert("Success", "Post created successfully!");
+      Alert.alert("Success", "Food event created successfully!");
       
       setTitle("");
       setLocation("");
@@ -103,8 +104,9 @@ export default function CreateEventScreen() {
   };
 
   return (
+  <KeyboardAvoidingView>
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.bigText}>Create Food Post</Text>
+      <Text style={styles.bigText}>Create Food Event</Text>
       <Text style={styles.subText}>
         Prototype mode: posting as test organizer
       </Text>
@@ -115,6 +117,7 @@ export default function CreateEventScreen() {
         placeholderTextColor="#999"
         value={title}
         onChangeText={setTitle}
+        editable={!submitting}
       />
       <TextInput
         style={styles.input}
@@ -181,7 +184,7 @@ export default function CreateEventScreen() {
           mode="datetime"
           display={Platform.OS === "ios" ? "inline" : "default"}
           onChange={(_event, selectedDate) => {
-            if (Platform.OS != "ios") {
+            if (Platform.OS !== "ios") {
               setShowUntilPicker(false);
             }
             if (selectedDate) {
@@ -199,6 +202,7 @@ export default function CreateEventScreen() {
         />
       </View>
     </ScrollView>
+  </KeyboardAvoidingView>
   );
 }
 
