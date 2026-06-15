@@ -82,6 +82,7 @@ public class PostController {
     @PreAuthorize("hasAuthority('admin')")
     @PutMapping("/any/{id}")
     public ResponseEntity<Post> updateAnyPost(@PathVariable int id, @RequestBody Post postDetails) {
+        try {
         Optional<Post> postData = postRepository.findById(id);
         
         if (postData.isPresent()) {
@@ -105,6 +106,9 @@ public class PostController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // Update a creator's post
@@ -112,12 +116,15 @@ public class PostController {
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
     {
+        try {
         Optional<Post> postData = postRepository.findById(id);
 
         if (postData.isPresent()) {
             Post post = postData.get();
 
-            if (post.getCreatedBy().getId() == userId) {
+            if (post.getCreatedBy().getId() == userId)
+            // TODO: change userId to authenticated user
+            {
 
                 post.setTitle(postDetails.getTitle());
                 post.setDescription(postDetails.getDescription());
@@ -140,12 +147,15 @@ public class PostController {
             }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    // Delete post (soft delete by changing status)
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deletePost(@PathVariable int id) {
+    // Delete any post (soft delete by changing status)
+    @PreAuthorize("hasAuthority('admin')")
+    @DeleteMapping("/any/{id}")
+    public ResponseEntity<HttpStatus> deleteAnyPost(@PathVariable int id) {
         try {
             Optional<Post> post = postRepository.findById(id);
             if (post.isPresent()) {
@@ -161,7 +171,33 @@ public class PostController {
         }
     }
 
-    // Recover post (bring back soft deleted posts)
+    // Delete a creator's post (soft delete by changing status)
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<HttpStatus> deletePost(@RequestParam int userId, @PathVariable int id) {
+            try {
+        Optional<Post> postData = postRepository.findById(id);
+
+            if (postData.isPresent()) {
+                Post existingPost = postData.get();
+
+                if (existingPost.getCreatedBy().getId() == userId)
+                // TODO: Change userId to authenticated user
+                {
+                existingPost.setStatus("closed");
+                postRepository.save(existingPost);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } else {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            } catch (Exception e) {
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+    }
+
+    // Recover any post (bring back soft deleted posts)
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/recover")
     public ResponseEntity<HttpStatus> recoverPost(@PathVariable int id) {
