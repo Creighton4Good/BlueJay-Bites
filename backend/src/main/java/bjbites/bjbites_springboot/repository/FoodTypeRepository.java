@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface FoodTypeRepository extends JpaRepository<FoodType, Integer> {
-    Optional<FoodType> findByName(String typeName);
+    Optional<FoodType> findByTypeName(String typeName);
 }

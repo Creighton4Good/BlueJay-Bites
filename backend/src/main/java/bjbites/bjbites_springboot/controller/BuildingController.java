@@ -37,9 +37,9 @@ public class BuildingController {
 
     // Get building by name
     @PreAuthorize("hasAuthority('admin')")
-    @GetMapping("/name/{buildingName)")
+    @GetMapping("/name/{buildingName}")
     public ResponseEntity<Building> getBuildingByName(@PathVariable String buildingName) {
-        Optional<Building> building = buildingRepository.findByName(buildingName);
+        Optional<Building> building = buildingRepository.findByBuildingName(buildingName);
         return building.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }

@@ -39,7 +39,7 @@ public class FoodTypeController {
     @PreAuthorize("hasAuthority('admin)")
     @GetMapping("/name/{typeName}")
     public ResponseEntity<FoodType> getFoodTypeByName(@PathVariable String typeName) {
-        Optional<FoodType> foodType = foodTypeRepository.findByName(typeName);
+        Optional<FoodType> foodType = foodTypeRepository.findByTypeName(typeName);
         return foodType.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }

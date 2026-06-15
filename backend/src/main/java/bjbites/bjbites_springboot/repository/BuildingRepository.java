@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface BuildingRepository extends JpaRepository<Building, Integer> {
-    Optional<Building> findByName(String buildingName);
+    Optional<Building> findByBuildingName(String buildingName);
 }
 

@@ -38,7 +38,7 @@ public class DietaryOptionController {
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/name/{optionName}")
     public ResponseEntity<DietaryOption> getDietaryOptionByName(@PathVariable String optionName) {
-        Optional<DietaryOption> dietaryOption = dietaryOptionRepository.findByName(optionName);
+        Optional<DietaryOption> dietaryOption = dietaryOptionRepository.findByOptionName(optionName);
         return dietaryOption.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
