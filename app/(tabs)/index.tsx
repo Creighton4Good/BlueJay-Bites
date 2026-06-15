@@ -59,18 +59,25 @@ export default function HomeScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.title}</Text>
 
-              {!!item.location && (
-                <Text style={styles.cardLocation}>{item.location}</Text>
+              {!!item.building && (
+                <Text style={styles.cardLocation}>
+                  {item.building.buildingName}
+                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                </Text>
               )}
 
               {!!item.description && (
                 <Text style={styles.cardDescription}>{item.description}</Text>
               )}
 
-              {!!item.dietarySpecification && (
+              {!!item.foodType && (
                 <Text style={styles.cardMeta}>
-                  Dietary: {item.dietarySpecification}
+                  Food type: {item.foodType.typeName}
                 </Text>
+              )}
+
+              {!!item.directions && (
+                <Text style={styles.cardDescription}>{item.directions}</Text>
               )}
 
               {(item.availableFrom || item.availableUntil) && (

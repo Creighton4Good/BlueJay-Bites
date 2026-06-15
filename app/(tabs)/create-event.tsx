@@ -16,9 +16,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [dietarySpecification, setDietarySpecification] = useState("");
+  const [directions, setDirections] = useState("");
+  const [roomNumber, setRoomNumber] = useState("");
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -43,9 +43,9 @@ export default function CreateEventScreen() {
       return;
     }
 
-    if (!location.trim()) {
-    Alert.alert("Missing location", "Please enter a location for the post.");
-    return;
+    if (!description.trim()) {
+      Alert.alert("Missing description", "Please enter a description for the post.");
+      return;
     }
 
     if (!availableFrom || !availableUntil) {
@@ -64,19 +64,15 @@ export default function CreateEventScreen() {
       return;
     }
 
-   // Prototype-only: hardcoded organizer until auth/user accounts are wired in
-    const userId = 1;
-
+   // Prototype-only: hardcoded organizer until auth is wired in
     const payload: NewEvent = {
-      userId,
       title: title.trim(),
-      location: location.trim(),                    // required
-      description: description.trim() || "",        // optional
-      dietarySpecification: dietarySpecification.trim() || "",
-      availableFrom: availableFrom.toISOString(),          // required ISO string
-      availableUntil: availableUntil.toISOString(),        // required ISO string
-      imageUrl: "",                                 // optional
-      status: "active",
+      description: description.trim(),        
+      directions: directions.trim() || undefined,
+      roomNumber: roomNumber.trim() || undefined,
+      availableFrom: availableFrom.toISOString(),          
+      availableUntil: availableUntil.toISOString(),        
+      createdBy: { id: 1 },
     };
 
     setSubmitting(true);
@@ -87,16 +83,16 @@ export default function CreateEventScreen() {
       Alert.alert("Success", "Food event created successfully!");
       
       setTitle("");
-      setLocation("");
       setDescription("");
-      setDietarySpecification("");
+      setDirections("");
+      setRoomNumber("");
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
       console.error("Error creating event:", err);
       Alert.alert(
         "Error",
-        err.message ?? "Something went wrong while creating the post."
+        err.message ?? "Something went wrong while creating the event."
       );
     } finally {
       setSubmitting(false);
@@ -104,7 +100,10 @@ export default function CreateEventScreen() {
   };
 
   return (
-  <KeyboardAvoidingView>
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : undefined}
+  >
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.bigText}>Create Food Event</Text>
       <Text style={styles.subText}>
@@ -120,26 +119,29 @@ export default function CreateEventScreen() {
         editable={!submitting}
       />
       <TextInput
-        style={styles.input}
-        placeholder="Location *"
-        placeholderTextColor="#999"
-        value={location}
-        onChangeText={setLocation}
-      />
-      <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Description"
+        placeholder="Description *"
         placeholderTextColor="#999"
         value={description}
         onChangeText={setDescription}
+        editable={!submitting}
         multiline
       />
       <TextInput
         style={styles.input}
-        placeholder="Dietary specification (e.g., vegan, gluten-free)"
+        placeholder="Directions (optional)"
         placeholderTextColor="#999"
-        value={dietarySpecification}
-        onChangeText={setDietarySpecification}
+        value={directions}
+        onChangeText={setDirections}
+        editable={!submitting}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Room number (optional)"
+        placeholderTextColor="#999"
+        value={roomNumber}
+        onChangeText={setRoomNumber}
+        editable={!submitting}
       />
       <Pressable
         style={styles.input}

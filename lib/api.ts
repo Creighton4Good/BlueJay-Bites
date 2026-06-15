@@ -54,7 +54,6 @@ export type Event = {
 
 // What we send when creating a new event
 export type NewEvent = {
-  userId: number;
   title: string;
   description: string;
   notes?: string;
