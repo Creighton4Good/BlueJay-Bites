@@ -67,13 +67,16 @@ export type NewEvent = {
   availableFrom?: string;
   availableUntil?: string;
   createdBy: { id: number };
+  status?: EventStatus;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
-  Platform.OS === "android"
+  (Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
-    : "http://localhost:8080"; // iOS simulator
+    : "http://localhost:8080"); // iOS simulator
 // Use your local IP instead if testing on a physical device:
 // const BASE_URL = "http://123.456.7.890:8080";
 
@@ -111,7 +114,8 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Failed to create event");
+    console.error("Create event failed", res.status, text);
+    throw new Error(`Failed to create event (${res.status})${text ? `: ${text}` : ""}`);
   }
   return res.json();
 }

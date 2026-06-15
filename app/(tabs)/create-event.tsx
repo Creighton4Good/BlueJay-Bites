@@ -64,6 +64,8 @@ export default function CreateEventScreen() {
       return;
     }
 
+    const now = new Date().toISOString();
+    
    // Prototype-only: hardcoded organizer until auth is wired in
     const payload: NewEvent = {
       title: title.trim(),
@@ -73,6 +75,9 @@ export default function CreateEventScreen() {
       availableFrom: availableFrom.toISOString(),          
       availableUntil: availableUntil.toISOString(),        
       createdBy: { id: 1 },
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
     };
 
     setSubmitting(true);
