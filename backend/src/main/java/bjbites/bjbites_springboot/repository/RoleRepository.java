@@ -1,6 +1,6 @@
-package cuff.cuff_springboot.repository;
+package bjbites.bjbites_springboot.repository;
 
-import cuff.cuff_springboot.entity.Role;
+import bjbites.bjbites_springboot.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
