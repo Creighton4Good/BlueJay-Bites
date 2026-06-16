@@ -1,4 +1,4 @@
-package cuff.cuff_springboot.entity;
+package bjbites.bjbites_springboot.entity;
 
 import jakarta.persistence.*;
 
