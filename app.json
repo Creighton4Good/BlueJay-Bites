@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "CUFF",
-    "slug": "CUFF",
+    "name": "bjbites",
+    "slug": "bjbites",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "cuff",
+    "scheme": "bjbites",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.egerminario.CUFF"
+      "bundleIdentifier": "com.egerminario.bjbites"
     },
     "android": {
       "adaptiveIcon": {
