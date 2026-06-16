@@ -4,6 +4,10 @@ INSERT IGNORE INTO roles (id, role_name, description) VALUES
 (2, 'event_organizer', 'Can create and manage their own food events'),
 (3, 'admin', 'Full platform oversight and management');
 
+-- Test Users
+INSERT IGNORE INTO users (id, auth_provider, created_at, display_name, email, password_hash, role_id) VALUES
+(1, 'local', NOW(), 'Test Organizer', 'testorganizer@example.com', 'placeholder', 2);
+
 -- Buildings (Creighton campus)
 INSERT IGNORE INTO buildings (id, building_name, latitude, longitude) VALUES
 (1, 'Harper Center', 41.2653, -95.9434),
