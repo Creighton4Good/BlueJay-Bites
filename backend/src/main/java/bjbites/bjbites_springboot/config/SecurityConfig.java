@@ -1,4 +1,4 @@
-package cuff.cuff_springboot.config;
+package bjbites.bjbites_springboot.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

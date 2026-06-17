@@ -1,7 +1,7 @@
-package cuff.cuff_springboot.controller;
+package bjbites.bjbites_springboot.controller;
 
-import cuff.cuff_springboot.entity.Role;
-import cuff.cuff_springboot.repository.RoleRepository;
+import bjbites.bjbites_springboot.entity.Role;
+import bjbites.bjbites_springboot.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
