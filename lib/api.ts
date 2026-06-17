@@ -15,6 +15,11 @@ export type FoodType = {
   typeName: string;
 };
 
+export type DietaryOption = {
+  id: number;
+  optionName: string;
+};
+
 export type Role = {
   id: number;
   roleName: string;
@@ -135,7 +140,7 @@ export async function fetchFoodTypes(): Promise<FoodType[]> {
 }
 
 // Fetch all dietary options (for create event dropdown)
-export async function fetchDietaryOptions(): Promise<{ id: number; optionName: string }[]> {
+export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   const res = await fetch(`${DIETARY_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch dietary options");
   return res.json();
