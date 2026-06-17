@@ -26,16 +26,20 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 ### Core Tables
 
 - **users** — accounts with email, display name, role, Entra ID (for SSO), and auth provider
-- **posts** — food events with title, description, photo, location, food type, servings, pickup window, and creator
+- **posts** — food events with title, description, photo, location, food type, servings, pickup window, status and creator
 
 ### Lookup Tables
 
 - **roles** — `user`, `event_organizer`, `admin`
 - **buildings** — Creighton campus buildings with lat/long coordinates
-- **food_types** — categories like Pizza, Sandwiches, Italian, etc.
-- **dietary_options** — Vegetarian, Vegan, Gluten-Free, etc.
+- **food_types** — Includes food categories (pizza, sandwiches, etc), meal types (breakfast, etc), and cusines types (Italian, etc).
+- **dietary_options** — Options including Vegetarian, Vegan, Gluten-Free, etc.
 
 ## Design Decisions
+
+### Entities
+- Based on core/lookup tables
+- Each have fields, as well as constructor, getter and setter methods
 
 ### @ManyToOne foreign keys (not int FKs)
 
@@ -53,13 +57,21 @@ Posts use `availableFrom` and `availableUntil` instead of a single `expirationTi
 
 Roles, buildings, food types, and dietary options live in their own tables instead of as enums or free-text strings on Post. Reasons:
 
-- Single source of truth (e.g., building lat/long stored once)
+- Single source of truth (e.g., building's lat/long stored once)
 - Can add/edit values without code changes — just update `data.sql`
 - Foreign key constraints prevent bad data
 
 ### Soft delete via status field
 
-Posts are never hard-deleted. Status changes from `active` to `closed`. This preserves history for analytics and allows admins to recover closed posts via the `/recover` endpoint.
+Posts are never hard-deleted. Status changes from `active` to `closed`, where only admins can view them. This preserves history for analytics and allows admins to recover closed posts via the `/recover` endpoint, changing it back to `active`.
+
+### Admin/organizer actions
+
+Admins and organizers have separate endpoints for editing and deleting an event, to ensure that organizers are only performing these actions on events they own. Only admins can promote and demote users to other roles. Users can update their own personal information, such as their display name.
+
+### Admin/organizer views
+
+Admins can do anything that an organizer can do, so they will also be able to see the page of events only they created. Admins will also have admin only views such as get all closed posts, get a post by id, or recover a post. This helps to ensure that admins do not need to be assigned the organizer role separately.
 
 ### Buildings table = indoor structures only
 
@@ -78,9 +90,9 @@ Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`.
 - `/api/roles` — role lookup
 - `/api/buildings` — building lookup
 - `/api/foodtypes` — food type lookup
-- `/api/dietary` — dietary option lookup
+- `/api/dietary-options` — dietary option lookup
 
-### Standard endpoints per controller
+### Standard endpoints used in controllers
 
 - `GET /all` — list everything
 - `GET /{id}` — get one by ID
@@ -90,7 +102,7 @@ Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`.
 
 ### Authorization
 
-- `@PreAuthorize` annotations on endpoints define role requirements
+- `@PreAuthorize` annotations on endpoints define role requirements before a view/action
 - Uses `hasAuthority('admin')` or `hasAuthority('event_organizer')` — matches lowercase seed values
 - Currently `SecurityConfig` permits all `/api/**` requests for development so the frontend can connect without auth
 - Will switch to Microsoft Entra SSO before production (see User entity's `entraId` and `authProvider` fields)
@@ -99,13 +111,15 @@ Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`.
 
 - Use Spring Data JPA method naming conventions
 - Object navigation uses underscore syntax: `findByCreatedBy_Id(Integer userId)` navigates from Post to User.id
-- Sort orders: `findByStatusOrderByCreatedAtDesc(String status)`
+- Sort orders: `findByStatusOrderByCreatedAtDesc(String status)` - allows posts to be sorted by when they were most recently created
+- Counting: `long countByRoleRoleName(String roleName);` - allows roles to be counted, useful when ensuring that there will always be at least one admin left when promoting/demoting admins
 
 ## Pending Work
 
 - Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce (currently the annotations exist but aren't checked because method security is not enabled)
-- Integrate Microsoft Entra SSO for real authentication
+- Integrate Microsoft Entra SSO for real authentication for signing in/out
 - Build notification system (delivery method — in-app vs email — pending IT meeting)
+  - Possible approaches: SSE (Single-Server Events, websockets)
 - Add analytics endpoints for admin dashboard
 - Add photo upload for events
 - Add `servingsRemaining` tracking for "running low" UI
