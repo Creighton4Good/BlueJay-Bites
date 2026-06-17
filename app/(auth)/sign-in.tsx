@@ -1,98 +1,28 @@
-import { useSignIn } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   Button,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
 export default function SignInScreen() {
-  // Clerk's hook for handling the sign-in process
-  const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
-
-  // State variables to hold the user's input and manage UI state
-  const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  // This function is called when the user presses the "Sign In" button
-  const onSignInPress = async () => {
-    if (!isLoaded) return; // Wait for Clerk to be ready
-
-    setError("");
-    setIsLoading(true);
-
-    try {
-      // Start the sign-in process with Clerk
-      const signInAttempt = await signIn.create({
-        identifier: emailAddress,
-        password,
-      });
-
-      // If sign-in is complete, we set the session as active
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        // And navigate the user to the main part of the app
-        router.replace("/(tabs)");
-      } else {
-        // This can happen in multi-factor auth flows
-        setError("Sign-in incomplete. Please try again.");
-      }
-    } catch (err: any) {
-      // This is our error handling. We can show a friendly message.
-      const errorMessage =
-        err.errors?.[0]?.longMessage || "An error occurred. Please try again.";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign In</Text>
-
-      {error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
-
-      <TextInput
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Email..."
-        onChangeText={setEmailAddress}
-        style={styles.input}
-        editable={!isLoading}
-      />
-      <TextInput
-        value={password}
-        placeholder="Password..."
-        secureTextEntry
-        onChangeText={setPassword}
-        style={styles.input}
-        editable={!isLoading}
-      />
-      <Button
-        title={isLoading ? "Signing In..." : "Sign In"}
-        onPress={onSignInPress}
-        disabled={isLoading}
-      />
-      <Link href="/(auth)/forgot-password" asChild>
-        <Pressable style={styles.link} disabled={isLoading}>
-          <Text style={styles.linkText}>Forgot Password?</Text>
-        </Pressable>
-      </Link>
+      <Text style={styles.title}>BlueJay-Bites</Text>
+      <Text style={styles.subtitle}>
+        Sign-in is temporarily disabled in prototype mode.
+      </Text>
+      
+      <Button title="Continue to App" onPress={() => router.replace("/(tabs)")} />
+      
       <Link href="/sign-up" asChild>
-        <Pressable style={styles.link} disabled={isLoading}>
-          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+        <Pressable style={styles.link}>
+          <Text style={styles.linkText}>View prototype sign-up screen</Text>
         </Pressable>
       </Link>
     </View>
@@ -110,29 +40,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 12,
     color: "#00235D",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#005CA9",
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 5,
+  subtitle: {
     fontSize: 16,
-  },
-  errorContainer: {
-    backgroundColor: "#005CA9",
-    borderColor: "#00235D",
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 12,
-    marginBottom: 15,
-  },
-  errorText: {
-    color: "#6CADDE",
-    fontSize: 14,
     textAlign: "center",
+    marginBottom: 30,
+    color: "#555"
   },
   link: {
     marginTop: 15,
