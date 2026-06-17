@@ -83,7 +83,7 @@ const BASE_URL =
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
-const DIETARY_URL = `${BASE_URL}/api/dietary`;
+const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 
 // Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
