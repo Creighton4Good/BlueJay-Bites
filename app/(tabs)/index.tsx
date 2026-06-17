@@ -16,7 +16,7 @@ export default function HomeScreen() {
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching events:", err);
-      setError(err.message ?? "Failed to load events");
+      setError("Could not load active food events.");
     } finally {
       setLoading(false);
     }
