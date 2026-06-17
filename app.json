@@ -8,8 +8,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.egerminario.bjbites"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
