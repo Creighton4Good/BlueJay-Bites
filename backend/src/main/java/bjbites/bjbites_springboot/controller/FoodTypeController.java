@@ -27,7 +27,7 @@ public class FoodTypeController {
     }
 
     // Get food type by id
-    @PreAuthorize("hasAuthority('admin)")
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<FoodType> getFoodTypeById(@PathVariable int id) {
         Optional<FoodType> foodType = foodTypeRepository.findById(id);
@@ -36,7 +36,7 @@ public class FoodTypeController {
     }
 
     // Get food type by name
-    @PreAuthorize("hasAuthority('admin)")
+    @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/name/{typeName}")
     public ResponseEntity<FoodType> getFoodTypeByName(@PathVariable String typeName) {
         Optional<FoodType> foodType = foodTypeRepository.findByTypeName(typeName);
