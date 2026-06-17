@@ -7,23 +7,23 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadEvents = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await fetchEvents();
+      setEvents(data);
+    } catch (err: any) {
+      console.error("Error fetching events:", err);
+      setError(err.message ?? "Failed to load events");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await fetchEvents();
-        setEvents(data.filter((e) => e.status === "active"));
-      } catch (err: any) {
-        console.error("Error fetching events:", err);
-        setError(err.message ?? "Failed to load events");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    loadEvents();
   }, []);
 
   const formatDateTime = (value?: string | null) => {
@@ -77,7 +77,9 @@ export default function HomeScreen() {
               )}
 
               {!!item.directions && (
-                <Text style={styles.cardDescription}>{item.directions}</Text>
+                <Text style={styles.cardMeta}>
+                  Directions: {item.directions}
+                </Text>
               )}
 
               {(item.availableFrom || item.availableUntil) && (
