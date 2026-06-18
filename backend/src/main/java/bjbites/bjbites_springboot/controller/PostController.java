@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,15 +78,15 @@ public class PostController {
         }
     }
     
-    // Update post
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable int id, @RequestBody Post postDetails) {
+    // Update any post (for admin)
+    @PreAuthorize("hasAuthority('admin')")
+    @PutMapping("/any/{id}")
+    public ResponseEntity<Post> updateAnyPost(@PathVariable int id, @RequestBody Post postDetails) {
+        try {
         Optional<Post> postData = postRepository.findById(id);
         
         if (postData.isPresent()) {
             Post post = postData.get();
-            post.setId(postDetails.getId());
             post.setTitle(postDetails.getTitle());
             post.setDescription(postDetails.getDescription());
             post.setNotes(postDetails.getNotes());
@@ -98,21 +99,63 @@ public class PostController {
             post.setServingsMax(postDetails.getServingsMax());
             post.setAvailableFrom(postDetails.getAvailableFrom());
             post.setAvailableUntil(postDetails.getAvailableUntil());
-            post.setCreatedBy(postDetails.getCreatedBy());
-            post.setCreatedAt(postDetails.getCreatedAt());
-            post.setUpdatedAt(postDetails.getUpdatedAt());
+            post.setUpdatedAt(LocalDateTime.now());
             post.setStatus(postDetails.getStatus());
             
             return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-    
-    // Delete post (soft delete by changing status)
+
+    // Update a creator's post
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deletePost(@PathVariable int id) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Post> updatePost(@RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
+    {
+        try {
+        Optional<Post> postData = postRepository.findById(id);
+
+        if (postData.isPresent()) {
+            Post post = postData.get();
+
+            if (post.getCreatedBy().getId() == userId)
+            // TODO: change userId to authenticated user
+            {
+
+                post.setTitle(postDetails.getTitle());
+                post.setDescription(postDetails.getDescription());
+                post.setNotes(postDetails.getNotes());
+                post.setPhotoUrl(postDetails.getPhotoUrl());
+                post.setBuilding(postDetails.getBuilding());
+                post.setDirections(postDetails.getDirections());
+                post.setRoomNumber(postDetails.getRoomNumber());
+                post.setFoodType(postDetails.getFoodType());
+                post.setServingsMin(postDetails.getServingsMin());
+                post.setServingsMax(postDetails.getServingsMax());
+                post.setAvailableFrom(postDetails.getAvailableFrom());
+                post.setAvailableUntil(postDetails.getAvailableUntil());
+                post.setUpdatedAt(LocalDateTime.now());
+                post.setStatus(postDetails.getStatus());
+
+                return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Delete any post (soft delete by changing status)
+    @PreAuthorize("hasAuthority('admin')")
+    @DeleteMapping("/any/{id}")
+    public ResponseEntity<HttpStatus> deleteAnyPost(@PathVariable int id) {
         try {
             Optional<Post> post = postRepository.findById(id);
             if (post.isPresent()) {
@@ -128,7 +171,33 @@ public class PostController {
         }
     }
 
-    // Recover post (bring back soft deleted posts)
+    // Delete a creator's post (soft delete by changing status)
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<HttpStatus> deletePost(@RequestParam int userId, @PathVariable int id) {
+            try {
+        Optional<Post> postData = postRepository.findById(id);
+
+            if (postData.isPresent()) {
+                Post existingPost = postData.get();
+
+                if (existingPost.getCreatedBy().getId() == userId)
+                // TODO: Change userId to authenticated user
+                {
+                existingPost.setStatus("closed");
+                postRepository.save(existingPost);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } else {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            } catch (Exception e) {
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+    }
+
+    // Recover any post (bring back soft deleted posts)
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/recover")
     public ResponseEntity<HttpStatus> recoverPost(@PathVariable int id) {

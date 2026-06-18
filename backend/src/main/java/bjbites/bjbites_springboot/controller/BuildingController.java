@@ -26,6 +26,24 @@ public class BuildingController {
         return new ResponseEntity<>(buildings, HttpStatus.OK);
     }
 
+    // Get building by id
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/{id}")
+    public ResponseEntity<Building> getBuildingById(@PathVariable int id) {
+        Optional<Building> building = buildingRepository.findById(id);
+        return building.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // Get building by name
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/name/{buildingName}")
+    public ResponseEntity<Building> getBuildingByName(@PathVariable String buildingName) {
+        Optional<Building> building = buildingRepository.findByBuildingName(buildingName);
+        return building.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     // Create new building
     @PreAuthorize("hasAuthority('admin')")
     @PostMapping("/create")
