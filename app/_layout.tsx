@@ -1,11 +1,7 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import React from "react";
 import { useColorScheme } from "react-native";
-
-// This tells the splash screen to stay visible until we're ready
-SplashScreen.preventAutoHideAsync();
 
 const MyTheme = {
   ...DefaultTheme,
