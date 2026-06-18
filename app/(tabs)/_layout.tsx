@@ -29,10 +29,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="admin"
+        name="create-event"
         options={{
-          title: "Post Event",
-          tabBarLabel: "Post Event",
+          title: "Create Event",
+          tabBarLabel: "Create",
         }}
       />
     </Tabs>

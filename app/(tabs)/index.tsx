@@ -11,6 +11,7 @@ export default function HomeScreen() {
     const load = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const data = await fetchEvents();
         setEvents(data.filter((e) => e.status === "active"));
@@ -21,6 +22,7 @@ export default function HomeScreen() {
         setLoading(false);
       }
     };
+
     load();
   }, []);
 
@@ -56,19 +58,26 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.title}</Text>
-              
-              {!!item.location && (
-                <Text style={styles.cardLocation}>{item.location}</Text>
+
+              {!!item.building && (
+                <Text style={styles.cardLocation}>
+                  {item.building.buildingName}
+                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                </Text>
               )}
 
               {!!item.description && (
                 <Text style={styles.cardDescription}>{item.description}</Text>
               )}
 
-              {!!item.dietarySpecification && (
+              {!!item.foodType && (
                 <Text style={styles.cardMeta}>
-                  Dietary: {item.dietarySpecification}
+                  Food type: {item.foodType.typeName}
                 </Text>
+              )}
+
+              {!!item.directions && (
+                <Text style={styles.cardDescription}>{item.directions}</Text>
               )}
 
               {(item.availableFrom || item.availableUntil) && (
@@ -78,7 +87,7 @@ export default function HomeScreen() {
                     : ""}
                   {item.availableUntil
                     ? `To: ${formatDateTime(item.availableUntil)}`
-                  : ""}
+                    : ""}
                 </Text>
               )}
             </View>
@@ -90,15 +99,15 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     padding: 20,
-    backgroundColor: "#FFFFFF" 
+    backgroundColor: "#FFFFFF",
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: "bold", 
-    marginBottom: 4 
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
@@ -110,23 +119,23 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#eee",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    marginBottom: 8 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
   },
   statusText: {
-    fontSize:14,
+    fontSize: 14,
     color: "#666",
   },
-  emptyText: { 
-    fontSize: 14, 
-    color: "#888" 
+  emptyText: {
+    fontSize: 14,
+    color: "#888",
   },
-  errorText: { 
-    fontSize: 14, 
-    color: "red", 
-    marginBottom: 8 
+  errorText: {
+    fontSize: 14,
+    color: "red",
+    marginBottom: 8,
   },
   listContent: {
     paddingVertical: 8,
@@ -139,10 +148,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "#E9F2FB",
   },
-  cardTitle: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    marginBottom: 4 
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   cardLocation: {
     fontSize: 14,

@@ -15,6 +15,11 @@ export type FoodType = {
   typeName: string;
 };
 
+export type DietaryOption = {
+  id: number;
+  optionName: string;
+};
+
 export type Role = {
   id: number;
   roleName: string;
@@ -67,19 +72,23 @@ export type NewEvent = {
   availableFrom?: string;
   availableUntil?: string;
   createdBy: { id: number };
+  status?: EventStatus;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 const BASE_URL =
-  Platform.OS === "android"
+  process.env.EXPO_PUBLIC_API_URL ??
+  (Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
-    : "http://localhost:8080"; // iOS simulator
+    : "http://localhost:8080"); // iOS simulator
 // Use your local IP instead if testing on a physical device:
 // const BASE_URL = "http://123.456.7.890:8080";
 
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
-const DIETARY_URL = `${BASE_URL}/api/dietary`;
+const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 
 // Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
@@ -110,7 +119,8 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Failed to create event");
+    console.error("Create event failed", res.status, text);
+    throw new Error(`Failed to create event (${res.status})${text ? `: ${text}` : ""}`);
   }
   return res.json();
 }
@@ -130,7 +140,7 @@ export async function fetchFoodTypes(): Promise<FoodType[]> {
 }
 
 // Fetch all dietary options (for create event dropdown)
-export async function fetchDietaryOptions(): Promise<{ id: number; optionName: string }[]> {
+export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   const res = await fetch(`${DIETARY_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch dietary options");
   return res.json();
