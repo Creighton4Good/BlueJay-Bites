@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, StyleSheet, Text, View } from "react-native";
 import MapView, { Callout, Marker } from "react-native-maps";
 import { Event, fetchEvents } from "@/lib/api";
 
@@ -9,6 +9,28 @@ const CREIGHTON_REGION = {
   latitudeDelta: 0.01,
   longitudeDelta: 0.01,
 };
+
+// Format a building's coordinates into a maps URL that opens the
+// native maps app (Apple Maps on iOS, Google Maps on Android).
+function getDirectionsUrl(latitude: number, longitude: number, label?: string) {
+  const latLng = `${latitude},${longitude}`;
+  const encodedLabel = label ? encodeURIComponent(label) : "Food Event";
+  return Platform.select({
+    ios: `maps:0,0?q=${encodedLabel}@${latLng}`,
+    android: `geo:0,0?q=${latLng}(${encodedLabel})`,
+    default: `https://www.google.com/maps/search/?api=1&query=${latLng}`,
+  })!;
+}
+
+function openDirections(event: Event) {
+  const lat = event.building?.latitude;
+  const lng = event.building?.longitude;
+  if (lat == null || lng == null) return;
+  const url = getDirectionsUrl(lat, lng, event.building?.buildingName);
+  Linking.openURL(url).catch((err) =>
+    console.error("Failed to open maps:", err)
+  );
+}
 
 export default function EventMap() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -48,7 +70,7 @@ export default function EventMap() {
             title={event.title}
             description={event.building?.buildingName}
           >
-            <Callout>
+            <Callout onPress={() => openDirections(event)}>
               <View style={styles.callout}>
                 <Text style={styles.calloutTitle}>{event.title}</Text>
                 {event.building?.buildingName && (
@@ -60,6 +82,7 @@ export default function EventMap() {
                 {event.description && (
                   <Text style={styles.calloutDescription}>{event.description}</Text>
                 )}
+                <Text style={styles.calloutAction}>Tap for directions</Text>
               </View>
             </Callout>
           </Marker>
@@ -96,6 +119,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 4,
+  },
+  calloutAction: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#005CA9",
+    marginTop: 8,
   },
   errorBanner: {
     position: "absolute",
