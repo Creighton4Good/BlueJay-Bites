@@ -19,11 +19,17 @@ public class PostController {
     
     @Autowired
     private PostRepository postRepository;
-    
-    // Get all active posts
+
+    // How long an event keeps showing in the feed after its availableUntil time
+    // passes, so the frontend can display a countdown before it disappears.
+    private static final long GRACE_PERIOD_MINUTES = 5;
+
+    // Get all active posts (excludes events whose availableUntil passed more than
+    // the grace period ago; events with no end time always show)
     @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
-        List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("active");
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(GRACE_PERIOD_MINUTES);
+        List<Post> posts = postRepository.findActiveWithinGrace("active", cutoff);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
