@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Linking, Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import MapView, { Callout, Marker } from "react-native-maps";
 import { Event, fetchEvents } from "@/lib/api";
+import { router } from "expo-router";
 
 const CREIGHTON_REGION = {
   latitude: 41.2627,
@@ -9,28 +10,6 @@ const CREIGHTON_REGION = {
   latitudeDelta: 0.01,
   longitudeDelta: 0.01,
 };
-
-// Format a building's coordinates into a maps URL that opens the
-// native maps app (Apple Maps on iOS, Google Maps on Android).
-function getDirectionsUrl(latitude: number, longitude: number, label?: string) {
-  const latLng = `${latitude},${longitude}`;
-  const encodedLabel = label ? encodeURIComponent(label) : "Food Event";
-  return Platform.select({
-    ios: `maps:0,0?q=${encodedLabel}@${latLng}`,
-    android: `geo:0,0?q=${latLng}(${encodedLabel})`,
-    default: `https://www.google.com/maps/search/?api=1&query=${latLng}`,
-  })!;
-}
-
-function openDirections(event: Event) {
-  const lat = event.building?.latitude;
-  const lng = event.building?.longitude;
-  if (lat == null || lng == null) return;
-  const url = getDirectionsUrl(lat, lng, event.building?.buildingName);
-  Linking.openURL(url).catch((err) =>
-    console.error("Failed to open maps:", err)
-  );
-}
 
 export default function EventMap() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -70,19 +49,22 @@ export default function EventMap() {
             title={event.title}
             description={event.building?.buildingName}
           >
-            <Callout onPress={() => openDirections(event)}>
+            <Callout onPress={() => router.push({
+              pathname: "/events/[id]",
+              params: { id: String(event.id), from: "map" },
+            })}>
               <View style={styles.callout}>
                 <Text style={styles.calloutTitle}>{event.title}</Text>
-                {event.building?.buildingName && (
+                {!!event.building?.buildingName && (
                   <Text style={styles.calloutText}>{event.building.buildingName}</Text>
                 )}
-                {event.foodType?.typeName && (
+                {!!event.foodType?.typeName && (
                   <Text style={styles.calloutText}>{event.foodType.typeName}</Text>
                 )}
-                {event.description && (
+                {!!event.description && (
                   <Text style={styles.calloutDescription}>{event.description}</Text>
                 )}
-                <Text style={styles.calloutAction}>Tap for directions</Text>
+                <Text style={styles.calloutLink}>Tap for details</Text>
               </View>
             </Callout>
           </Marker>
@@ -120,11 +102,11 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
   },
-  calloutAction: {
-    fontSize: 13,
-    fontWeight: "600",
+  calloutLink: {
+    fontSize: 12,
     color: "#005CA9",
-    marginTop: 8,
+    marginTop: 6,
+    textDecorationLine: "underline",
   },
   errorBanner: {
     position: "absolute",
