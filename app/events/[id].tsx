@@ -4,7 +4,11 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { Event, fetchEventById } from "@/lib/api";
 
 export default function EventDetailsScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id, from } = useLocalSearchParams<{ 
+        id: string; 
+        from?: string;
+    }>();
+    
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -62,7 +66,7 @@ export default function EventDetailsScreen() {
             <Stack.Screen 
                 options={{ 
                     title: "Event Details",
-                    headerBackTitle: "Dashboard",
+                    headerBackTitle: from === "map" ? "Map" : "Dashboard",
                 }} 
             />
             <ScrollView contentContainerStyle={styles.container}>

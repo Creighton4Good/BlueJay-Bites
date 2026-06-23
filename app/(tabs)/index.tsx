@@ -59,7 +59,10 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <Pressable
               style={styles.card}
-              onPress={() => router.push(`/events/${item.id}`)}
+              onPress={() => router.push({
+                pathname: "/events/[id]",
+                params: { id: String(item.id), from: "dashboard" },
+              })}
             >
               <Text style={styles.cardTitle}>{item.title}</Text>
 

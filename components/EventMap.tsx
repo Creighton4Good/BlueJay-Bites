@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import MapView, { Callout, Marker } from "react-native-maps";
 import { Event, fetchEvents } from "@/lib/api";
+import { router } from "expo-router";
 
 const CREIGHTON_REGION = {
   latitude: 41.2627,
@@ -48,18 +49,22 @@ export default function EventMap() {
             title={event.title}
             description={event.building?.buildingName}
           >
-            <Callout>
+            <Callout onPress={() => router.push({
+              pathname: "/events/[id]",
+              params: { id: String(event.id), from: "map" },
+            })}>
               <View style={styles.callout}>
                 <Text style={styles.calloutTitle}>{event.title}</Text>
-                {event.building?.buildingName && (
+                {!!event.building?.buildingName && (
                   <Text style={styles.calloutText}>{event.building.buildingName}</Text>
                 )}
-                {event.foodType?.typeName && (
+                {!!event.foodType?.typeName && (
                   <Text style={styles.calloutText}>{event.foodType.typeName}</Text>
                 )}
-                {event.description && (
+                {!!event.description && (
                   <Text style={styles.calloutDescription}>{event.description}</Text>
                 )}
+                <Text style={styles.calloutLink}>Tap for details</Text>
               </View>
             </Callout>
           </Marker>
@@ -96,6 +101,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 4,
+  },
+  calloutLink: {
+    fontSize: 12,
+    color: "#005CA9",
+    marginTop: 6,
+    textDecorationLine: "underline",
   },
   errorBanner: {
     position: "absolute",
