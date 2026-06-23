@@ -125,6 +125,28 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
+export async function updateEvent(
+  id: number,
+  userId: number,
+  event: NewEvent
+): Promise<Event> {
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update event failed", res.status, text);
+    throw new Error(
+      `Failed to update event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
 // Fetch all buildings (for create event dropdown)
 export async function fetchBuildings(): Promise<Building[]> {
   const res = await fetch(`${BUILDINGS_URL}/all`);
