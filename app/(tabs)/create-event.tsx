@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -11,19 +11,41 @@ import {
   View,
   KeyboardAvoidingView,
 } from "react-native";
-import { createEvent, NewEvent } from "@/lib/api";
+import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [directions, setDirections] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadBuildings = async () => {
+      setLoadingBuildings(true);
+      try {
+        const data = await fetchBuildings();
+        setBuildings(data);
+      } catch (err) {
+        console.error("Error fetching buildings:", err);
+        Alert.alert("Error", "Could not load building options.");
+      } finally {
+        setLoadingBuildings(false);
+      }
+    };
+
+    loadBuildings();
+  }, []);
 
   const formatDisplayDateTime = (date: Date | null) => {
     if (!date) return "";
@@ -48,6 +70,11 @@ export default function CreateEventScreen() {
       return;
     }
 
+    if (!selectedBuildingId) {
+      Alert.alert("Missing building", "Please select a building for this event.");
+      return;
+    }
+
     if (!availableFrom || !availableUntil) {
       Alert.alert(
         "Missing availability",
@@ -69,7 +96,8 @@ export default function CreateEventScreen() {
    // Prototype-only: hardcoded organizer until auth is wired in
     const payload: NewEvent = {
       title: title.trim(),
-      description: description.trim(),        
+      description: description.trim(),    
+      building: { id: selectedBuildingId },
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: availableFrom.toISOString(),          
@@ -91,6 +119,7 @@ export default function CreateEventScreen() {
       setDescription("");
       setDirections("");
       setRoomNumber("");
+      setSelectedBuildingId(null);
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -132,14 +161,29 @@ export default function CreateEventScreen() {
         editable={!submitting}
         multiline
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Directions (optional)"
-        placeholderTextColor="#999"
-        value={directions}
-        onChangeText={setDirections}
-        editable={!submitting}
-      />
+      <Text style={styles.label}>Building *</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={selectedBuildingId}
+          enabled={!submitting && !loadingBuildings}
+          onValueChange={(itemValue) => 
+            setSelectedBuildingId(itemValue ? Number(itemValue) : null)
+          }
+        >
+          <Picker.Item
+            label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
+            value={null}
+          />
+          {buildings.map((building) => (
+            <Picker.Item
+              key={building.id}
+              label={building.buildingName}
+              value={building.id}
+            />
+          ))}
+        </Picker>
+      </View>
+
       <TextInput
         style={styles.input}
         placeholder="Room number (optional)"
@@ -148,9 +192,20 @@ export default function CreateEventScreen() {
         onChangeText={setRoomNumber}
         editable={!submitting}
       />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Directions (optional)"
+        placeholderTextColor="#999"
+        value={directions}
+        onChangeText={setDirections}
+        editable={!submitting}
+      />
+    
       <Pressable
         style={styles.input}
         onPress={() => setShowFromPicker(true)}
+        disabled={submitting}
       >
         <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
           {availableFrom
@@ -159,10 +214,13 @@ export default function CreateEventScreen() {
         </Text>
       </Pressable>
 
-      <Pressable style={styles.input} onPress={() => setShowUntilPicker(true)}>
+      <Pressable 
+        style={styles.input} 
+        onPress={() => setShowUntilPicker(true)} 
+        disabled={submitting} 
+      >
         <Text
-          style={availableUntil ? styles.inputText : styles.placeholderText}
-        >
+          style={availableUntil ? styles.inputText : styles.placeholderText}>
           {availableUntil
             ? formatDisplayDateTime(availableUntil)
             : "Available until * (tap to pick date & time)"}
@@ -205,7 +263,7 @@ export default function CreateEventScreen() {
         <Button
           title={submitting ? "Posting..." : "Post Food Event"}
           onPress={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || loadingBuildings}
         />
       </View>
     </ScrollView>
@@ -231,6 +289,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
   },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 6,
+    color: "#00235D",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -238,6 +302,14 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 12,
     backgroundColor: "#fff",
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+    overflow: "hidden",
   },
   inputText: {
     color: "#000",
