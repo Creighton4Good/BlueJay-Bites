@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Event, fetchEventById } from "@/lib/api";
 
 export default function EventDetailsScreen() {
@@ -58,53 +58,61 @@ export default function EventDetailsScreen() {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>{event.title}</Text>
+        <>
+            <Stack.Screen 
+                options={{ 
+                    title: "Event Details",
+                    headerBackTitle: "Dashboard",
+                }} 
+            />
+            <ScrollView contentContainerStyle={styles.container}>
+                <Text style={styles.title}>{event.title}</Text>
 
-            {!!event.description && (
-                <>
-                    <Text style={styles.sectionTitle}>Description</Text>
-                    <Text style={styles.bodyText}>{event.description}</Text>
-                </>
-            )}
+                {!!event.description && (
+                    <>
+                        <Text style={styles.sectionTitle}>Description</Text>
+                        <Text style={styles.bodyText}>{event.description}</Text>
+                    </>
+                )}
 
-            <Text style={styles.sectionTitle}>Location</Text>
+                <Text style={styles.sectionTitle}>Location</Text>
 
-            {!!event.building && (
-                <Text style={styles.bodyText}>Building: {event?.building.buildingName}</Text>
-            )}
+                {!!event.building && (
+                    <Text style={styles.bodyText}>Building: {event.building.buildingName}</Text>
+                )}
 
-            {!!event.roomNumber && (
-                <Text style={styles.bodyText}>Room: {event.roomNumber}</Text>
-            )}
+                {!!event.roomNumber && (
+                    <Text style={styles.bodyText}>Room: {event.roomNumber}</Text>
+                )}
 
-            {!!event.directions && (
-                <Text style={styles.bodyText}>Directions: {event.directions}</Text>
-            )}
+                {!!event.directions && (
+                    <Text style={styles.bodyText}>Directions: {event.directions}</Text>
+                )}
 
-            {!!event.foodType && (
-                <>
-                    <Text style={styles.sectionTitle}>Food Type</Text>
-                    <Text style={styles.bodyText}>{event?.foodType.typeName}</Text>
-                </>
-            )}
+                {!!event.foodType && (
+                    <>
+                        <Text style={styles.sectionTitle}>Food Type</Text>
+                        <Text style={styles.bodyText}>{event.foodType.typeName}</Text>
+                    </>
+                )}
 
-            {(event.availableFrom || event.availableUntil) && ( 
-                <>
-                    <Text style={styles.sectionTitle}>Availability</Text>
-                    {!!event.availableFrom && (
-                        <Text style={styles.bodyText}>
-                            From: {formatDateTime(event.availableFrom)}
-                        </Text>
-                    )}
-                    {!!event.availableUntil && (
-                        <Text style={styles.bodyText}>
-                            Until: {formatDateTime(event.availableUntil)}
-                        </Text>
-                    )}
-                </>
-            )}
-        </ScrollView>
+                {(event.availableFrom || event.availableUntil) && ( 
+                    <>
+                        <Text style={styles.sectionTitle}>Availability</Text>
+                        {!!event.availableFrom && (
+                            <Text style={styles.bodyText}>
+                                From: {formatDateTime(event.availableFrom)}
+                            </Text>
+                        )}
+                        {!!event.availableUntil && (
+                            <Text style={styles.bodyText}>
+                                Until: {formatDateTime(event.availableUntil)}
+                            </Text>
+                        )}
+                    </>
+                )}
+            </ScrollView>
+        </>
     );
 }
 
