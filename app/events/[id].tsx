@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+    ActivityIndicator,
+    Linking,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Event, fetchEventById } from "@/lib/api";
 
+// Format a building's coordinates into a maps URL that opens the
+// native maps app (Apple Maps on iOS, Google Maps on Android).
+function getDirectionsUrl(latitude: number, longitude: number, label?: string) {
+    const latLng = `${latitude},${longitude}`;
+    const encodedLabel = label ? encodeURIComponent(label) : "Food Event";
+    return Platform.select({
+        ios: `maps:0,0?q=${encodedLabel}@${latLng}`,
+        android: `geo:0,0?q=${latLng}(${encodedLabel})`,
+        default: `https://www.google.com/maps/search/?api=1&query=${latLng}`,
+    })!;
+}
+
 export default function EventDetailsScreen() {
-    const { id, from } = useLocalSearchParams<{ 
-        id: string; 
+    const { id, from } = useLocalSearchParams<{
+        id: string;
         from?: string;
     }>();
-    
+
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -19,7 +40,7 @@ export default function EventDetailsScreen() {
                 setError("Missing event id.");
                 setLoading(false);
                 return;
-            }  
+            }
 
             try {
                 const data = await fetchEventById(Number(id));
@@ -44,6 +65,16 @@ export default function EventDetailsScreen() {
         }
     };
 
+    const handleGetDirections = () => {
+        const lat = event?.building?.latitude;
+        const lng = event?.building?.longitude;
+        if (lat == null || lng == null) return;
+        const url = getDirectionsUrl(lat, lng, event?.building?.buildingName);
+        Linking.openURL(url).catch((err) =>
+            console.error("Failed to open maps:", err)
+        );
+    };
+
     if (loading) {
         return (
             <View style={styles.centered}>
@@ -61,13 +92,16 @@ export default function EventDetailsScreen() {
         );
     }
 
+    const hasCoordinates =
+        event.building?.latitude != null && event.building?.longitude != null;
+
     return (
         <>
-            <Stack.Screen 
-                options={{ 
+            <Stack.Screen
+                options={{
                     title: "Event Details",
                     headerBackTitle: from === "map" ? "Map" : "Dashboard",
-                }} 
+                }}
             />
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>{event.title}</Text>
@@ -93,6 +127,18 @@ export default function EventDetailsScreen() {
                     <Text style={styles.bodyText}>Directions: {event.directions}</Text>
                 )}
 
+                {hasCoordinates && (
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.directionsButton,
+                            pressed && styles.directionsButtonPressed,
+                        ]}
+                        onPress={handleGetDirections}
+                    >
+                        <Text style={styles.directionsButtonText}>Get Directions</Text>
+                    </Pressable>
+                )}
+
                 {!!event.foodType && (
                     <>
                         <Text style={styles.sectionTitle}>Food Type</Text>
@@ -100,7 +146,7 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
-                {(event.availableFrom || event.availableUntil) && ( 
+                {(event.availableFrom || event.availableUntil) && (
                     <>
                         <Text style={styles.sectionTitle}>Availability</Text>
                         {!!event.availableFrom && (
@@ -149,6 +195,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 22,
         color: "#222",
+    },
+    directionsButton: {
+        marginTop: 12,
+        backgroundColor: "#005CA9",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: "center",
+    },
+    directionsButtonPressed: {
+        opacity: 0.85,
+    },
+    directionsButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
     },
     statusText: {
         marginTop: 8,
