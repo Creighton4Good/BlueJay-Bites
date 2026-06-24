@@ -71,6 +71,13 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!--dependencies to implement for admin dashboard-->
+			<dependency>
+				<groupId>de.codecentric</groupId>
+				<artifactId>spring-boot-admin-starter-server</artifactId>
+				<version>3.5.7</version>
+			</dependency>
+
 	</dependencies>
 
 	<build>
