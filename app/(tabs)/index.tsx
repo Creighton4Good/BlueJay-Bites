@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Event, fetchEvents } from "@/lib/api";
 
 export default function HomeScreen() {
@@ -56,7 +57,18 @@ export default function HomeScreen() {
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.card,
+                pressed && styles.cardPressed,
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: "/events/[id]",
+                  params: { id: String(item.id), from: "dashboard" },
+                })
+              }
+            >
               <Text style={styles.cardTitle}>{item.title}</Text>
 
               {!!item.building && (
@@ -90,7 +102,7 @@ export default function HomeScreen() {
                     : ""}
                 </Text>
               )}
-            </View>
+            </Pressable>
           )}
         />
       )}
@@ -147,6 +159,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     backgroundColor: "#E9F2FB",
+  },
+  cardPressed: {
+    opacity: 0.9,
   },
   cardTitle: {
     fontSize: 16,
