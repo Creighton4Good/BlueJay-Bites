@@ -11,18 +11,55 @@ const CREIGHTON_REGION = {
   longitudeDelta: 0.01,
 };
 
+// A building with all the active events located there.
+type BuildingGroup = {
+  buildingId: number;
+  buildingName?: string;
+  latitude: number;
+  longitude: number;
+  events: Event[];
+};
+
+// Group events that share a building into one entry per building.
+function groupEventsByBuilding(events: Event[]): BuildingGroup[] {
+  const groups = new Map<number, BuildingGroup>();
+
+  for (const event of events) {
+    const building = event.building;
+    if (
+      building?.id == null ||
+      building.latitude == null ||
+      building.longitude == null
+    ) {
+      continue;
+    }
+
+    const existing = groups.get(building.id);
+    if (existing) {
+      existing.events.push(event);
+    } else {
+      groups.set(building.id, {
+        buildingId: building.id,
+        buildingName: building.buildingName,
+        latitude: building.latitude,
+        longitude: building.longitude,
+        events: [event],
+      });
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
 export default function EventMap() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [groups, setGroups] = useState<BuildingGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await fetchEvents();
-        const withCoords = data.filter(
-          (e) => e.building?.latitude != null && e.building?.longitude != null
-        );
-        setEvents(withCoords);
+        setGroups(groupEventsByBuilding(data));
       } catch (err: any) {
         console.error("Error fetching events for map:", err);
         setError(err.message ?? "Failed to load events");
@@ -30,6 +67,22 @@ export default function EventMap() {
     };
     load();
   }, []);
+
+  const handleGroupPress = (group: BuildingGroup) => {
+    if (group.events.length === 1) {
+      // Only one event here, go straight to its details
+      router.push({
+        pathname: "/events/[id]",
+        params: { id: String(group.events[0].id), from: "map" },
+      });
+    } else {
+      // Multiple events, open the building events list
+      router.push({
+        pathname: "/buildings/[id]",
+        params: { id: String(group.buildingId) },
+      });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -39,36 +92,69 @@ export default function EventMap() {
         showsUserLocation
         showsMyLocationButton
       >
-        {events.map((event) => (
-          <Marker
-            key={event.id}
-            coordinate={{
-              latitude: event.building!.latitude!,
-              longitude: event.building!.longitude!,
-            }}
-            title={event.title}
-            description={event.building?.buildingName}
-          >
-            <Callout onPress={() => router.push({
-              pathname: "/events/[id]",
-              params: { id: String(event.id), from: "map" },
-            })}>
-              <View style={styles.callout}>
-                <Text style={styles.calloutTitle}>{event.title}</Text>
-                {!!event.building?.buildingName && (
-                  <Text style={styles.calloutText}>{event.building.buildingName}</Text>
-                )}
-                {!!event.foodType?.typeName && (
-                  <Text style={styles.calloutText}>{event.foodType.typeName}</Text>
-                )}
-                {!!event.description && (
-                  <Text style={styles.calloutDescription}>{event.description}</Text>
-                )}
-                <Text style={styles.calloutLink}>Tap for details</Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+        {groups.map((group) => {
+          const count = group.events.length;
+          const isMulti = count > 1;
+          return (
+            <Marker
+              key={group.buildingId}
+              coordinate={{
+                latitude: group.latitude,
+                longitude: group.longitude,
+              }}
+              title={group.buildingName}
+              description={
+                isMulti ? `${count} events here` : group.events[0].title
+              }
+            >
+              {isMulti ? (
+                <View style={styles.markerBadgeWrap}>
+                  <View style={styles.markerPin} />
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{count}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.markerPin} />
+              )}
+              <Callout onPress={() => handleGroupPress(group)}>
+                <View style={styles.callout}>
+                  <Text style={styles.calloutTitle}>
+                    {group.buildingName ?? "Building"}
+                  </Text>
+                  {isMulti ? (
+                    <>
+                      <Text style={styles.calloutText}>{count} events here:</Text>
+                      {group.events.slice(0, 3).map((e) => (
+                        <Text key={e.id} style={styles.calloutEvent}>
+                          • {e.title}
+                        </Text>
+                      ))}
+                      {count > 3 && (
+                        <Text style={styles.calloutText}>
+                          and {count - 3} more
+                        </Text>
+                      )}
+                      <Text style={styles.calloutLink}>Tap to view all</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.calloutText}>
+                        {group.events[0].title}
+                      </Text>
+                      {!!group.events[0].foodType?.typeName && (
+                        <Text style={styles.calloutText}>
+                          {group.events[0].foodType.typeName}
+                        </Text>
+                      )}
+                      <Text style={styles.calloutLink}>Tap for details</Text>
+                    </>
+                  )}
+                </View>
+              </Callout>
+            </Marker>
+          );
+        })}
       </MapView>
       {error && (
         <View style={styles.errorBanner}>
@@ -82,6 +168,37 @@ export default function EventMap() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  markerBadgeWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  markerPin: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#005CA9",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  countBadge: {
+    position: "absolute",
+    top: -8,
+    right: -10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: "#E24B4A",
+    borderWidth: 2,
+    borderColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
   callout: {
     minWidth: 180,
     padding: 4,
@@ -95,6 +212,11 @@ const styles = StyleSheet.create({
   calloutText: {
     fontSize: 13,
     color: "#333",
+    marginBottom: 2,
+  },
+  calloutEvent: {
+    fontSize: 13,
+    color: "#005CA9",
     marginBottom: 2,
   },
   calloutDescription: {
