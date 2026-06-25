@@ -2,11 +2,14 @@ package bjbites.bjbites_springboot.controller;
 
 import bjbites.bjbites_springboot.entity.Notification;
 import bjbites.bjbites_springboot.repository.NotificationRepository;
+import bjbites.bjbites_springboot.service.NotificationSseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +21,8 @@ public class NotificationController {
 
     @Autowired
     private NotificationRepository notificationRepository;
+    @Autowired
+    private NotificationSseService notificationSseService;
 
     // Get all notifications
     @PreAuthorize("hasAuthority('admin')")
@@ -55,15 +60,33 @@ public class NotificationController {
     // Change notification status to read (for a specific user)
     @PatchMapping("/{id}/read")
     public ResponseEntity<HttpStatus> readNotification(@PathVariable int id) {
-            // TODO: Ensure spring security checks authenticated user
-            Optional<Notification> notification = notificationRepository.findById(id);
+        // TODO: Ensure spring security checks authenticated user
+        Optional<Notification> notification = notificationRepository.findById(id);
 
-            if (notification.isPresent()) {
-                Notification existingNotification = notification.get();
-                existingNotification.setIsRead(true);
-                notificationRepository.save(existingNotification);
-                return new ResponseEntity<>(HttpStatus.OK); }
-            else
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        if (notification.isPresent()) {
+            Notification existingNotification = notification.get();
+            existingNotification.setIsRead(true);
+            notificationRepository.save(existingNotification);
+            return new ResponseEntity<>(HttpStatus.OK); }
+        else
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    // Client subscribes to notifications
+    @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe(@PathVariable Integer userId) {
+       return notificationSseService.subscribe(userId); }
+
+
+    // Temporary endpoint for testing SSE functionality
+    @PostMapping("/test/{userId}")
+    public ResponseEntity<String> testNotification(@PathVariable Integer userId) {
+
+       Notification notification = new Notification();
+
+       notificationSseService.publish(userId, notification);
+
+        return ResponseEntity.ok("Sent");
+    }
+
+}

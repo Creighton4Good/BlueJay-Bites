@@ -16,6 +16,8 @@ public class NotificationService {
     private NotificationRepository notificationRepository;
     @Autowired
     private UserPreferenceRepository userPreferenceRepository;
+    @Autowired
+    private NotificationSseService notificationSseService;
 
     public void createNotification(User user, Post post, String type) {
         UserPreference preference = userPreferenceRepository.findByUser(user);
@@ -27,6 +29,10 @@ public class NotificationService {
 
         Notification notification =
                 new Notification(user, post, type);
+
+        notificationSseService.publish(
+                user.getId(),
+                notification);
 
         notificationRepository.save(notification);
 

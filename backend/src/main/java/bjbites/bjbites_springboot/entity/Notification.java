@@ -29,7 +29,8 @@ public class Notification {
         @Column(name = "created_at", nullable = false)
         private LocalDateTime createdAt = LocalDateTime.now();
 
-        protected Notification() {}
+        // Temporarily public for testing SSE (will be protected)
+        public Notification() {}
 
         public Notification(User user, Post post, String type) {
             this.user = user;
