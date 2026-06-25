@@ -60,7 +60,7 @@ public class NotificationController {
     // Change notification status to read (for a specific user)
     @PatchMapping("/{id}/read")
     public ResponseEntity<HttpStatus> readNotification(@PathVariable int id) {
-        // TODO: Ensure spring security checks authenticated user
+        // TODO: Ensure user is authenticated
         Optional<Notification> notification = notificationRepository.findById(id);
 
         if (notification.isPresent()) {
@@ -75,8 +75,11 @@ public class NotificationController {
     // Client subscribes to notifications
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable Integer userId) {
+        // TODO: Ensure user is authenticated
        return notificationSseService.subscribe(userId); }
 
+    // TODO: Add GET /user endpoint for user to receive notifications that
+    //  they missed when they were not on app/inactive
 
     // Temporary endpoint for testing SSE functionality
     @PostMapping("/test/{userId}")

@@ -30,11 +30,11 @@ public class NotificationService {
         Notification notification =
                 new Notification(user, post, type);
 
+        notificationRepository.save(notification);
+        
         notificationSseService.publish(
                 user.getId(),
                 notification);
-
-        notificationRepository.save(notification);
 
     }
 }
