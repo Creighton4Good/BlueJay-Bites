@@ -28,7 +28,7 @@ public class PostController {
     private NotificationService notificationService;
     
     // Get all active posts
-    @GetMapping("/active{id}")
+    @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
         List<Post> posts = postRepository.findByStatusOrderByCreatedAtDesc("active");
         return new ResponseEntity<>(posts, HttpStatus.OK);
