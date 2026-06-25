@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Button,
     Linking,
     Platform,
     Pressable,
@@ -9,7 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Event, fetchEventById } from "@/lib/api";
 
 // Format a building's coordinates into a maps URL that opens the
@@ -80,6 +81,14 @@ export default function EventDetailsScreen() {
             <View style={styles.centered}>
                 <ActivityIndicator />
                 <Text style={styles.statusText}>Loading event details...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.centered}>
+                <Text style={styles.errorText}>{error}</Text>
             </View>
         );
     }
@@ -161,12 +170,27 @@ export default function EventDetailsScreen() {
                         )}
                     </>
                 )}
+
+                <View style={styles.buttonWrapper}>
+                    <Button
+                        title="Edit Event"
+                        onPress={() =>
+                            router.push({
+                                pathname: "/events/[id]/edit",
+                                params: { id: String(event.id) },
+                            })
+                        }
+                    />
+                </View>
             </ScrollView>
         </>
     );
 }
 
 const styles = StyleSheet.create({
+    buttonWrapper: {
+        marginTop: 24,
+    },
     container: {
         padding: 20,
         backgroundColor: "#fff",
