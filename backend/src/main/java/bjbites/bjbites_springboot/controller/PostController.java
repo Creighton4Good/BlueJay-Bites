@@ -31,7 +31,8 @@ public class PostController {
     // passes, so the frontend can display a countdown before it disappears.
     private static final long GRACE_PERIOD_MINUTES = 5;
 
-    // Get all active posts
+    // Get all active posts (excludes events whose availableUntil passed more than
+    // the grace period ago; events with no end time always show)
     @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(GRACE_PERIOD_MINUTES);
