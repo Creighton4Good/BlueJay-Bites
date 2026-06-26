@@ -34,6 +34,14 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - **buildings** — Creighton campus buildings with lat/long coordinates
 - **food_types** — Includes food categories (pizza, sandwiches, etc), meal types (breakfast, etc), and cusines types (Italian, etc).
 - **dietary_options** — Options including Vegetarian, Vegan, Gluten-Free, etc.
+- **notifications** - Includes createdAt, read status, and notification type
+- **user_preferences** - Supports the notification preference
+
+## Admin Dashboard Server
+
+- Accessible using localhost:8080/admin when running backend
+- Utilizes Spring Boot supported admin dashboard
+- Useful for monitoring the registered application
 
 ## Design Decisions
 
@@ -43,7 +51,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 
 ### @ManyToOne foreign keys (not int FKs)
 
-User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, and `User createdBy` objects. This:
+User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, and `User createdBy` objects. Notification has `User` and `Post` objects. UserPreference has a `User` object. This:
 
 - Enforces relationships at the entity level
 - Allows navigating object references in repository queries (e.g., `findByCreatedBy_Id(Integer userId)`)
@@ -80,6 +88,14 @@ Outdoor event specifics (e.g., "by the fountain on the north side") live in the 
 ### Role naming convention
 
 Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`. The `@PreAuthorize` annotations use `hasAuthority()` instead of `hasRole()` since we don't use the `ROLE_` prefix convention.
+
+### Notifications
+
+Notifications are sent using SSE (Server-Sent Events). This is because data does not need to be sent two-way in this application, but directly to the user is the objective. There are entities for Notification and UserPreference
+- Notifications are only sent to those with the "user" role
+- They are triggered when an event-organizer/admin creates a post
+- Notifications are sent using SSE emitters, streaming real-time data
+- Endpoints exist to get certain notifications, such as by read status, and to support the user enabling or disabling notifications
 
 ## API Conventions
 
@@ -118,9 +134,9 @@ Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`.
 
 - Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce (currently the annotations exist but aren't checked because method security is not enabled)
 - Integrate Microsoft Entra SSO for real authentication for signing in/out
-- Build notification system (delivery method — in-app vs email — pending IT meeting)
-  - Possible approaches: SSE (Single-Server Events, websockets)
-- Add analytics endpoints for admin dashboard
+- Continue building notification system (delivery method — in-app vs email — pending IT meeting)
+  - Current approach: SSE (Single-Server Events, websockets)
+- Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
 - Add photo upload for events
 - Add `servingsRemaining` tracking for "running low" UI
 
