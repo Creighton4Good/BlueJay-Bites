@@ -35,7 +35,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - **food_types** — Includes food categories (pizza, sandwiches, etc), meal types (breakfast, etc), and cusines types (Italian, etc).
 - **dietary_options** — Options including Vegetarian, Vegan, Gluten-Free, etc.
 - **notifications** - Includes createdAt, read status, and notification type
-- **user_preferences** - Supports the notification preference
+- **user_preferences** - Supports the notification preference for the user ("on" or "off")
 
 ## Admin Dashboard Server
 
