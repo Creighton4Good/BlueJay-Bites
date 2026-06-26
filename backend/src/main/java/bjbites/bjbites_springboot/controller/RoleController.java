@@ -19,12 +19,14 @@ public class RoleController {
     @Autowired
     private RoleRepository roleRepository;
 
+    // Get all roles
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public ResponseEntity<List<Role>> getAllRoles() {
         return new ResponseEntity<>(roleRepository.findAll(), HttpStatus.OK);
     }
 
+    // Get role by id
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Role> getRoleById(@PathVariable Integer id) {
@@ -33,6 +35,7 @@ public class RoleController {
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // Get role by name
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/name/{roleName}")
     public ResponseEntity<Role> getRoleByName(@PathVariable String roleName) {
@@ -41,6 +44,7 @@ public class RoleController {
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // Create new role
     @PreAuthorize("hasAuthority('admin')")
     @PostMapping("/create")
     public ResponseEntity<Role> createRole(@RequestBody Role role) {
@@ -52,6 +56,7 @@ public class RoleController {
         }
     }
 
+    // Delete role
     @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteRole(@PathVariable Integer id) {

@@ -4,7 +4,6 @@ import { Tabs } from "expo-router";
 
 export default function TabsLayout() {
   const { colors } = useTheme();
-
   return (
     <Tabs
       screenOptions={{
@@ -17,16 +16,23 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ 
+        options={{
           title: "Dashboard",
           tabBarLabel: "Dashboard",
         }}
       />
       <Tabs.Screen
+        name="map"
+        options={{
+          title: "Map",
+          tabBarLabel: "Map",
+        }}
+      />
+      <Tabs.Screen
         name="create-event"
-        options={{ 
+        options={{
           title: "Create Event",
-          tabBarLabel: "Create", 
+          tabBarLabel: "Create",
         }}
       />
     </Tabs>
