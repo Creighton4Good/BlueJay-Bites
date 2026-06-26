@@ -77,6 +77,12 @@ public class PostController {
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
+
+            User creator = userRepository.findById(post.getCreatedBy().getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            post.setCreatedBy(creator);
+
             Post savedPost = postRepository.save(post);
 
             List<User> users = userRepository.findByRoleRoleName("user");

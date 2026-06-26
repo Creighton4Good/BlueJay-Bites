@@ -6,7 +6,8 @@ INSERT IGNORE INTO roles (id, role_name, description) VALUES
 
 -- Test Users
 INSERT IGNORE INTO users (id, auth_provider, created_at, display_name, email, password_hash, role_id) VALUES
-(1, 'local', NOW(), 'Test Organizer', 'testorganizer@example.com', 'placeholder', 2);
+(1, 'local', NOW(), 'Test User', 'testuser@example.com', 'placeholder', 1),
+(2, 'local', NOW(), 'Test Organizer', 'testorganizer@example.com', 'placeholder', 2);
 
 -- Buildings (Creighton campus)
 INSERT IGNORE INTO buildings (id, building_name, latitude, longitude) VALUES
