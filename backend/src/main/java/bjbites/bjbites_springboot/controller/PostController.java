@@ -79,7 +79,7 @@ public class PostController {
         try {
             Post savedPost = postRepository.save(post);
 
-            List<User> users = userRepository.findByRole_Id(1);
+            List<User> users = userRepository.findByRoleRoleName("user");
 
            users.forEach(user ->
                     notificationService.createNotification(user, savedPost, "NEW_POST"));

@@ -26,6 +26,8 @@ public class NotificationSseService {
 
     public void publish(Integer userId, Notification notification) {
         SseEmitter emitter = emitters.get(userId);
+
+        // TODO: Add support for storing multiple emitters for a user
         if (emitter == null) {
             return; }
             try {

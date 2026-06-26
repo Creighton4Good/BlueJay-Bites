@@ -27,7 +27,7 @@ public class UserPreference {
 
     public UserPreference(User user) {
         this.user = user;
-        this.notificationPreference = "in_app";
+        this.notificationPreference = "on";
         this.updatedAt = LocalDateTime.now();
     }
 

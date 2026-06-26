@@ -73,6 +73,7 @@ public class NotificationController {
     }
 
     // Client subscribes to notifications
+    @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable Integer userId) {
         // TODO: Ensure user is authenticated
