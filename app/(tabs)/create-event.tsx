@@ -92,6 +92,12 @@ export default function CreateEventScreen() {
     }
 
     const now = new Date().toISOString();
+
+    const toLocalDateTimeString = (date: Date) => {
+      const pad = (n: number) => String(n).padStart(2, "0");
+
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
     
    // Prototype-only: hardcoded organizer until auth is wired in
     const payload: NewEvent = {
@@ -100,8 +106,8 @@ export default function CreateEventScreen() {
       building: { id: selectedBuildingId },
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
-      availableFrom: availableFrom.toISOString(),          
-      availableUntil: availableUntil.toISOString(),        
+      availableFrom: toLocalDateTimeString(availableFrom),          
+      availableUntil: toLocalDateTimeString(availableUntil),        
       createdBy: { id: 1 },
       status: "active",
       createdAt: now,

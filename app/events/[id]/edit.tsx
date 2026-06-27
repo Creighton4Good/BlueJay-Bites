@@ -101,6 +101,12 @@ export default function EditEventScreen() {
         });
     };
 
+    const toLocalDateTimeString = (date: Date) => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
     const handleSubmit = async () => {
         if (!id) {
             Alert.alert("Error", "Missing event id.");
@@ -146,8 +152,8 @@ export default function EditEventScreen() {
             building: { id: selectedBuildingId },
             directions: directions.trim() || undefined,
             roomNumber: roomNumber.trim() || undefined,
-            availableFrom: availableFrom.toISOString(),
-            availableUntil: availableUntil.toISOString(),
+            availableFrom: toLocalDateTimeString(availableFrom),
+            availableUntil: toLocalDateTimeString(availableUntil),
             createdBy: { id: 1 },
             status: "active",
             updatedAt: now,
@@ -287,11 +293,12 @@ export default function EditEventScreen() {
                             value={availableFrom ?? new Date()}
                             mode="datetime"
                             display={Platform.OS === "ios" ? "inline" : "default"}
-                            onChange={(_event, selectedDate) => {
+                            onChange={(event, selectedDate) => {
                                 if (Platform.OS != "ios") {
                                     setShowFromPicker(false);
                                 }
-                                if (selectedDate) {
+                                
+                                if (event.type === "set" && selectedDate) {
                                     setAvailableFrom(selectedDate);
                                 }
                             }}
@@ -303,11 +310,12 @@ export default function EditEventScreen() {
                             value={availableUntil ?? availableFrom ?? new Date()}
                             mode="datetime"
                             display={Platform.OS === "ios" ? "inline" : "default"}
-                            onChange={(_event, selectedDate) => {
+                            onChange={(event, selectedDate) => {
                                 if (Platform.OS !== "ios") {
                                     setShowUntilPicker(false);
                                 }
-                                if (selectedDate) {
+                                
+                                if (event.type === "set" && selectedDate) {
                                     setAvailableUntil(selectedDate);
                                 }
                             }}
