@@ -2,10 +2,13 @@ package bjbites.bjbites_springboot.controller;
 
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import bjbites.bjbites_springboot.repository.UserRepository;
+import bjbites.bjbites_springboot.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import bjbites.bjbites_springboot.entity.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +22,10 @@ public class PostController {
     
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     // How long an event keeps showing in the feed after its availableUntil time
     // passes, so the frontend can display a countdown before it disappears.
@@ -76,9 +83,21 @@ public class PostController {
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
+
+            User creator = userRepository.findById(post.getCreatedBy().getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            post.setCreatedBy(creator);
+
             Post savedPost = postRepository.save(post);
-            // TODO: Trigger notification system here
-            return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
+
+            List<User> users = userRepository.findByRoleRoleName("user");
+
+           users.forEach(user ->
+                    notificationService.createNotification(user, savedPost, "NEW_POST"));
+
+                return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
+
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -213,7 +232,7 @@ public class PostController {
                 Post existingPost = post.get();
                 existingPost.setStatus("active");
                 postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
