@@ -21,7 +21,7 @@ public class UserPreference {
     private String notificationPreference = "on";
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     protected UserPreference() {}
 
