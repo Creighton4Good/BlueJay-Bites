@@ -134,7 +134,7 @@ export default function EventDetailsScreen() {
                 )}
 
                 {!!event.roomNumber && (
-                    <Text style={styles.bodyText}>Room: {event.roomNumber}</Text>
+                    <Text style={styles.bodyText}>{event.roomNumber}</Text>
                 )}
 
                 {!!event.directions && (

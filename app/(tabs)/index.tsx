@@ -76,7 +76,7 @@ export default function HomeScreen() {
               {!!item.building && (
                 <Text style={styles.cardLocation}>
                   {item.building.buildingName}
-                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                  {item.roomNumber ? `, ${item.roomNumber}` : ""}
                 </Text>
               )}
 
