@@ -80,7 +80,7 @@ export default function EditEventScreen() {
                 setAvailableUntil(event.availableUntil ? new Date(event.availableUntil) : null);
             } catch (err) {
                 console.error("Error fetching event:", err);
-                Alert.alert("Could not load event details.");
+                setLoadError("Could not load event details.");
             } finally {
                 setLoadingEvent(false);
             }
@@ -88,6 +88,36 @@ export default function EditEventScreen() {
 
         loadEvent();
     }, [id]);
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    const formatDateForWebInput = (date: Date | null) => {
+        if (!date || Number.isNaN(date.getTime())) return "";
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    };
+
+    const formatTimeForWebInput = (date: Date | null) => {
+        if (!date || Number.isNaN(date.getTime())) return "";
+        return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
+    const updateDatePart = (current: Date | null, dateValue: string) => {
+        if (!dateValue) return null;
+        const [year, month, day] = dateValue.split("-").map(Number);
+        const base =
+            current && !Number.isNaN(current.getTime()) ? new Date(current) : new Date();
+        base.setFullYear(year, month - 1, day);
+        return base;
+    };
+
+    const updateTimePart = (current: Date | null, timeValue: string) => {
+        if (!timeValue) return current;
+        const [hours, minutes] = timeValue.split(":").map(Number);
+        const base =
+            current && !Number.isNaN(current.getTime()) ? new Date(current) : new Date();
+        base.setHours(hours, minutes, 0, 0);
+        return base;
+    };
 
     const formatDisplayDateTime = (date: Date | null) => {
         if (!date) return "";
@@ -191,6 +221,36 @@ export default function EditEventScreen() {
         );
     }
 
+    const WebNativeInput = ({
+        type,
+        value,
+        onChange,
+        placeholder,
+    } : {
+        type: "date" | "time";
+        value: string;
+        onChange: (value: string) => void;
+        placeholder?: string;
+    }) => {
+        return React.createElement("input", {
+            type,
+            value,
+            placeholder,
+            disabled: submitting,
+            onChange: (e: any) => onChange(e.target.value),
+            style: {
+                width: "100%",
+                height: 44,
+                border: "1px solid #ccc",
+                borderRadius: 8,
+                padding: "0 10px",
+                fontSize: 16,
+                backgroundColor: "#fff",
+                boxSizing: "border-box",
+            },
+        });
+    };
+
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -264,31 +324,89 @@ export default function EditEventScreen() {
                         editable={!submitting}
                     />
 
-                    <Pressable
-                        style={styles.input}
-                        onPress={() => setShowFromPicker(true)}
-                        disabled={submitting}
-                    >
-                        <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
-                            {availableFrom
-                                ? formatDisplayDateTime(availableFrom)
-                                : "Available from * (tap to pick date & time)"}
-                        </Text>
-                    </Pressable>
+                    {Platform.OS === "web" ? (
+                        <>
+                            <Text style={styles.label}>Available from *</Text>
+                            <View style={styles.webDateTimeRow}>
+                                <View style={styles.webInputGroup}>
+                                    <Text style={styles.webInputLabel}>Date</Text>
+                                    <WebNativeInput
+                                        type="date"
+                                        value={formatDateForWebInput(availableFrom)}
+                                        onChange={(value) =>
+                                            setAvailableFrom(updateDatePart(availableFrom, value))
+                                        }
+                                    />
+                                </View>
 
-                    <Pressable
-                        style={styles.input}
-                        onPress={() => setShowUntilPicker(true)}
-                        disabled={submitting}
-                    >
-                        <Text style={availableUntil ? styles.inputText : styles.placeholderText}>
-                            {availableUntil
-                                ? formatDisplayDateTime(availableUntil)
-                                : "Available until * (tap to pick date & time)"}
-                        </Text>
-                    </Pressable>
+                                <View style={styles.webInputGroup}>
+                                    <Text style={styles.webInputLabel}>Time</Text>
+                                    <WebNativeInput
+                                        type="time"
+                                        value={formatTimeForWebInput(availableFrom)}
+                                        onChange={(value) =>
+                                            setAvailableFrom(updateTimePart(availableFrom, value))
+                                        }
+                                    />
+                                </View>
+                            </View>
+                        </>
+                    ):(
+                        <Pressable
+                            style={styles.input}
+                            onPress={() => setShowFromPicker(true)}
+                            disabled={submitting}
+                        >
+                            <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
+                                {availableFrom
+                                    ? formatDisplayDateTime(availableFrom)
+                                    : "Available from * (tap to pick date & time)"}
+                            </Text>
+                        </Pressable>
+                    )}
 
-                    {showFromPicker && (
+                    {Platform.OS === "web" ? (
+                        <>
+                            <Text style={styles.label}>Available until *</Text>
+                            <View style={styles.webDateTimeRow}>
+                                <View style={styles.webInputGroup}>
+                                    <Text style={styles.webInputLabel}>Date</Text>
+                                    <WebNativeInput
+                                        type="date"
+                                        value={formatDateForWebInput(availableUntil)}
+                                        onChange={(value) =>
+                                            setAvailableUntil(updateDatePart(availableUntil, value))
+                                        }
+                                    />
+                                </View>
+
+                                <View style={styles.webInputGroup}>
+                                    <Text style={styles.webInputLabel}>Time</Text>
+                                    <WebNativeInput
+                                        type="time"
+                                        value={formatTimeForWebInput(availableUntil)}
+                                        onChange={(value) =>
+                                            setAvailableUntil(updateTimePart(availableUntil, value))
+                                        }
+                                    />
+                                </View>
+                            </View>
+                        </>
+                    ) : (
+                        <Pressable
+                            style={styles.input}
+                            onPress={() => setShowUntilPicker(true)}
+                            disabled={submitting}
+                        >
+                            <Text style={availableUntil ? styles.inputText : styles.placeholderText}>
+                                {availableUntil
+                                    ? formatDisplayDateTime(availableUntil)
+                                    : "Available until * (tap to pick date & time)"}
+                            </Text>
+                        </Pressable>
+                    )}
+
+                    {Platform.OS !== "web" && showFromPicker && (
                         <DateTimePicker
                             value={availableFrom ?? new Date()}
                             mode="datetime"
@@ -305,7 +423,7 @@ export default function EditEventScreen() {
                         />
                     )}
 
-                    {showUntilPicker && (
+                    {Platform.OS !== "web" && showUntilPicker && (
                         <DateTimePicker
                             value={availableUntil ?? availableFrom ?? new Date()}
                             mode="datetime"
@@ -401,5 +519,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "red",
         textAlign: "center",
+    },
+    webDateTimeRow: {
+        flexDirection: "row",
+        gap: 12,
+        marginBottom: 12,
+    },
+    webInputGroup: {
+        flex: 1,
+    },
+    webInputLabel: {
+        fontSize: 14,
+        fontWeight: "500",
+        marginBottom: 6,
+        color: "#555",
+    },
+    webDateInput: {
+        flex: 2,
+        marginBottom: 0,
+    },
+    webTimeInput: {
+        flex: 1,
+        marginBottom: 0,
     },
 });
