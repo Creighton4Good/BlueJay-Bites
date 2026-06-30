@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,11 +50,52 @@ public class PhotoController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // Create photo
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @PostMapping("/create")
+    public ResponseEntity<Photo> createPhoto(@RequestBody Photo photo) {
+        Post post = postRepository.findById(photo.getPost().getId())
+            .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        photo.setPost(post);
+
+        photoRepository.save(photo);
+
+        return new ResponseEntity<>(photo, HttpStatus.CREATED);
+    }
+
+    // Update photo
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @PutMapping("/{id}")
+    public ResponseEntity<Photo> updatePhoto(@PathVariable int id, @RequestBody Photo photoDetails) {
+        Optional<Photo> photoData = photoRepository.findById(id);
+        if (photoData.isPresent()) {
+            Photo photo = photoData.get();
+            photo.setDisplayOrder(photoDetails.getDisplayOrder());
+            return new ResponseEntity<>(photoRepository.save(photo), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    // Delete photo
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Photo> deletePhoto(@PathVariable int id) {
+            Optional<Photo> photo = photoRepository.findById(id);
+            if (photo.isPresent()) {
+                Photo existingPhoto = photo.get();
+                photoRepository.delete(existingPhoto);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT); }
+            else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND); }
+        }
+
     // Get all photos for a post (by display order)
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer)")
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<Photo>> getEventPhotos(@PathVariable Integer postId, @RequestParam Integer displayOrder) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
         List<Photo> photoOrder = photoRepository.findByPostAndDisplayOrder(post, displayOrder);
         return new ResponseEntity<>(photoOrder, HttpStatus.OK); }
