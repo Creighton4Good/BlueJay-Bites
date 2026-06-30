@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
     Building,
     Event,
@@ -42,6 +42,9 @@ export default function EditEventScreen() {
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showUntilPicker, setShowUntilPicker] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     useEffect(() => {
         const loadBuildings = async () => {
@@ -138,6 +141,8 @@ export default function EditEventScreen() {
     }
 
     const handleSubmit = async () => {
+        setSaveMessage(null);
+        setSaveError(null);
         if (!id) {
             Alert.alert("Error", "Missing event id.");
             return;
@@ -193,12 +198,15 @@ export default function EditEventScreen() {
 
         try {
             await updateEvent(Number(id), 1, payload);
-            Alert.alert("Success", "Food event updated successfully!");
+            setSaveMessage("Food event updated successfully!");
+
+            setTimeout(() => {
+                router.back();
+            }, 800);
         } catch (err: any) {
             console.error("Error updating event:", err);
-            Alert.alert(
-                "Error",
-                err.message ?? "Something went wrong while updating the event."
+            setSaveError(
+                err.message ?? "Something went wrong while updaing the event."
             );
         } finally {
             setSubmitting(false);
@@ -440,6 +448,9 @@ export default function EditEventScreen() {
                         />
                     )}
 
+                    {saveMessage && <Text style={styles.successText}>{saveMessage}</Text>}
+                    {saveError && <Text style={styles.errorText}>{saveError}</Text>}
+
                     <View style={styles.buttonWrapper}>
                         <Button
                             title={submitting ? "Saving..." : "Save Changes"}
@@ -541,5 +552,11 @@ const styles = StyleSheet.create({
     webTimeInput: {
         flex: 1,
         marginBottom: 0,
+    },
+    successText: {
+        fontSize: 16,
+        color: "green",
+        textAlign: "center",
+        marginBottom: 12,
     },
 });

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback} from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 import { Event, fetchEvents } from "@/lib/api";
 
 export default function HomeScreen() {
@@ -8,24 +8,26 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const data = await fetchEvents();
-        setEvents(data.filter((e) => e.status === "active"));
-      } catch (err: any) {
-        console.error("Error fetching events:", err);
-        setError(err.message ?? "Failed to load events");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    try {
+      const data = await fetchEvents();
+      setEvents(data);
+    } catch (err: any) {
+      console.error("Error fetching events:", err);
+      setError(err.message ?? "Failed to load events");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadEvents();
+    }, [loadEvents])
+  );
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";

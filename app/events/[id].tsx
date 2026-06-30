@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Button,
@@ -10,7 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Event, fetchEventById } from "@/lib/api";
 
 // Format a building's coordinates into a maps URL that opens the
@@ -35,27 +35,32 @@ export default function EventDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const loadEvent = async () => {
-            if (!id) {
-                setError("Missing event id.");
-                setLoading(false);
-                return;
-            }
+    const loadEvent = React.useCallback(async () => {
+        if (!id) {
+            setError("Missing event id.");
+            setLoading(false);
+            return;
+        }
 
-            try {
-                const data = await fetchEventById(Number(id));
-                setEvent(data);
-            } catch (err: any) {
-                console.error("Error fetching event details: ", err);
-                setError("Could not load event details.");
-            } finally {
-                setLoading(false);
-            }
-        };
+        setLoading(true);
+        setError(null);
 
-        loadEvent();
+        try {
+            const data = await fetchEventById(Number(id));
+            setEvent(data);
+        } catch (err: any) {
+            console.error("Error fetching event details: ", err);
+            setError("Could not load event details.");
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            loadEvent();
+        }, [loadEvent])
+    );
 
     const formatDateTime = (value?: string | null) => {
         if (!value) return "";
