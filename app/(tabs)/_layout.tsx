@@ -29,6 +29,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="my-events"
+        options={{
+          title: "My Events",
+          tabBarLabel: "My Events",
+        }}
+      />
+      <Tabs.Screen
         name="create-event"
         options={{
           title: "Create Event",
