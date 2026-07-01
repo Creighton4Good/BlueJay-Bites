@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface PhotoRepository extends JpaRepository<Photo, Integer> {
     Optional<Photo> findByPhotoUrl(String photoUrl);
-    List<Photo> findByPostAndDisplayOrder(Post post, Integer displayOrder);
+    List<Photo> findByPostOrderByDisplayOrderAsc(Post post);
 }

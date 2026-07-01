@@ -51,9 +51,10 @@ public class PhotoController {
     }
 
     // Create photo
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
     public ResponseEntity<Photo> createPhoto(@RequestBody Photo photo) {
+       // TODO: Support photo uploads & conversion
         Post post = postRepository.findById(photo.getPost().getId())
             .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -64,13 +65,14 @@ public class PhotoController {
         return new ResponseEntity<>(photo, HttpStatus.CREATED);
     }
 
-    // Update photo
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    // Update photo (for changing uploads and display order changes)
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
     public ResponseEntity<Photo> updatePhoto(@PathVariable int id, @RequestBody Photo photoDetails) {
         Optional<Photo> photoData = photoRepository.findById(id);
         if (photoData.isPresent()) {
             Photo photo = photoData.get();
+            photo.setPhotoUrl((photoDetails.getPhotoUrl()));
             photo.setDisplayOrder(photoDetails.getDisplayOrder());
             return new ResponseEntity<>(photoRepository.save(photo), HttpStatus.OK);
         }
@@ -78,7 +80,7 @@ public class PhotoController {
     }
 
     // Delete photo
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Photo> deletePhoto(@PathVariable int id) {
             Optional<Photo> photo = photoRepository.findById(id);
@@ -91,13 +93,13 @@ public class PhotoController {
         }
 
     // Get all photos for a post (by display order)
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer)")
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<Photo>> getEventPhotos(@PathVariable Integer postId, @RequestParam Integer displayOrder) {
+    public ResponseEntity<List<Photo>> getEventPhotos(@PathVariable Integer postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        List<Photo> photoOrder = photoRepository.findByPostAndDisplayOrder(post, displayOrder);
+        List<Photo> photoOrder = photoRepository.findByPostOrderByDisplayOrderAsc(post);
         return new ResponseEntity<>(photoOrder, HttpStatus.OK); }
 
     }
