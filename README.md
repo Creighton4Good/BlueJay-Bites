@@ -3,7 +3,7 @@
 ### Providing food, saving valuable resources, and benefitting the environment & community.
 
 ## Overview 
-Our app helps students find free food on campus while reducing food waste and addressing food insecurity. When events have extra food, organizers can post it in the app, and students receive real-time notifications with location and timing details. It’s a simple, scalable solution that makes better use of resources already on campus while ensuring surplus food reaches those who can use it.
+Our app helps students find free food on the Creighton University campus while reducing food waste and addressing food insecurity. When events have extra food, organizers can post it in the app, and students receive real-time notifications with location and timing details. It’s a simple, scalable solution that makes better use of resources already on campus while ensuring surplus food reaches those who can use it.
 
 ---
 
@@ -101,13 +101,13 @@ npm start
 
 **4. Accessing the app**
 * Open `localhost:8081` on browser for web
-* Scan the QR code for mobile Expo Go
+* Scan the QR code to access Expo Go on mobile
 
 ---
 
 ## Contributions
 
-For detailed on contributing, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
+For details on contributing to the application, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
 
 ## License:
 This project is licensed uner the MIT license - take a look at the [license](https://github.com/Creighton4Good/BlueJay-Bites?tab=License-1-ov-file) for details
