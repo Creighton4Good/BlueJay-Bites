@@ -1,6 +1,6 @@
 ## BlueJay Bites Contribution Guidelines
 
-This document is adapted from documentation in TeamNewPipe, licensed under GPLv3. This modified version is distributed under GPLv3. See full license [here](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/docs/GPLv3.md).
+This document is adapted from TeamNewPipe Contribution [Guidelines](https://github.com/TeamNewPipe/NewPipe?tab=contributing-ov-file), licensed under the GNU General Public License (GPLv3). This modified version (initial implementation: 6-10-26) is distributed under GPLv3. See full license [here](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/docs/GPLv3.md).
 
 ## Code Contribution
 ### Guidelines
