@@ -1,16 +1,23 @@
 # BlueJay-Bites
 
+### Providing food, saving valuable resources, and benefitting the environment & community.
+
 ## Overview 
-Our app will help students find free food on campus while reducing food waste and addressing food insecurity. When events have extra food, organizers can post it in the app, and students receive real-time notifications with location and timing details. It’s a simple, scalable solution that makes better use of resources already on campus while ensuring surplus food reaches those who can use it.
+Our app helps students find free food on campus while reducing food waste and addressing food insecurity. When events have extra food, organizers can post it in the app, and students receive real-time notifications with location and timing details. It’s a simple, scalable solution that makes better use of resources already on campus while ensuring surplus food reaches those who can use it.
 
 ---
 
 ## Features:
-* Organizers can manage events, including key info (title, servings, building, images, etc)
+* Organizers can create/manage events, which includes key event info (title, food type/dietary restrictions, servings, building, images, etc)
 * Event page shows lists of events with info for the user to evaluate
 * Notifications notify user when an event becomes available
-* Map directions help user navigate to their destination
-* Admins can manage the events and roles
+* Map helps user navigate to their destination
+* Admins can manage the events and roles, and monitor the app
+
+---
+
+## For a quick demo of the app's structure:
+Take a look [here](https://jhb09808.github.io/)
 
 ---
 
@@ -93,15 +100,14 @@ npm start
 ```
 
 **4. Accessing the app**
-* Open localhost:8081 on browser for web
+* Open `localhost:8081` on browser for web
 * Scan the QR code for mobile Expo Go
 
 ---
 
-## For a quick look at the app's structure:
-Take a look [here](https://jhb09808.github.io/)
+## Contributions
 
----
+For detailed on contributing, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
 
 ## License:
-This project is licensed uner the MIT license - take a look at the license file for details
+This project is licensed uner the MIT license - take a look at the [license](https://github.com/Creighton4Good/BlueJay-Bites?tab=License-1-ov-file) for details
