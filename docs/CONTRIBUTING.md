@@ -22,7 +22,7 @@ Make changes on a separate branch with a meaningful name (such as update-user-ro
 Please test (compile and run) your code before submitting changes! Ideally, provide test feedback in the PR description. Untested code will not be merged!
 Respond if someone requests changes or otherwise raises issues about your PRs.
 Keep each PR focused on one issue or feature. Avoid large PRs that combine unrelated changes.
-Make sure your PR is up-to-date with the rest of the code. Often, a simple click on "Update branch" will do the job, but if not, you must rebase your branch on the dev branch manually and resolve the conflicts on your own. You can find help [on the NewPipe wiki](https://github.com/TeamNewPipe/NewPipe/wiki/How-to-merge-a-PR). Doing this makes the maintainers' job way easier.
+Make sure your PR is up-to-date with the rest of the code. Often, a simple click on "Update branch" will do the job, but if not, you must rebase your branch on the dev branch manually and resolve the conflicts on your own. You can find help [on the NewPipe wiki](https://github.com/TeamNewPipe/NewPipe/wiki/How-to-merge-a-PR). Doing this makes the maintainers' job way easier. View the PR template [here](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/.github/pull_request_template.md).
 
 ## Issue reporting/feature requests
 * Already reported? Browse the [existing issues](https://github.com/Creighton4Good/BlueJay-Bites/issues) to make sure your issue/feature hasn't been reported/requested.
@@ -32,6 +32,9 @@ Make sure your PR is up-to-date with the rest of the code. Often, a simple click
 * Is it in English? Issues in other languages will be ignored unless someone translates them.
 * Is it one issue? Multiple issues require multiple reports that can be linked to track their statuses.
 * The template: Fill it out, everyone wins. Your issue has a chance of getting fixed.
+
+### User Story Template
+
 1. Create Stories:
 Begin by creating user stories that clearly describe a user need and the value it provides. Stories should follow a consistent format (e.g., As a [user], I want [goal], so that [benefit]) and focus on user outcomes rather than technical implementation. Add labels help organize and sort stories. 
 2. Add Acceptance Criteria:
