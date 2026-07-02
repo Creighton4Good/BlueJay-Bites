@@ -9,7 +9,7 @@ New dependencies should be clearly relevant to the project, actively maintained,
 Write comments that are concise and helpful. Prefer comments that explain why something is done when the intent is not obvious from the code.
 Follow the existing code structure and naming conventions of the repository. Prioritize readability and consistency in method names, variable names, and file organization.
 Propose basic Java conventions: camelCase for variables/methods, PascalCase for classes, JavaDoc on public methods, max ~120 chars per line. Doesn't need to be strict, just enough that the codebase stays consistent.
-Use clear and descriptive commit messages that summarize the purpose of the change under 70 characters.
+Use clear and descriptive commit messages that summarize the purpose of the change in approximately under 70 characters.
 By contributing you agree that your contributions will be licensed under the licenses used in this project (MIT, GPLv3, etc)
 ### Before starting development
 If you want to help out with an existing bug report or feature request, leave a comment on that issue saying you want to try your hand at it.
@@ -64,6 +64,7 @@ Please refrain from contributions which are heavily dependent on AI generated so
 * ensure that the generated code follows the project structure,
 * fully understand the generated code, and
 * review the generated code completely.
+
 Using AI to find the root cause of bugs and generating small fixes might be acceptable. However, gen. AI often does not fix the underlying problem but is trying to fix the symptoms. If you are using AI to fix bugs, ensure that the root cause is tackled.
 The use of AI to generate documentation is allowed. We ask you to thoroughly check the quality of generated documentation – wrong, misleading or uninformative documentation is useless and wastes the reader's time. Ensure that reasoning is documented.
 Using generative AI to write or fill in PR or issue templates is prohibited. Those texts are often lengthy and miss critical information.
