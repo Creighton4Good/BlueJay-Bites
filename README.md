@@ -84,7 +84,7 @@ Find your IP address from terminal:
 * Windows: `ipconfig` -> look for IPv4 address
 * Linux: `hostname -I`
 
-Then implement it:
+Then implement it by writing in a .env file:
 ```
 BASE_URL=http://YOUR_IP_ADDRESS:8080
 ```
