@@ -72,7 +72,7 @@ public class NotificationController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    // Client subscribes to notifications
+    // User subscribes to notifications
     @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable Integer userId) {
@@ -88,7 +88,7 @@ public class NotificationController {
 
        Notification notification = new Notification();
 
-       notificationSseService.publish(userId, notification);
+       notificationSseService.publishNotification(userId, notification);
 
         return ResponseEntity.ok("Sent");
     }
