@@ -36,6 +36,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - **dietary_options** — Options including Vegetarian, Vegan, Gluten-Free, etc.
 - **notifications** - Includes createdAt, read status, and notification type
 - **user_preferences** - Supports the notification preference for the user ("on" or "off")
+- **post_photos** - Supports photo uploads for organizers when creating posts
 
 ## Admin Dashboard Server
 
@@ -51,7 +52,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 
 ### @ManyToOne foreign keys (not int FKs)
 
-User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, and `User createdBy` objects. Notification has `User` and `Post` objects. UserPreference has a `User` object. This:
+User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, and `User createdBy` objects. Notification has `User` and `Post` objects. UserPreference has a `User` object. Photo has a `Post` object. This:
 
 - Enforces relationships at the entity level
 - Allows navigating object references in repository queries (e.g., `findByCreatedBy_Id(Integer userId)`)
@@ -95,7 +96,11 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - Notifications are only sent to those with the "user" role
 - They are triggered when an event-organizer/admin creates a post
 - Notifications are sent using SSE emitters, streaming real-time data
-- Endpoints exist to get certain notifications, such as by read status, and to support the user enabling or disabling notifications
+- Endpoints exist to get certain notifications, such as by read status, support the user enabling or disabling notifications, and for user to subscribe to notifications
+
+### Photos
+
+Photos can be uploaded to each event with no limit, and with a display order. This order can be changed, as well as the photo itself. Photo endpoints support viewing photos and managing them.
 
 ## API Conventions
 
@@ -107,6 +112,7 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - `/api/buildings` — building lookup
 - `/api/foodtypes` — food type lookup
 - `/api/dietary-options` — dietary option lookup
+- `api/post-photos` - photo lookup
 
 ### Standard endpoints used in controllers
 
@@ -123,6 +129,12 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - Currently `SecurityConfig` permits all `/api/**` requests for development so the frontend can connect without auth
 - Will switch to Microsoft Entra SSO before production (see User entity's `entraId` and `authProvider` fields)
 
+## Authentication
+- Logging in and logging out of the application will be done using a Microsoft Entra Account through OAUTH
+  - Using the documentation provided by Microsoft [here](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configure-spring-boot-starter-java-app-with-entra), which includes dependencies and configuration information
+  - OAUTH was chosen over SAML due to being more compatible with Spring-Boot
+- Endpoints are temporarily all accessible for local development
+
 ## Repository Patterns
 
 - Use Spring Data JPA method naming conventions
@@ -137,6 +149,6 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - Continue building notification system (delivery method — in-app vs email — pending IT meeting)
   - Current approach: SSE (Single-Server Events, websockets)
 - Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
-- Add photo upload for events
+- •	Support for uploading and converting photos end-to-end
 - Add `servingsRemaining` tracking for "running low" UI
 
