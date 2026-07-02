@@ -58,8 +58,7 @@ After tasks are identified, the team estimates the effort required for each one 
 With ownership in place, work is scheduled into a sprint or development cycle based on priority and team capacity. A practical approach is to pull one task at a time from the backlog and begin a new task only after the current one has moved into review.
 Repeat - This process is iterative. Progress should be tracked continuously using GitHub to maintain visibility into task status and ensure steady movement from initial story to completed implementation. Pull requests should be linked to tasks associated with user stories. As work progresses, if new tasks or missing stories are identified, they should be created and/or existing issues can be updated to reflect the evolving state of the project. Additionally, if you realize there is replication or redundancy in stories and tasks, you can modify or close them as duplicates.
 ## Communication
-You can use the GitHub Discussions Q/A Thread to ask/answer questions
-For more time-sensitive discussion, feel free to message a maintainer on the repo by email. Contact information can be found in the [README](https://github.com/Creighton4Good/BlueJay-Bites/blob/main/README.md).
+You can use the GitHub Discussions Q/A Thread to ask/answer questions.
 
 ## AI Policy
 Please refrain from contributions which are heavily dependent on AI generated source code because they are usually lacking a fundamental understanding of the overall project structure and thus come with poor quality. However, you are allowed to use gen. AI if you
