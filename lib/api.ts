@@ -125,6 +125,7 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
+// Delete an event
 export async function closeEvent(id: number, userId: number): Promise<void> {
   const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
     method: "DELETE",
