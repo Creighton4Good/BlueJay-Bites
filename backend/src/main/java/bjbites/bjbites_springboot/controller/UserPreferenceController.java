@@ -1,11 +1,15 @@
 package bjbites.bjbites_springboot.controller;
 
+import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.entity.UserPreference;
 import bjbites.bjbites_springboot.repository.UserPreferenceRepository;
+import bjbites.bjbites_springboot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +22,8 @@ public class UserPreferenceController {
 
     @Autowired
     private UserPreferenceRepository userPreferenceRepository;
+    @Autowired
+    private UserRepository userRepository;
 
    // Get all user preferences
    @PreAuthorize("hasAuthority('admin')")
@@ -38,9 +44,11 @@ public class UserPreferenceController {
 
     // Update user preference to on
     @PatchMapping("/{id}/update/on")
-    public ResponseEntity<UserPreference> updateUserPreferenceToOn(@PathVariable int id) {
+    public ResponseEntity<UserPreference> updateUserPreferenceToOn(@AuthenticationPrincipal OAuth2User oAuthUser) {
            // TODO: Ensure spring security checks authenticated user
-           Optional<UserPreference> preferenceData = userPreferenceRepository.findById(id);
+           User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+
+           Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
 
            if (preferenceData.isPresent()) {
                UserPreference preference = preferenceData.get();
@@ -58,9 +66,11 @@ public class UserPreferenceController {
 
     // Update user preference to off
     @PatchMapping("/{id}/update/off")
-    public ResponseEntity<UserPreference> updateUserPreferenceToOff(@PathVariable int id) {
+    public ResponseEntity<UserPreference> updateUserPreferenceToOff(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
         // TODO: Ensure spring security checks authenticated user
-        Optional<UserPreference> preferenceData = userPreferenceRepository.findById(id);
+        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+
+        Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
 
         if (preferenceData.isPresent()) {
             UserPreference preference = preferenceData.get();

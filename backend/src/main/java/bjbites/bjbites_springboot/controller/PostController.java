@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import bjbites.bjbites_springboot.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -139,16 +141,17 @@ public class PostController {
     // Update a creator's post
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
+    public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
     {
-        try {
+        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+
         Optional<Post> postData = postRepository.findById(id);
 
         if (postData.isPresent()) {
             Post post = postData.get();
 
-            if (post.getCreatedBy().getId() == userId)
-            // TODO: change userId to authenticated user
+            if (post.getCreatedBy().getId().equals(currentUser.getId()))
+            // TODO: Ensure user is authenticated
             {
 
                 post.setTitle(postDetails.getTitle());
@@ -172,9 +175,7 @@ public class PostController {
             }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
     }
 
     // Delete any post (soft delete by changing status)
@@ -199,15 +200,16 @@ public class PostController {
     // Delete a creator's post (soft delete by changing status)
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deletePost(@RequestParam int userId, @PathVariable int id) {
-            try {
+    public ResponseEntity<HttpStatus> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
+        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+
         Optional<Post> postData = postRepository.findById(id);
 
             if (postData.isPresent()) {
                 Post existingPost = postData.get();
 
-                if (existingPost.getCreatedBy().getId() == userId)
-                // TODO: Change userId to authenticated user
+                if (existingPost.getCreatedBy().getId().equals(currentUser.getId()))
+                // TODO: Ensure user is authenticated
                 {
                 existingPost.setStatus("closed");
                 postRepository.save(existingPost);
@@ -217,9 +219,6 @@ public class PostController {
             }
         }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            } catch (Exception e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
     }
 
     // Recover any post (bring back soft deleted posts)
