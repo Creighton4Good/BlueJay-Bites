@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * PostController class for endpoints when managing post views, creation, updates,
+ * and deletion
+ */
 @RestController
 @RequestMapping("/api/posts")
 @CrossOrigin(origins = "*") // Configure this properly for production
@@ -35,6 +39,10 @@ public class PostController {
 
     // Get all active posts (excludes events whose availableUntil passed more than
     // the grace period ago; events with no end time always show)
+    /**
+     * Get all active posts
+     * @return a {@code ResponseEntity} containing the active posts with {@code 200 OK}
+     */
     @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(GRACE_PERIOD_MINUTES);
@@ -43,6 +51,10 @@ public class PostController {
     }
 
     // Get all closed posts
+    /**
+     * Get all closed posts
+     * @return a {@code ResponseEntity} containing the closed posts with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/closed")
     public ResponseEntity<List<Post>> getAllClosedPosts() {
@@ -52,6 +64,12 @@ public class PostController {
 
 
     // Get post by ID (active or closed)
+    /**
+     * Get post by ID (active or closed)
+     * @param id the ID of the post to retrieve
+     * @return a {@code ResponseEntity} containing the post by ID with {@code 200 OK},
+     *      or {@code 404 Not Found} if no post exists with the specified ID
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable int id) {
@@ -61,17 +79,27 @@ public class PostController {
     }
 
     // Get only posts that they created
+    /**
+     * Get only posts that the user created
+     * @param oAuthUser the authenticated user who created the post
+     * @return a {@code ResponseEntity} containing the posts created by a specific user with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/created")
-    public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
+    public ResponseEntity<List<Post>> getCreatedPosts(@AuthenticationPrincipal OAuth2User oAuthUser) {
+        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
-        List<Post> posts = postRepository.findByCreatedBy_Id(userId);
+        List<Post> posts = postRepository.findByCreatedBy_Id(currentUser.getId());
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
     }
 
     // Get all posts (active and closed)
+    /**
+     * Get all posts (active and closed)
+     * @return a {@code ResponseEntity} containing all posts with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Post>> getAllPosts() {
@@ -81,6 +109,12 @@ public class PostController {
     }
 
     // Create new post
+    /**
+     * Create new post
+     * @param post the post that is being created
+     * @return a {@code ResponseEntity} containing the created post with {@code 201 Created},
+     *      or {@code 500 Internal Server Error} if an unexpected error occurs
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
@@ -106,6 +140,14 @@ public class PostController {
     }
     
     // Update any post (for admin)
+    /**
+     * Update any post (for admin)
+     * @param id the ID of the post to update
+     * @param postDetails the updated post details
+     * @return a {@code ResponseEntity} containing the updated post with {@code 200 OK},
+     *      or {@code 404 Not Found} if no post exists with the specified ID,
+     *      or {@code 500 Internal Server Error} if an unexpected error occurs
+     */
     @PreAuthorize("hasAuthority('admin')")
     @PutMapping("/any/{id}")
     public ResponseEntity<Post> updateAnyPost(@PathVariable int id, @RequestBody Post postDetails) {
@@ -139,9 +181,19 @@ public class PostController {
     }
 
     // Update a creator's post
+    /**
+     * Update a creator's post
+     * @param id the ID of the post to update
+     * @param postDetails the updated post details
+     * @param oAuthUser the authenticated user who created the post
+     * @return a {@code ResponseEntity} containing the updated post with {@code 200 OK},
+     *      or {@code 404 Not Found} if no post exists with the specified ID,
+     *      or {@code 403 Forbidden} if the authenticated user is not the owner of the post that is
+     *      trying to be updated
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
+    public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id, @RequestBody Post postDetails)
     {
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
@@ -179,6 +231,13 @@ public class PostController {
     }
 
     // Delete any post (soft delete by changing status)
+    /**
+     * Delete any post (soft delete by changing status)
+     * @param id the ID of the post to delete
+     * @return a {@code ResponseEntity} with {@code 204 No Content} if post is successfully deleted,
+     *      or {@code 404 Not Found} if no post exists with the specified ID,
+     *      or {@code 500 Internal Server Error} if an unexpected error occurs
+     */
     @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/any/{id}")
     public ResponseEntity<HttpStatus> deleteAnyPost(@PathVariable int id) {
@@ -198,6 +257,15 @@ public class PostController {
     }
 
     // Delete a creator's post (soft delete by changing status)
+    /**
+     * Delete a creator's post (soft delete by changing status)
+     * @param id the ID of the post to delete
+     * @param oAuthUser the authenticated user who created the post
+     * @return a {@code ResponseEntity} with {@code 204 No Content} if post is successfully deleted,
+     *      or {@code 404 Not Found} if no post exists with the specified ID,
+     *      or {@code 403 Forbidden} if the authenticated user is not the owner of the post that is
+     *      trying to be deleted
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
@@ -222,6 +290,13 @@ public class PostController {
     }
 
     // Recover any post (bring back soft deleted posts)
+    /**
+     * Recover any post (bring back soft deleted posts)
+     * @param id the ID of the post to recover
+     * @return a {@code ResponseEntity} with {@code 200 OK} if post is successfully recovered,
+     *      or {@code 404 Not Found} if no post exists with the specified ID,
+     *      or {@code 500 Internal Server Error} if an unexpected error occurs
+     */
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/recover")
     public ResponseEntity<HttpStatus> recoverPost(@PathVariable int id) {
