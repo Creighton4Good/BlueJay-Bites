@@ -31,6 +31,10 @@ public class NotificationController {
     private UserRepository userRepository;
 
     // Get all notifications
+    /**
+     * Get all notifications
+     * @return a {@code ResponseEntity} containing all the notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Notification>> getAllNotifications() {
@@ -39,15 +43,25 @@ public class NotificationController {
     }
 
     // Get notification by id
+    /**
+     * Get notification by id
+     * @param id the ID of the notification to retrieve
+     * @return a {@code ResponseEntity} containing the notification by ID with {@code 200 OK},
+     *          or {@code 404 Not Found} if no notification exists with specified ID
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Notification> getNotificationById(@PathVariable int id) {
         Optional<Notification> notification = notificationRepository.findById(id);
         return notification.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get all unread notifications
+    /**
+     * Get all unread notifications
+     * @return a {@code ResponseEntity} containing the unread notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/unread")
     public ResponseEntity<List<Notification>> getAllUnread() {
@@ -56,6 +70,10 @@ public class NotificationController {
     }
 
     // Get all read notifications
+    /**
+     * Get all read notifications
+     * @return a {@code ResponseEntity} containing the read notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/read")
     public ResponseEntity<List<Notification>> getAllRead() {
@@ -64,8 +82,14 @@ public class NotificationController {
     }
 
     // Change notification status to read (for a specific user)
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<HttpStatus> readNotification(@AuthenticationPrincipal OAuth2User oAuthUser) {
+    /**
+     * Update notification status to read
+     * @param oAuthUser the authenticated user who created the notification
+     * @return {@code 200 OK} if notification status is successfully changed to read
+     *      or {@code 404 Not Found} if no notification exists with the specified ID
+     */
+    @PatchMapping("/me/read")
+    public ResponseEntity<Void> readNotification(@AuthenticationPrincipal OAuth2User oAuthUser) {
         // TODO: Ensure user is authenticated
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
@@ -75,15 +99,15 @@ public class NotificationController {
             Notification existingNotification = notification.get();
             existingNotification.setIsRead(true);
             notificationRepository.save(existingNotification);
-            return new ResponseEntity<>(HttpStatus.OK); }
+            return ResponseEntity.ok().build(); }
         else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
     }
 
     // User subscribes to notifications
-    @PreAuthorize("hasAuthority('user')")
+   @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser) {
+    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable Integer userId) {
         // TODO: Ensure user is authenticated
        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
@@ -100,7 +124,7 @@ public class NotificationController {
 
        notificationSseService.publishNotification(userId, notification);
 
-        return ResponseEntity.ok("Sent");
+        return new ResponseEntity<>("Sent", HttpStatus.OK);
     }
 
 }

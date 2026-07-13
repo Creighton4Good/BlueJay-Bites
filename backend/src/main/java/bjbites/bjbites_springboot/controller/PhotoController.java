@@ -25,6 +25,10 @@ public class PhotoController {
 
 
     // Get all photos
+    /**
+     * Get all photos
+     * @return a {@code ResponseEntity} containing all the photos with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Photo>> getAllPhotos() {
@@ -33,24 +37,42 @@ public class PhotoController {
     }
 
     // Get photo by id
+    /**
+     * Get photo by id
+     * @param id the ID of the photo to retrieve
+     * @return a {@code ResponseEntity} containing the photo by ID with {@code 200 OK},
+     *          or {@code 404 Not Found} if no photo exists with specified ID
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Photo> getPhotoById(@PathVariable int id) {
         Optional<Photo> photo = photoRepository.findById(id);
         return photo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get photo by url
+    /**
+     * Get photo by url
+     * @param photoUrl the url of the photo to retrieve
+     * @return a {@code ResponseEntity} containing the photo by url with {@code 200 OK},
+     *          or {@code 404 Not Found} if no photo exists with specified url
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/url/{photoUrl}")
     public ResponseEntity<Photo> getPhotoByUrl(@PathVariable String photoUrl) {
         Optional<Photo> photo = photoRepository.findByPhotoUrl(photoUrl);
         return photo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Create photo
+    /**
+     * Create new photo
+     * @param photo the photo to create
+     * @return a {@code ResponseEntity} containing the created photo with {@code 201 Created},
+     *          or {@code 500 Internal Server Error} if an unexpected error occurs
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
     public ResponseEntity<Photo> createPhoto(@RequestBody Photo photo) {
@@ -66,6 +88,14 @@ public class PhotoController {
     }
 
     // Update photo (for changing uploads and display order changes)
+
+    /**
+     * Update photo
+     * @param id the ID of the photo to update
+     * @param photoDetails the updated photo details
+     * @return a {@code ResponseEntity} containing the updated photos with {@code 200 OK},
+     *      or {@code 404 Not Found} if no photo exists with specified ID
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
     public ResponseEntity<Photo> updatePhoto(@PathVariable int id, @RequestBody Photo photoDetails) {
@@ -76,10 +106,16 @@ public class PhotoController {
             photo.setDisplayOrder(photoDetails.getDisplayOrder());
             return new ResponseEntity<>(photoRepository.save(photo), HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.notFound().build();
     }
 
     // Delete photo
+    /**
+     * Delete photo
+     * @param id the ID of the photo to delete
+     * @return {@code 204 No Content} if photo is successfully deleted,
+     *          or {@code 404 Not Found} if no photo exists with specified ID
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Photo> deletePhoto(@PathVariable int id) {
@@ -87,12 +123,17 @@ public class PhotoController {
             if (photo.isPresent()) {
                 Photo existingPhoto = photo.get();
                 photoRepository.delete(existingPhoto);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT); }
+                return ResponseEntity.noContent().build(); }
             else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); }
+                return ResponseEntity.notFound().build(); }
         }
 
     // Get all photos for a post (by display order)
+    /**
+     * Get all photos for a post
+     * @param postId the ID of the post for which to retrieve its photos
+     * @return a {@code ResponseEntity} containing the photos list with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<Photo>> getEventPhotos(@PathVariable Integer postId) {

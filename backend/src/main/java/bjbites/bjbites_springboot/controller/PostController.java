@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -75,7 +76,7 @@ public class PostController {
     public ResponseEntity<Post> getPostById(@PathVariable int id) {
         Optional<Post> post = postRepository.findById(id);
         return post.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                   .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                   .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get only posts that they created
@@ -135,7 +136,7 @@ public class PostController {
                 return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build();
         }
     }
     
@@ -173,10 +174,10 @@ public class PostController {
             
             return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -192,7 +193,7 @@ public class PostController {
      *      trying to be updated
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PutMapping("/{id}")
+    @PutMapping("/me")
     public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id, @RequestBody Post postDetails)
     {
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
@@ -202,7 +203,7 @@ public class PostController {
         if (postData.isPresent()) {
             Post post = postData.get();
 
-            if (post.getCreatedBy().getId().equals(currentUser.getId()))
+            if (Objects.equals(post.getCreatedBy().getId(), currentUser.getId()))
             // TODO: Ensure user is authenticated
             {
 
@@ -223,10 +224,10 @@ public class PostController {
 
                 return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.notFound().build();
 
     }
 
@@ -234,25 +235,25 @@ public class PostController {
     /**
      * Delete any post (soft delete by changing status)
      * @param id the ID of the post to delete
-     * @return a {@code ResponseEntity} with {@code 204 No Content} if post is successfully deleted,
+     * @return {@code 204 No Content} if post is successfully deleted,
      *      or {@code 404 Not Found} if no post exists with the specified ID,
      *      or {@code 500 Internal Server Error} if an unexpected error occurs
      */
     @PreAuthorize("hasAuthority('admin')")
     @DeleteMapping("/any/{id}")
-    public ResponseEntity<HttpStatus> deleteAnyPost(@PathVariable int id) {
+    public ResponseEntity<Void> deleteAnyPost(@PathVariable int id) {
         try {
             Optional<Post> post = postRepository.findById(id);
             if (post.isPresent()) {
                 Post existingPost = post.get();
                 existingPost.setStatus("closed");
                 postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                return ResponseEntity.noContent().build();
             } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -261,14 +262,14 @@ public class PostController {
      * Delete a creator's post (soft delete by changing status)
      * @param id the ID of the post to delete
      * @param oAuthUser the authenticated user who created the post
-     * @return a {@code ResponseEntity} with {@code 204 No Content} if post is successfully deleted,
+     * @return {@code 204 No Content} if post is successfully deleted,
      *      or {@code 404 Not Found} if no post exists with the specified ID,
      *      or {@code 403 Forbidden} if the authenticated user is not the owner of the post that is
      *      trying to be deleted
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
         Optional<Post> postData = postRepository.findById(id);
@@ -276,42 +277,42 @@ public class PostController {
             if (postData.isPresent()) {
                 Post existingPost = postData.get();
 
-                if (existingPost.getCreatedBy().getId().equals(currentUser.getId()))
+                if (Objects.equals(existingPost.getCreatedBy().getId(), currentUser.getId()))
                 // TODO: Ensure user is authenticated
                 {
                 existingPost.setStatus("closed");
                 postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                return ResponseEntity.noContent().build();
             } else {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.notFound().build();
     }
 
     // Recover any post (bring back soft deleted posts)
     /**
      * Recover any post (bring back soft deleted posts)
      * @param id the ID of the post to recover
-     * @return a {@code ResponseEntity} with {@code 200 OK} if post is successfully recovered,
+     * @return {@code 200 OK} if post is successfully recovered,
      *      or {@code 404 Not Found} if no post exists with the specified ID,
      *      or {@code 500 Internal Server Error} if an unexpected error occurs
      */
     @PreAuthorize("hasAuthority('admin')")
     @PatchMapping("/{id}/recover")
-    public ResponseEntity<HttpStatus> recoverPost(@PathVariable int id) {
+    public ResponseEntity<Void> recoverPost(@PathVariable int id) {
         try {
             Optional<Post> post = postRepository.findById(id);
             if (post.isPresent()) {
                 Post existingPost = post.get();
                 existingPost.setStatus("active");
                 postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.OK);
+                return ResponseEntity.ok().build();
             } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build();
         }
     }
     }
