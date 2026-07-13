@@ -125,6 +125,21 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
+// Delete an event
+export async function closeEvent(id: number, userId: number): Promise<void> {
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Close event failed", res.status, text);
+    throw new Error(
+      `Failed to close event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+}
+
 // Fetch all buildings (for create event dropdown)
 export async function fetchBuildings(): Promise<Building[]> {
   const res = await fetch(`${BUILDINGS_URL}/all`);
