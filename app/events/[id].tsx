@@ -109,6 +109,9 @@ export default function EventDetailsScreen() {
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
+    const currentUserId = 1;
+    const canEdit = event.createdBy?.id === currentUserId;
+    
     return (
         <>
             <Stack.Screen
@@ -176,17 +179,19 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
-                <View style={styles.buttonWrapper}>
-                    <Button
-                        title="Edit Event"
-                        onPress={() =>
-                            router.push({
-                                pathname: "/events/[id]/edit",
-                                params: { id: String(event.id) },
-                            })
-                        }
-                    />
-                </View>
+                {canEdit && (
+                    <View style={styles.buttonWrapper}>
+                        <Button
+                            title="Edit Event"
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/events/[id]/edit",
+                                    params: { id: String(event.id) },
+                                })
+                            }
+                        />
+                    </View>
+                )}
             </ScrollView>
         </>
     );

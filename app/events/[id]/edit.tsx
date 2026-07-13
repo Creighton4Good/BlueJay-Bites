@@ -46,6 +46,8 @@ export default function EditEventScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    const currentUserId = 1;
+
     useEffect(() => {
         const loadBuildings = async () => {
             setLoadingBuildings(true);
@@ -73,6 +75,16 @@ export default function EditEventScreen() {
 
             try {
                 const event: Event = await fetchEventById(Number(id));
+
+                if (event.createdBy?.id !== currentUserId) {
+                    Alert.alert("Not allowed", "Only the event creator can edit this event.", [
+                        {
+                            text: "OK",
+                            onPress: () => router.back(),
+                        },
+                    ]);
+                    return;
+                }
 
                 setTitle(event.title ?? "");
                 setDescription(event.description ?? "");
