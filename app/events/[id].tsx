@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    Button,
     Linking,
     Platform,
     Pressable,
@@ -9,8 +11,8 @@ import {
     Text,
     View,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { Event, fetchEventById } from "@/lib/api";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import { Event, fetchEventById, closeEvent } from "@/lib/api";
 
 // Format a building's coordinates into a maps URL that opens the
 // native maps app (Apple Maps on iOS, Google Maps on Android).
@@ -72,6 +74,62 @@ export default function EventDetailsScreen() {
         const url = getDirectionsUrl(lat, lng, event?.building?.buildingName);
         Linking.openURL(url).catch((err) =>
             console.error("Failed to open maps:", err)
+        );
+    };
+
+    const handleCloseEvent = async () => {
+        if (!event) return;
+
+        if (Platform.OS === "web") {
+            const confirmed = window.confirm(
+                "Are you sure you want to close this event? It will no longer appear in active event views."
+            );
+
+            if (!confirmed) return;
+
+            try {
+                await closeEvent(event.id, 1);
+                window.alert("Event closed successfully.");
+                router.replace("/");
+            } catch (err: any) {
+                console.error("Error closing event:", err);
+                window.alert(
+                    err.message ?? "Something went wrong while closing the event."
+                );
+            }
+
+            return;
+        }
+
+        Alert.alert(
+            "Close Event",
+            "Are you sure you want to close this event? It will no longer appear in active event views.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Close Event",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await closeEvent(event.id, 1);
+                            Alert.alert("Success", "Event closed successfully.", [
+                                {
+                                    text: "OK",
+                                    onPress: () => {
+                                        router.replace("/");
+                                    },
+                                },
+                            ]);
+                        } catch (err: any) {
+                            console.error("Error closing event:", err);
+                            Alert.alert(
+                                "Error",
+                                err.message ?? "Something went wrong while closing the event."
+                            );
+                        }
+                    },
+                },
+            ]
         );
     };
 
@@ -161,6 +219,13 @@ export default function EventDetailsScreen() {
                         )}
                     </>
                 )}
+
+                <View style={styles.buttonWrapper}>
+                    <Button
+                        title="Close Event"
+                        onPress={handleCloseEvent}
+                    />
+                </View>
             </ScrollView>
         </>
     );
@@ -221,5 +286,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "red",
         textAlign: "center",
+    },
+    buttonWrapper: {
+        marginTop: 16,
     },
 });

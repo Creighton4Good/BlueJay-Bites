@@ -22,7 +22,7 @@ export default function CreateEventScreen() {
   const [directions, setDirections] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
   const [buildings, setBuildings] = useState<Building[]>([]);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
@@ -97,7 +97,7 @@ export default function CreateEventScreen() {
     const payload: NewEvent = {
       title: title.trim(),
       description: description.trim(),    
-      building: { id: selectedBuildingId },
+      building: { id: Number(selectedBuildingId) },
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: availableFrom.toISOString(),          
@@ -119,7 +119,7 @@ export default function CreateEventScreen() {
       setDescription("");
       setDirections("");
       setRoomNumber("");
-      setSelectedBuildingId(null);
+      setSelectedBuildingId("");
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -167,18 +167,18 @@ export default function CreateEventScreen() {
           selectedValue={selectedBuildingId}
           enabled={!submitting && !loadingBuildings}
           onValueChange={(itemValue) => 
-            setSelectedBuildingId(itemValue ? Number(itemValue) : null)
-          }
+            setSelectedBuildingId(String(itemValue))}
+          style={styles.picker}
         >
           <Picker.Item
             label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
-            value={null}
+            value=""
           />
           {buildings.map((building) => (
             <Picker.Item
               key={building.id}
               label={building.buildingName}
-              value={building.id}
+              value={String(building.id)}
             />
           ))}
         </Picker>
@@ -325,5 +325,8 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     marginTop: 16
+  },
+  picker: {
+    color: "#000",
   },
 });
