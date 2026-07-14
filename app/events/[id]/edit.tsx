@@ -20,6 +20,7 @@ import {
     fetchBuildings,
     fetchEventById,
     NewEvent,
+    PROTOTYPE_CURRENT_USER_ID,
     updateEvent,
 } from "@/lib/api";
 
@@ -46,7 +47,7 @@ export default function EditEventScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const currentUserId = 1;
+    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
 
     useEffect(() => {
         const loadBuildings = async () => {
@@ -201,7 +202,7 @@ export default function EditEventScreen() {
             roomNumber: roomNumber.trim() || undefined,
             availableFrom: toLocalDateTimeString(availableFrom),
             availableUntil: toLocalDateTimeString(availableUntil),
-            createdBy: { id: 1 },
+            createdBy: { id: currentUserId },
             status: "active",
             updatedAt: now,
         };
@@ -209,7 +210,7 @@ export default function EditEventScreen() {
         setSubmitting(true);
 
         try {
-            await updateEvent(Number(id), 1, payload);
+            await updateEvent(Number(id), currentUserId, payload);
             setSaveMessage("Food event updated successfully!");
 
             setTimeout(() => {

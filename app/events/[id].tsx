@@ -11,7 +11,7 @@ import {
     View,
 } from "react-native";
 import { Stack, router, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { Event, fetchEventById } from "@/lib/api";
+import { Event, fetchEventById, PROTOTYPE_CURRENT_USER_ID } from "@/lib/api";
 
 // Format a building's coordinates into a maps URL that opens the
 // native maps app (Apple Maps on iOS, Google Maps on Android).
@@ -109,7 +109,7 @@ export default function EventDetailsScreen() {
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
-    const currentUserId = 1;
+    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
     const canEdit = event.createdBy?.id === currentUserId;
     
     return (

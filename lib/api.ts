@@ -90,6 +90,10 @@ const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 
+export const PROTOTYPE_CURRENT_USER_ID = Number(
+  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
+);
+
 // Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/active`);
