@@ -152,6 +152,9 @@ export async function updateEvent(
   userId: number,
   event: UpdateEvent
 ): Promise<Event> {
+
+  // TODO: Remove the userId query parameter once authentication is integrated.
+  // The backend should derive the current user from the authenticated session.
   const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
