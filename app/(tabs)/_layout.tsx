@@ -1,9 +1,14 @@
 import React from "react";
 import { useTheme } from "@react-navigation/native";
 import { Tabs } from "expo-router";
+import { useSession } from "@/app/contexts/session-context";
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+
+  const { isOrganizer, isAdmin } = useSession();
+  const canCreateEvent = isOrganizer || isAdmin;
+
   return (
     <Tabs
       screenOptions={{
@@ -39,7 +44,7 @@ export default function TabsLayout() {
         name="create-event"
         options={{
           title: "Create Event",
-          tabBarLabel: "Create",
+          href: canCreateEvent ? undefined : null,
         }}
       />
     </Tabs>

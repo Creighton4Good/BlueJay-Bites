@@ -14,6 +14,7 @@ import {
 import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { useSession } from "@/app/contexts/session-context";
 
 
 export default function CreateEventScreen() {
@@ -29,6 +30,9 @@ export default function CreateEventScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const { user, isOrganizer, isAdmin } = useSession();
+  const canCreateEvent = isOrganizer || isAdmin;
 
   useEffect(() => {
     const loadBuildings = async () => {
@@ -94,6 +98,16 @@ export default function CreateEventScreen() {
   };
 
   const handleSubmit = async () => {
+    if (!canCreateEvent) {
+      return ( 
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>
+            Only event organizers can create food events.
+          </Text>
+        </View>
+      );
+    }
+
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
       return;
@@ -136,7 +150,7 @@ export default function CreateEventScreen() {
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
       availableUntil: toLocalDateTimeString(availableUntil),        
-      createdBy: { id: 1 },
+      createdBy: { id: user.id },
       status: "active",
       createdAt: now,
       updatedAt: now,
@@ -471,5 +485,17 @@ const styles = StyleSheet.create({
   },
   picker: {
     color: "#000",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
+    textAlign: "center",
   },
 });

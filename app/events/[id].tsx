@@ -11,8 +11,10 @@ import {
     Text,
     View,
 } from "react-native";
+
 import { Stack, router, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { Event, closeEvent, fetchEventById, PROTOTYPE_CURRENT_USER_ID } from "@/lib/api";
+import { Event, closeEvent, fetchEventById } from "@/lib/api";
+import { useSession } from "@/app/contexts/session-context";
 
 // Format a building's coordinates into a maps URL that opens the
 // native maps app (Apple Maps on iOS, Google Maps on Android).
@@ -36,6 +38,8 @@ export default function EventDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { user, isOrganizer, isAdmin } = useSession();
+
     const loadEvent = React.useCallback(async () => {
         if (!id) {
             setError("Missing event id.");
@@ -49,9 +53,8 @@ export default function EventDetailsScreen() {
         try {
             const data = await fetchEventById(Number(id));
             setEvent(data);
-        } catch (err: any) {
-            console.error("Error fetching event details: ", err);
-            setError("Could not load event details.");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not load event details.");
         } finally {
             setLoading(false);
         }
@@ -93,7 +96,7 @@ export default function EventDetailsScreen() {
             if (!confirmed) return;
 
             try {
-                await closeEvent(event.id, PROTOYPE_CURRENT_USER_ID);
+                await closeEvent(event.id, user.id);
                 window.alert("Event closed successfully.");
                 router.replace("/");
             } catch (err: any) {
@@ -116,7 +119,7 @@ export default function EventDetailsScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            await closeEvent(event.id, PROTOTYPE_CURRENT_USER_ID);
+                            await closeEvent(event.id, user.id);
                             Alert.alert("Success", "Event closed successfully.", [
                                 {
                                     text: "OK",
@@ -166,9 +169,11 @@ export default function EventDetailsScreen() {
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
-    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
-    const canEdit = event.createdBy?.id === currentUserId;
-    
+    const isCreator = event.createdBy?.id === user.id;
+
+    const canManage =
+        isAdmin || (isOrganizer && isCreator);
+
     return (
         <>
             <Stack.Screen
@@ -236,7 +241,7 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
-                {canEdit && (
+                {canManage && (
                   <>
                     <View style={styles.buttonWrapper}>
                         <Button
@@ -322,8 +327,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "red",
         textAlign: "center",
-    },
-    buttonWrapper: {
-        marginTop: 16,
-    },
+    }
 });
