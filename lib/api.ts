@@ -77,6 +77,23 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
+export type UpdateEvent = {
+  title: string;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: { id: number };
+  directions?: string;
+  roomNumber?: string;
+  foodType?: { id: number};
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string;
+  availableUntil?: string;
+  status?: EventStatus;
+  updatedAt?: string;
+}
+
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
   (Platform.OS === "android"
@@ -133,7 +150,7 @@ export async function createEvent(event: NewEvent): Promise<Event> {
 export async function updateEvent(
   id: number,
   userId: number,
-  event: NewEvent
+  event: UpdateEvent
 ): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
     method: "PUT",

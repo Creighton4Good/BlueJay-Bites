@@ -19,7 +19,7 @@ import {
     Event,
     fetchBuildings,
     fetchEventById,
-    NewEvent,
+    UpdateEvent,
     PROTOTYPE_CURRENT_USER_ID,
     updateEvent,
 } from "@/lib/api";
@@ -194,7 +194,7 @@ export default function EditEventScreen() {
 
         const now = new Date().toISOString();
 
-        const payload: NewEvent = {
+        const payload: UpdateEvent = {
             title: title.trim(),
             description: description.trim(),
             building: { id: selectedBuildingId },
@@ -202,7 +202,6 @@ export default function EditEventScreen() {
             roomNumber: roomNumber.trim() || undefined,
             availableFrom: toLocalDateTimeString(availableFrom),
             availableUntil: toLocalDateTimeString(availableUntil),
-            createdBy: { id: currentUserId },
             status: "active",
             updatedAt: now,
         };
