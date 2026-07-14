@@ -2,10 +2,13 @@ package bjbites.bjbites_springboot.controller;
 
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import bjbites.bjbites_springboot.repository.UserRepository;
+import bjbites.bjbites_springboot.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import bjbites.bjbites_springboot.entity.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +22,10 @@ public class PostController {
     
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     // How long an event keeps showing in the feed after its availableUntil time
     // passes, so the frontend can display a countdown before it disappears.
@@ -76,132 +83,113 @@ public class PostController {
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
+
+            User creator = userRepository.findById(post.getCreatedBy().getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            post.setCreatedBy(creator);
+
             Post savedPost = postRepository.save(post);
-            // TODO: Trigger notification system here
-            return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    
-    // Update any post (for admin)
-    @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/any/{id}")
-    public ResponseEntity<Post> updateAnyPost(@PathVariable int id, @RequestBody Post postDetails) {
-        try {
-        Optional<Post> postData = postRepository.findById(id);
-        
-        if (postData.isPresent()) {
-            Post post = postData.get();
-            post.setTitle(postDetails.getTitle());
-            post.setDescription(postDetails.getDescription());
-            post.setNotes(postDetails.getNotes());
-            post.setPhotoUrl(postDetails.getPhotoUrl());
-            post.setBuilding(postDetails.getBuilding());
-            post.setDirections(postDetails.getDirections());
-            post.setRoomNumber(postDetails.getRoomNumber());
-            post.setFoodType(postDetails.getFoodType());
-            post.setServingsMin(postDetails.getServingsMin());
-            post.setServingsMax(postDetails.getServingsMax());
-            post.setAvailableFrom(postDetails.getAvailableFrom());
-            post.setAvailableUntil(postDetails.getAvailableUntil());
-            post.setUpdatedAt(LocalDateTime.now());
-            post.setStatus(postDetails.getStatus());
-            
-            return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+
+            List<User> users = userRepository.findByRoleRoleName("user");
+
+           users.forEach(user ->
+                    notificationService.createNotification(user, savedPost, "NEW_POST"));
+
+                return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
+
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Update a creator's post
+    // Update a post or creator's post
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@RequestParam int userId, @PathVariable int id, @RequestBody Post postDetails)
     {
-        try {
         Optional<Post> postData = postRepository.findById(id);
 
         if (postData.isPresent()) {
             Post post = postData.get();
 
-            if (post.getCreatedBy().getId() == userId)
-            // TODO: change userId to authenticated user
-            {
+            if (post.getCreatedBy().getRole().getRoleName().equals("event_organizer")) {
+                // TODO: change creator user to user making request
 
-                post.setTitle(postDetails.getTitle());
-                post.setDescription(postDetails.getDescription());
-                post.setNotes(postDetails.getNotes());
-                post.setPhotoUrl(postDetails.getPhotoUrl());
-                post.setBuilding(postDetails.getBuilding());
-                post.setDirections(postDetails.getDirections());
-                post.setRoomNumber(postDetails.getRoomNumber());
-                post.setFoodType(postDetails.getFoodType());
-                post.setServingsMin(postDetails.getServingsMin());
-                post.setServingsMax(postDetails.getServingsMax());
-                post.setAvailableFrom(postDetails.getAvailableFrom());
-                post.setAvailableUntil(postDetails.getAvailableUntil());
-                post.setUpdatedAt(LocalDateTime.now());
-                post.setStatus(postDetails.getStatus());
+                if (post.getCreatedBy().getId() == userId)
+                // TODO: change userId to authenticated user
+                {
 
-                return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                    post.setTitle(postDetails.getTitle());
+                    post.setDescription(postDetails.getDescription());
+                    post.setNotes(postDetails.getNotes());
+                    post.setPhotoUrl(postDetails.getPhotoUrl());
+                    post.setBuilding(postDetails.getBuilding());
+                    post.setDirections(postDetails.getDirections());
+                    post.setRoomNumber(postDetails.getRoomNumber());
+                    post.setFoodType(postDetails.getFoodType());
+                    post.setServingsMin(postDetails.getServingsMin());
+                    post.setServingsMax(postDetails.getServingsMax());
+                    post.setAvailableFrom(postDetails.getAvailableFrom());
+                    post.setAvailableUntil(postDetails.getAvailableUntil());
+                    post.setUpdatedAt(LocalDateTime.now());
+                    post.setStatus(postDetails.getStatus());
+
+                    return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+            }
+            else {
+                    post.setTitle(postDetails.getTitle());
+                    post.setDescription(postDetails.getDescription());
+                    post.setNotes(postDetails.getNotes());
+                    post.setPhotoUrl(postDetails.getPhotoUrl());
+                    post.setBuilding(postDetails.getBuilding());
+                    post.setDirections(postDetails.getDirections());
+                    post.setRoomNumber(postDetails.getRoomNumber());
+                    post.setFoodType(postDetails.getFoodType());
+                    post.setServingsMin(postDetails.getServingsMin());
+                    post.setServingsMax(postDetails.getServingsMax());
+                    post.setAvailableFrom(postDetails.getAvailableFrom());
+                    post.setAvailableUntil(postDetails.getAvailableUntil());
+                    post.setUpdatedAt(LocalDateTime.now());
+                    post.setStatus(postDetails.getStatus());
             }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
-    // Delete any post (soft delete by changing status)
-    @PreAuthorize("hasAuthority('admin')")
-    @DeleteMapping("/any/{id}")
-    public ResponseEntity<HttpStatus> deleteAnyPost(@PathVariable int id) {
-        try {
-            Optional<Post> post = postRepository.findById(id);
-            if (post.isPresent()) {
-                Post existingPost = post.get();
-                existingPost.setStatus("closed");
-                postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Delete a creator's post (soft delete by changing status)
+    // Delete a post or creator's post (soft delete by changing status)
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@RequestParam int userId, @PathVariable int id) {
-            try {
-        Optional<Post> postData = postRepository.findById(id);
+                Optional<Post> postData = postRepository.findById(id);
 
-            if (postData.isPresent()) {
-                Post existingPost = postData.get();
+                if (postData.isPresent()) {
+                    Post existingPost = postData.get();
 
-                if (existingPost.getCreatedBy().getId() == userId)
-                // TODO: Change userId to authenticated user
-                {
-                existingPost.setStatus("closed");
-                postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            } else {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
-        }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            } catch (Exception e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-    }
+                    if (existingPost.getCreatedBy().getRole().getRoleName().equals("event_organizer")) {
+                        // TODO: Change creator user to user making request
+                        if (existingPost.getCreatedBy().getId() == userId) {
+                            // TODO: Change userId to authenticated user
+                            existingPost.setStatus("closed");
+                            postRepository.save(existingPost);
+                            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                        } else {
+                            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                        }
+                    }
+
+                    else {
+                                existingPost.setStatus("closed");
+                                postRepository.save(existingPost);
+                                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                            }
+                        }
+                else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND); }
+                }
 
     // Recover any post (bring back soft deleted posts)
     @PreAuthorize("hasAuthority('admin')")
@@ -213,7 +201,7 @@ public class PostController {
                 Post existingPost = post.get();
                 existingPost.setStatus("active");
                 postRepository.save(existingPost);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }

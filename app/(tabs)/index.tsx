@@ -48,11 +48,17 @@ export default function HomeScreen() {
       <Text style={styles.sectionTitle}>Available Food Events</Text>
 
       {loading ? (
-        <Text style={styles.statusText}>Loading events...</Text>
+        <View style={styles.stateContainer}>
+          <Text style={styles.statusText}>Loading events...</Text>
+        </View>
       ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.stateContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       ) : events.length === 0 ? (
-        <Text style={styles.emptyText}>No active food events right now.</Text>
+        <View style={styles.stateContainer}>
+          <Text style={styles.emptyText}>No active food events right now.</Text>
+        </View>
       ) : (
         <FlatList
           data={events}
@@ -91,7 +97,9 @@ export default function HomeScreen() {
               )}
 
               {!!item.directions && (
-                <Text style={styles.cardDescription}>{item.directions}</Text>
+                <Text style={styles.cardMeta}>
+                  Directions: {item.directions}
+                </Text>
               )}
 
               {(item.availableFrom || item.availableUntil) && (
@@ -113,6 +121,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  stateContainer: {
+    paddingVertical: 24,
+    alignItems: "center",
+  },
   container: {
     flex: 1,
     padding: 20,
