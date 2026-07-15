@@ -34,10 +34,11 @@ public class PhotoService {
         // Save the file to the directory
         String fileName = saveImage(file);
 
-        Photo photo = new Photo(post, "api/uploads/photos/" + fileName);
+        Photo photo = new Photo(post, "/api/uploads/photos/" + fileName);
         photo.setPost(post);
         photo.setDisplayOrder(photoRepository.countByPost(post));
-        post.setPhotoUrl("api/uploads/photos/" + fileName);
+        post.setPhotoUrl("/api/uploads/photos/" + fileName);
+        postRepository.save(post);
 
         return photoRepository.save(photo);
 
@@ -51,6 +52,7 @@ public class PhotoService {
         }
 
         // TODO: Use a UUID for file storage to prevent overwriting images
+        // and can also implement path validation
         String fileName = file.getOriginalFilename();
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -62,8 +64,16 @@ public class PhotoService {
         Optional<Photo> photo = photoRepository.findById(id);
         if (photo.isPresent()) {
             Photo existingPhoto = photo.get();
-            Files.delete(Paths.get(uploadDir)
-                    .resolve(existingPhoto.getPhotoUrl()));
+
+            String filename = Paths.get(existingPhoto.getPhotoUrl())
+                    .getFileName()
+                    .toString();
+
+            Files.deleteIfExists(Paths.get(uploadDir)
+                    .resolve(filename));
+            Post post = existingPhoto.getPost();
+            post.setPhotoUrl(null);
+            postRepository.save(post);
             photoRepository.delete(existingPhoto);
         }
 

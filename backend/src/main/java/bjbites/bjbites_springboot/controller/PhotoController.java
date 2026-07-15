@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +48,8 @@ public class PhotoController {
 
     // Get photo by url
     @PreAuthorize("hasAuthority('admin')")
-    @GetMapping("/url/{photoUrl}")
-    public ResponseEntity<Photo> getPhotoByUrl(@PathVariable String photoUrl) {
+    @GetMapping("/url/")
+    public ResponseEntity<Photo> getPhotoByUrl(@RequestParam String photoUrl) {
         Optional<Photo> photo = photoRepository.findByPhotoUrl(photoUrl);
         return photo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -74,8 +75,14 @@ public class PhotoController {
            try {
                 photoService.deletePhoto(id);
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            } catch (IOException e) {
+            }
+           catch (NoSuchFileException e) {
                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+           }
+
+           catch (IOException e) {
+               return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
            }
         }
 

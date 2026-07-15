@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/uploads")
+@CrossOrigin(origins = "*")
 public class PhotoUploadController {
 
     @Value("${file.upload-dir}")
@@ -30,7 +31,7 @@ public class PhotoUploadController {
     // Upload photo
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/photos")
-    public ResponseEntity<Photo> uploadImage(@RequestParam("file") MultipartFile file, @RequestParam("postId") Integer postId) {
+    public ResponseEntity<Photo> uploadPhoto(@RequestParam("file") MultipartFile file, @RequestParam("postId") Integer postId) {
         try {
             Photo photo = photoService.uploadPhoto(file, postId);
             return ResponseEntity.status(HttpStatus.CREATED).body(photo);
