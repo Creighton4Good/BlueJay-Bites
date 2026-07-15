@@ -15,6 +15,7 @@ import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "@/app/contexts/session-context";
+import { OrganizerRouteGuard } from "@/components/organizer-route-guard";
 
 
 export default function CreateEventScreen() {
@@ -98,16 +99,6 @@ export default function CreateEventScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!canCreateEvent) {
-      return ( 
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>
-            Only event organizers can create food events.
-          </Text>
-        </View>
-      );
-    }
-
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
       return;
@@ -212,73 +203,74 @@ export default function CreateEventScreen() {
   };
 
   return (
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : undefined}
-  >
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.bigText}>Create Food Event</Text>
-      <Text style={styles.subText}>
-        Prototype mode: posting as test organizer
-      </Text>
+    <OrganizerRouteGuard>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.bigText}>Create Food Event</Text>
+        <Text style={styles.subText}>
+          Prototype mode: posting as test organizer
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Title *"
-        placeholderTextColor="#999"
-        value={title}
-        onChangeText={setTitle}
-        editable={!submitting}
-      />
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="Description *"
-        placeholderTextColor="#999"
-        value={description}
-        onChangeText={setDescription}
-        editable={!submitting}
-        multiline
-      />
-      <Text style={styles.label}>Building *</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={selectedBuildingId}
-          enabled={!submitting && !loadingBuildings}
-          onValueChange={(itemValue) => 
-            setSelectedBuildingId(String(itemValue))}
-          style={styles.picker}
-        >
-          <Picker.Item
-            label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
-            value=""
-          />
-          {buildings.map((building) => (
+        <TextInput
+          style={styles.input}
+          placeholder="Title *"
+          placeholderTextColor="#999"
+          value={title}
+          onChangeText={setTitle}
+          editable={!submitting}
+        />
+        <TextInput
+          style={[styles.input, styles.multiline]}
+          placeholder="Description *"
+          placeholderTextColor="#999"
+          value={description}
+          onChangeText={setDescription}
+          editable={!submitting}
+          multiline
+        />
+        <Text style={styles.label}>Building *</Text>
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={selectedBuildingId}
+            enabled={!submitting && !loadingBuildings}
+            onValueChange={(itemValue) => 
+              setSelectedBuildingId(String(itemValue))}
+            style={styles.picker}
+          >
             <Picker.Item
-              key={building.id}
-              label={building.buildingName}
-              value={String(building.id)}
+              label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
+              value=""
             />
-          ))}
-        </Picker>
-      </View>
+            {buildings.map((building) => (
+              <Picker.Item
+                key={building.id}
+                label={building.buildingName}
+                value={String(building.id)}
+              />
+            ))}
+          </Picker>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Room number (optional)"
-        placeholderTextColor="#999"
-        value={roomNumber}
-        onChangeText={setRoomNumber}
-        editable={!submitting}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Room number (optional)"
+            placeholderTextColor="#999"
+            value={roomNumber}
+            onChangeText={setRoomNumber}
+            editable={!submitting}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Directions (optional)"
-        placeholderTextColor="#999"
-        value={directions}
-        onChangeText={setDirections}
-        editable={!submitting}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Directions (optional)"
+            placeholderTextColor="#999"
+            value={directions}
+            onChangeText={setDirections}
+            editable={!submitting}
+          />
     
       {Platform.OS === "web" ? (
         <>
@@ -394,15 +386,16 @@ export default function CreateEventScreen() {
         />
       )}
 
-      <View style={styles.buttonWrapper}>
-        <Button
-          title={submitting ? "Posting..." : "Post Food Event"}
-          onPress={handleSubmit}
-          disabled={submitting || loadingBuildings}
-        />
-      </View>
-    </ScrollView>
-  </KeyboardAvoidingView>
+          <View style={styles.buttonWrapper}>
+            <Button
+              title={submitting ? "Posting..." : "Post Food Event"}
+              onPress={handleSubmit}
+              disabled={submitting || loadingBuildings}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </OrganizerRouteGuard>
   );
 }
 
