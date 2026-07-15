@@ -4,12 +4,14 @@ import bjbites.bjbites_springboot.entity.Photo;
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PhotoRepository;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import bjbites.bjbites_springboot.service.PhotoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,8 @@ public class PhotoController {
     private PhotoRepository photoRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private PhotoService photoService;
 
 
     // Get all photos
@@ -50,21 +54,6 @@ public class PhotoController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // Create photo
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PostMapping("/create")
-    public ResponseEntity<Photo> createPhoto(@RequestBody Photo photo) {
-       // TODO: Support photo uploads & conversion
-        Post post = postRepository.findById(photo.getPost().getId())
-            .orElseThrow(() -> new RuntimeException("Post not found"));
-
-        photo.setPost(post);
-
-        photoRepository.save(photo);
-
-        return new ResponseEntity<>(photo, HttpStatus.CREATED);
-    }
-
     // Update photo (for changing uploads and display order changes)
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PutMapping("/{id}")
@@ -72,7 +61,6 @@ public class PhotoController {
         Optional<Photo> photoData = photoRepository.findById(id);
         if (photoData.isPresent()) {
             Photo photo = photoData.get();
-            photo.setPhotoUrl((photoDetails.getPhotoUrl()));
             photo.setDisplayOrder(photoDetails.getDisplayOrder());
             return new ResponseEntity<>(photoRepository.save(photo), HttpStatus.OK);
         }
@@ -82,14 +70,13 @@ public class PhotoController {
     // Delete photo
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Photo> deletePhoto(@PathVariable int id) {
-            Optional<Photo> photo = photoRepository.findById(id);
-            if (photo.isPresent()) {
-                Photo existingPhoto = photo.get();
-                photoRepository.delete(existingPhoto);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT); }
-            else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); }
+    public ResponseEntity<Void> deletePhoto(@PathVariable int id) {
+           try {
+                photoService.deletePhoto(id);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } catch (IOException e) {
+               return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+           }
         }
 
     // Get all photos for a post (by display order)
