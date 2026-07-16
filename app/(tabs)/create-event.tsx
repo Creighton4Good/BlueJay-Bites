@@ -468,6 +468,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 6,
     color: "#555",
+  },
   picker: {
     color: "#000",
   },
