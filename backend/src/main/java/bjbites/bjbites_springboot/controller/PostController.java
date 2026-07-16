@@ -33,6 +33,8 @@ public class PostController {
     private UserRepository userRepository;
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private bjbites.bjbites_springboot.service.UserProvisioningService userProvisioningService;
 
     // How long an event keeps showing in the feed after its availableUntil time
     // passes, so the frontend can display a countdown before it disappears.
@@ -88,7 +90,7 @@ public class PostController {
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/created")
     public ResponseEntity<List<Post>> getCreatedPosts(@AuthenticationPrincipal OAuth2User oAuthUser) {
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         List<Post> posts = postRepository.findByCreatedBy_Id(currentUser.getId());
 
@@ -196,7 +198,7 @@ public class PostController {
     @PutMapping("/me")
     public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id, @RequestBody Post postDetails)
     {
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<Post> postData = postRepository.findById(id);
 
@@ -270,7 +272,7 @@ public class PostController {
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/me")
     public ResponseEntity<Void> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<Post> postData = postRepository.findById(id);
 
