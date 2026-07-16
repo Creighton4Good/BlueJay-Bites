@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Event, fetchMyEvents } from "@/lib/api";
 
 // TODO: Replace with the signed-in user's id once SSO/auth is wired up.
@@ -12,7 +12,7 @@ export default function MyEventsScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadMyEvents = async () => {
+  const loadMyEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -24,11 +24,15 @@ export default function MyEventsScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadMyEvents();
   }, []);
+
+  // Reload whenever the tab regains focus so newly created, edited, or closed
+  // events show without needing a remount.
+  useFocusEffect(
+    useCallback(() => {
+      loadMyEvents();
+    }, [loadMyEvents])
+  );
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
