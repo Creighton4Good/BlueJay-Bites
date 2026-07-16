@@ -122,6 +122,17 @@ export async function fetchEvents(): Promise<Event[]> {
   return res.json();
 }
 
+// Fetch events created by a specific user (their "My Events")
+export async function fetchMyEvents(userId: number): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/created?userId=${userId}`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch my events", res.status, text);
+    throw new Error(text || "Failed to fetch my events");
+  }
+  return res.json();
+}
+
 // Fetch a single event by ID
 export async function fetchEventById(id: number): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/${id}`);
