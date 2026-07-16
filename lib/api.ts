@@ -77,6 +77,23 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
+export type UpdateEvent = {
+  title: string;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: { id: number };
+  directions?: string;
+  roomNumber?: string;
+  foodType?: { id: number};
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string;
+  availableUntil?: string;
+  status?: EventStatus;
+  updatedAt?: string;
+}
+
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
   (Platform.OS === "android"
@@ -89,6 +106,10 @@ const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
+
+export const PROTOTYPE_CURRENT_USER_ID = Number(
+  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
+);
 
 // Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
@@ -125,8 +146,37 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
-// Delete an event
-export async function closeEvent(id: number, userId: number): Promise<void> {
+// Update an existing event
+export async function updateEvent(
+  id: number,
+  userId: number,
+  event: UpdateEvent
+): Promise<Event> {
+
+  // TODO: Remove the userId query parameter once authentication is integrated.
+  // The backend should derive the current user from the authenticated session.
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update event failed", res.status, text);
+    throw new Error(
+      `Failed to update event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Close an event
+export async function closeEvent(
+  id: number,
+  userId: number
+): Promise<void> {
   const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
     method: "DELETE",
   });
