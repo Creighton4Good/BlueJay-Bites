@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback} from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 import { Event, fetchEvents } from "@/lib/api";
 
 export default function HomeScreen() {
@@ -8,7 +8,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -17,15 +17,17 @@ export default function HomeScreen() {
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching events:", err);
-      setError("Could not load active food events.");
+      setError(err.message ?? "Failed to load events");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadEvents();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadEvents();
+    }, [loadEvents])
+  );
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
@@ -80,7 +82,7 @@ export default function HomeScreen() {
               {!!item.building && (
                 <Text style={styles.cardLocation}>
                   {item.building.buildingName}
-                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                  {item.roomNumber ? `, ${item.roomNumber}` : ""}
                 </Text>
               )}
 

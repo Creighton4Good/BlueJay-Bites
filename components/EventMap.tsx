@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import MapView, { Callout, Marker } from "react-native-maps";
 import { Event, fetchEvents } from "@/lib/api";
-import { router } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 
 const CREIGHTON_REGION = {
   latitude: 41.2627,
@@ -55,19 +55,24 @@ export default function EventMap() {
   const [groups, setGroups] = useState<BuildingGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
+  const loadEvents = useCallback(async () => {
+    setError(null);
+
+    try {
         const data = await fetchEvents();
         setGroups(groupEventsByBuilding(data));
       } catch (err: any) {
         console.error("Error fetching events for map:", err);
         setError(err.message ?? "Failed to load events");
       }
-    };
-    load();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadEvents();
+    }, [loadEvents])
+  );
+    
   const handleGroupPress = (group: BuildingGroup) => {
     if (group.events.length === 1) {
       // Only one event here, go straight to its details
