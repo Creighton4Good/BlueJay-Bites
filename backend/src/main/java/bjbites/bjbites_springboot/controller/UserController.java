@@ -25,6 +25,25 @@ public class UserController {
     private UserRepository userRepository;
     @Autowired
     private RoleRepository roleRepository;
+    @Autowired
+    private bjbites.bjbites_springboot.service.UserProvisioningService userProvisioningService;
+
+    /**
+     * Get the currently authenticated user. The frontend calls this after the
+     * Entra login flow to confirm the session and retrieve the user's profile
+     * and role. Provisions the user on first sign-in.
+     *
+     * @param oAuthUser the authenticated Entra principal
+     * @return the current user with {@code 200 OK}, or {@code 401} if unauthenticated
+     */
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal OAuth2User oAuthUser) {
+        if (oAuthUser == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
+        return new ResponseEntity<>(currentUser, HttpStatus.OK);
+    }
 
     // Get all users (admin only)
     /**
