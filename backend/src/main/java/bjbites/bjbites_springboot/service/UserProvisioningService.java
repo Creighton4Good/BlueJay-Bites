@@ -5,6 +5,7 @@ import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.repository.RoleRepository;
 import bjbites.bjbites_springboot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,11 @@ public class UserProvisioningService {
 
     // Default role assigned to a newly provisioned user on first sign-in.
     private static final String DEFAULT_ROLE = "user";
+    private static final String ADMIN_ROLE = "admin";
+
+    // Comma-separated emails configured to be provisioned as admin on first login.
+    @Value("${app.admin-emails:}")
+    private String adminEmails;
 
     @Autowired
     private UserRepository userRepository;
@@ -49,9 +55,10 @@ public class UserProvisioningService {
     }
 
     private User createUser(OAuth2User oAuthUser, String email) {
-        Role defaultRole = roleRepository.findByRoleName(DEFAULT_ROLE)
+        String roleName = isAdminEmail(email) ? ADMIN_ROLE : DEFAULT_ROLE;
+        Role role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Default role '" + DEFAULT_ROLE + "' is not present in the database."));
+                        "Role '" + roleName + "' is not present in the database."));
 
         String displayName = oAuthUser.getAttribute("name");
         if (displayName == null) {
@@ -59,8 +66,25 @@ public class UserProvisioningService {
         }
 
         String entraId = oAuthUser.getAttribute("oid");
-        User newUser = new User(email, displayName, defaultRole, entraId);
+        User newUser = new User(email, displayName, role, entraId);
 
         return userRepository.save(newUser);
+    }
+
+    /**
+     * Returns true if the given email is in the configured admin allowlist.
+     * This solves the bootstrap problem of creating the first admin, who can
+     * then assign roles to other users.
+     */
+    private boolean isAdminEmail(String email) {
+        if (adminEmails == null || adminEmails.isBlank()) {
+            return false;
+        }
+        for (String allowed : adminEmails.split(",")) {
+            if (allowed.trim().equalsIgnoreCase(email)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
