@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, Image } from "react-native";
 import { router } from "expo-router";
 import { Event, fetchEvents } from "@/lib/api";
 
@@ -75,6 +75,15 @@ export default function HomeScreen() {
                 })
               }
             >
+
+              {item.photoUrl ? (
+                  <Image
+                      source={{ uri: item.photoUrl }}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                  />
+              ) : null}
+
               <Text style={styles.cardTitle}>{item.title}</Text>
 
               {!!item.building && (
@@ -187,6 +196,12 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     marginTop: 4,
+  },
+  cardImage: {
+    width: "100%",
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   cardMeta: {
     marginTop: 4,

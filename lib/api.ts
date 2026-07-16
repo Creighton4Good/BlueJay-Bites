@@ -20,6 +20,14 @@ export type DietaryOption = {
   optionName: string;
 };
 
+export type Photo = {
+  id: number;
+  event: Event;
+  photoUrl: string;
+  displayOrder: number;
+  createdAt?: string;
+};
+
 export type Role = {
   id: number;
   roleName: string;
