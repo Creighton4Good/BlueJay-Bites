@@ -11,7 +11,14 @@ import {
   View,
   KeyboardAvoidingView,
 } from "react-native";
-import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
+import {
+  createEvent,
+  NewEvent,
+  Building,
+  fetchBuildings,
+  FoodType,
+  fetchFoodTypes,
+} from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 
@@ -24,6 +31,9 @@ export default function CreateEventScreen() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+  const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<string>("");
+  const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -45,6 +55,23 @@ export default function CreateEventScreen() {
     };
 
     loadBuildings();
+  }, []);
+
+  useEffect(() => {
+    const loadFoodTypes = async () => {
+      setLoadingFoodTypes(true);
+      try {
+        const data = await fetchFoodTypes();
+        setFoodTypes(data);
+      } catch (err) {
+        console.error("Error fetching food types:", err);
+        Alert.alert("Error", "Could not load food type options.");
+      } finally {
+        setLoadingFoodTypes(false);
+      }
+    };
+
+    loadFoodTypes();
   }, []);
 
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -132,6 +159,7 @@ export default function CreateEventScreen() {
       title: title.trim(),
       description: description.trim(),    
       building: { id: Number(selectedBuildingId) },
+      foodType: selectedFoodTypeId ? {id: Number(selectedFoodTypeId)} : undefined,
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
@@ -154,6 +182,7 @@ export default function CreateEventScreen() {
       setDirections("");
       setRoomNumber("");
       setSelectedBuildingId("");
+      setSelectedFoodTypeId("");
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -244,6 +273,29 @@ export default function CreateEventScreen() {
               label={building.buildingName}
               value={String(building.id)}
             />
+          ))}
+        </Picker>
+      </View>
+
+      <Text style={styles.label}>Food Type (optional)</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+            selectedValue={selectedFoodTypeId}
+            enabled={!submitting && !loadingFoodTypes}
+            onValueChange={(itemValue) =>
+                setSelectedFoodTypeId(String(itemValue))}
+            style={styles.picker}
+        >
+          <Picker.Item
+              label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+              value=""
+          />
+          {foodTypes.map((foodType) => (
+              <Picker.Item
+                  key={foodType.id}
+                  label={foodType.typeName}
+                  value={String(foodType.id)}
+              />
           ))}
         </Picker>
       </View>
