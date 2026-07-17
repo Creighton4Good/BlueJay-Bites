@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -65,16 +66,30 @@ public class PhotoService {
         if (photo.isPresent()) {
             Photo existingPhoto = photo.get();
 
-            String filename = Paths.get(existingPhoto.getPhotoUrl())
+            String fileName = Paths.get(existingPhoto.getPhotoUrl())
                     .getFileName()
                     .toString();
 
             Files.deleteIfExists(Paths.get(uploadDir)
-                    .resolve(filename));
+                    .resolve(fileName));
             Post post = existingPhoto.getPost();
-            post.setPhotoUrl(null);
-            postRepository.save(post);
             photoRepository.delete(existingPhoto);
+
+            if (Objects.equals(post.getPhotoUrl(), "/api/uploads/photos/" + fileName)) {
+
+                Optional<Photo> replacement = photoRepository
+                        .findFirstByPostOrderByDisplayOrderAsc(post);
+
+                if (replacement.isPresent()) {
+                    Photo replacementPhoto = replacement.get();
+                    post.setPhotoUrl(replacementPhoto.getPhotoUrl());
+                }
+
+                else {
+                    post.setPhotoUrl(null);
+                }
+            }
+            postRepository.save(post);
         }
 
     }
