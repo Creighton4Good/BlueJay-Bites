@@ -7,7 +7,7 @@ export default function TabsLayout() {
   const { colors } = useTheme();
 
   const { isOrganizer, isAdmin } = useSession();
-  const canCreateEvent = isOrganizer || isAdmin;
+  const canManageEvents = isOrganizer || isAdmin;
 
   return (
     <Tabs
@@ -38,13 +38,14 @@ export default function TabsLayout() {
         options={{
           title: "My Events",
           tabBarLabel: "My Events",
+          href: canManageEvents ? undefined : null,
         }}
       />
       <Tabs.Screen
         name="create-event"
         options={{
           title: "Create Event",
-          href: canCreateEvent ? undefined : null,
+          href: canManageEvents ? undefined : null,
         }}
       />
     </Tabs>
