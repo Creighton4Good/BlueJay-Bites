@@ -96,6 +96,12 @@ export default function HomeScreen() {
                 </Text>
               )}
 
+              {!!item.dietaryOptions?.length && (
+                  <Text style={styles.cardMeta}>
+                    Dietary options: {item.dietaryOptions.map((d) => d.optionName).join(", ")}
+                  </Text>
+              )}
+
               {!!item.directions && (
                 <Text style={styles.cardMeta}>
                   Directions: {item.directions}

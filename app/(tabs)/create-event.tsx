@@ -12,12 +12,12 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import {
-  createEvent,
-  NewEvent,
-  Building,
-  fetchBuildings,
-  FoodType,
-  fetchFoodTypes,
+    createEvent,
+    NewEvent,
+    Building,
+    fetchBuildings,
+    FoodType,
+    fetchFoodTypes, DietaryOption, fetchDietaryOptions,
 } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
@@ -34,6 +34,9 @@ export default function CreateEventScreen() {
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
   const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<string>("");
   const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
+  const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
+  const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
+  const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -74,7 +77,32 @@ export default function CreateEventScreen() {
     loadFoodTypes();
   }, []);
 
-  const pad = (n: number) => String(n).padStart(2, "0");
+    useEffect(() => {
+        const loadDietaryOptions = async () => {
+            setLoadingDietaryOptions(true);
+            try {
+                const data = await fetchDietaryOptions();
+                setDietaryOptionsList(data);
+
+
+            } catch (err) {
+                console.error("Error fetching dietary options:", err);
+                Alert.alert("Error", "Could not load dietary options.");
+            } finally {
+                setLoadingDietaryOptions(false);
+            }
+        };
+    loadDietaryOptions();
+}, []);
+
+
+    const toggleDietaryOption = (id: string) => {
+        setSelectedDietaryOptionIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
+
+    const pad = (n: number) => String(n).padStart(2, "0");
 
   const formatDateForWebInput = (date: Date | null) => {
     if (!date || Number.isNaN(date.getTime())) return "";
@@ -160,6 +188,8 @@ export default function CreateEventScreen() {
       description: description.trim(),    
       building: { id: Number(selectedBuildingId) },
       foodType: selectedFoodTypeId ? {id: Number(selectedFoodTypeId)} : undefined,
+      dietaryOptions: selectedDietaryOptionIds.length > 0  ? selectedDietaryOptionIds.map((id) => ({ id: Number(id) }))
+            : undefined,
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
@@ -183,6 +213,7 @@ export default function CreateEventScreen() {
       setRoomNumber("");
       setSelectedBuildingId("");
       setSelectedFoodTypeId("");
+      setSelectedDietaryOptionIds([]);
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -300,7 +331,34 @@ export default function CreateEventScreen() {
         </Picker>
       </View>
 
-      <TextInput
+
+        <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            {dietaryOptionsList.map((option) => {
+                const idStr = String(option.id);
+                const selected = selectedDietaryOptionIds.includes(idStr);
+                return (
+                    <Pressable
+                        key={option.id}
+                        onPress={() => toggleDietaryOption(idStr)}
+                        disabled={submitting || loadingDietaryOptions}
+                        style={{
+                            paddingVertical: 6,
+                            paddingHorizontal: 12,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: "#005CA9",
+                            backgroundColor: selected ? "#005CA9" : "#fff",
+                        }}
+                    >
+                        <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
+                    </Pressable>
+                );
+            })}
+        </View>
+
+
+        <TextInput
         style={styles.input}
         placeholder="Room number (optional)"
         placeholderTextColor="#999"

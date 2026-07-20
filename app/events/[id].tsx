@@ -220,6 +220,13 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
+                {!!event.dietaryOptions && (
+                    <>
+                        <Text style={styles.sectionTitle}>Food Type</Text>
+                        <Text style={styles.bodyText}>{event.dietaryOptions.map((d) => d.optionName).join(", ")}</Text>
+                    </>
+                )}
+
                 {(event.availableFrom || event.availableUntil) && (
                     <>
                         <Text style={styles.sectionTitle}>Availability</Text>
