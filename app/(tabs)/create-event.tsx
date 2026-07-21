@@ -32,8 +32,7 @@ export default function CreateEventScreen() {
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { user, isOrganizer, isAdmin } = useSession();
-  const canCreateEvent = isOrganizer || isAdmin;
+  const { user } = useSession();
 
   useEffect(() => {
     const loadBuildings = async () => {
