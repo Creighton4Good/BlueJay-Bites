@@ -118,6 +118,20 @@ export default function HomeScreen() {
                     : ""}
                 </Text>
               )}
+
+              {!!item.servingsMin && (
+                  <Text style={styles.cardMeta}>
+                    Minimum # of servings: {item.servingsMin}
+                  </Text>
+              )}
+
+              {!!item.servingsMax && (
+                  <Text style={styles.cardMeta}>
+                    Maximum # of servings: {item.servingsMax}
+                  </Text>
+              )}
+
+
             </Pressable>
           )}
         />

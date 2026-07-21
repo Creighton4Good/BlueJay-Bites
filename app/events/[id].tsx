@@ -222,8 +222,22 @@ export default function EventDetailsScreen() {
 
                 {!!event.dietaryOptions && (
                     <>
-                        <Text style={styles.sectionTitle}>Food Type</Text>
+                        <Text style={styles.sectionTitle}>Dietary Option</Text>
                         <Text style={styles.bodyText}>{event.dietaryOptions.map((d) => d.optionName).join(", ")}</Text>
+                    </>
+                )}
+
+                {!!event.servingsMin && (
+                    <>
+                        <Text style={styles.sectionTitle}>Minimum # of servings</Text>
+                        <Text style={styles.bodyText}>{event.servingsMin}</Text>
+                    </>
+                )}
+
+                {!!event.servingsMax && (
+                    <>
+                        <Text style={styles.sectionTitle}>Maximum # of servings</Text>
+                        <Text style={styles.bodyText}>{event.servingsMax}</Text>
                     </>
                 )}
 

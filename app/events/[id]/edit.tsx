@@ -38,6 +38,9 @@ export default function EditEventScreen() {
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
 
+    const [servingsMin, setServingsMin] = useState<number | null>(null);
+    const [servingsMax, setServingsMax] = useState<number | null>(null);
+
     const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
     const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
     const [showFromPicker, setShowFromPicker] = useState(false);
@@ -92,6 +95,8 @@ export default function EditEventScreen() {
                 setDirections(event.directions ?? "");
                 setRoomNumber(event.roomNumber ?? "");
                 setSelectedBuildingId(event.building?.id ?? null);
+                setServingsMin(event.servingsMin ?? null);
+                setServingsMax(event.servingsMax ?? null);
                 setAvailableFrom(event.availableFrom ? new Date(event.availableFrom) : null);
                 setAvailableUntil(event.availableUntil ? new Date(event.availableUntil) : null);
             } catch (err) {
@@ -176,6 +181,17 @@ export default function EditEventScreen() {
             return;
         }
 
+        const min = servingsMin ?? 0;
+        const max = servingsMax ?? 0;
+
+        if (max < min && servingsMax != null) {
+            Alert.alert(
+                "Invalid serving estimate",
+                "Minimum servings must be less or equal to maximum servings."
+            );
+            return;
+        }
+
         if (!availableFrom || !availableUntil) {
             Alert.alert(
                 "Missing availability",
@@ -200,6 +216,8 @@ export default function EditEventScreen() {
             building: { id: selectedBuildingId },
             directions: directions.trim() || undefined,
             roomNumber: roomNumber.trim() || undefined,
+            servingsMin: servingsMin || undefined,
+            servingsMax: servingsMax || undefined,
             availableFrom: toLocalDateTimeString(availableFrom),
             availableUntil: toLocalDateTimeString(availableUntil),
             status: "active",
@@ -342,6 +360,42 @@ export default function EditEventScreen() {
                         value={directions}
                         onChangeText={setDirections}
                         editable={!submitting}
+                    />
+
+                    <Text style={styles.label}>Minimum servings (optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Servings (minimum)"
+                        placeholderTextColor="#999"
+                        value={servingsMin === null ? "" : servingsMin.toString()}
+                        onChangeText={(text) => {
+                            if (text === "") {
+                                setServingsMin(null);
+                            } else {
+                                const n = Number(text);
+                                if (!Number.isNaN(n)) setServingsMin(n);
+                            }
+                        }}
+                        editable={!submitting}
+                        keyboardType="numeric"
+                    />
+
+                    <Text style={styles.label}>Maximum servings (optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Servings (maximum)"
+                        placeholderTextColor="#999"
+                        value={servingsMax === null ? "" : servingsMax.toString()}
+                        onChangeText={(text) => {
+                            if (text === "") {
+                                setServingsMax(null);
+                            } else {
+                                const n = Number(text);
+                                if (!Number.isNaN(n)) setServingsMax(n);
+                            }
+                        }}
+                        editable={!submitting}
+                        keyboardType="numeric"
                     />
 
                     {Platform.OS === "web" ? (

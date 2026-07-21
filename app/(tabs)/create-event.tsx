@@ -21,6 +21,8 @@ import {
 } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import {TypeGuard} from "@sinclair/typebox";
+import TInteger = TypeGuard.TInteger;
 
 
 export default function CreateEventScreen() {
@@ -37,6 +39,8 @@ export default function CreateEventScreen() {
   const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
   const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
   const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
+  const [servingsMin, setServingsMin] = useState<number | null>(null);
+  const [servingsMax, setServingsMax] = useState<number | null>(null);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -164,6 +168,17 @@ export default function CreateEventScreen() {
       return;
     }
 
+    const min = servingsMin ?? 0;
+    const max = servingsMax ?? 0;
+
+    if (max < min && servingsMax!= null) {
+      Alert.alert(
+          "Invalid serving estimate",
+          "Minimum servings must be less or equal to maximum servings."
+      );
+      return;
+    }
+
     if (!availableFrom || !availableUntil) {
       Alert.alert(
         "Missing availability",
@@ -192,8 +207,10 @@ export default function CreateEventScreen() {
             : undefined,
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
+      servingsMin: servingsMin || undefined,
+      servingsMax: servingsMax || undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
-      availableUntil: toLocalDateTimeString(availableUntil),        
+      availableUntil: toLocalDateTimeString(availableUntil),
       createdBy: { id: 1 },
       status: "active",
       createdAt: now,
@@ -214,6 +231,8 @@ export default function CreateEventScreen() {
       setSelectedBuildingId("");
       setSelectedFoodTypeId("");
       setSelectedDietaryOptionIds([]);
+      setServingsMin(null);
+      setServingsMax(null);
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -357,6 +376,40 @@ export default function CreateEventScreen() {
             })}
         </View>
 
+      <Text style={styles.label}>Minimum servings (optional)</Text>
+      <TextInput
+          style={styles.input}
+          placeholderTextColor="#999"
+          value={servingsMin === null ? "" : servingsMin.toString()}
+          onChangeText={(text) => {
+            if (text === "") {
+              setServingsMin(null);
+            } else {
+              const n = Number(text);
+              if (!Number.isNaN(n)) setServingsMin(n);
+            }
+          }}
+          editable={!submitting}
+          keyboardType="numeric"
+      />
+
+
+      <Text style={styles.label}>Maximum servings (optional)</Text>
+      <TextInput
+          style={styles.input}
+          placeholderTextColor="#999"
+          value={servingsMax === null ? "" : servingsMax.toString()}
+          onChangeText={(text) => {
+            if (text === "") {
+              setServingsMax(null);
+            } else {
+              const n = Number(text);
+              if (!Number.isNaN(n)) setServingsMax(n);
+            }
+          }}
+          editable={!submitting}
+          keyboardType="numeric"
+      />
 
         <TextInput
         style={styles.input}
