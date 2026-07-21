@@ -88,6 +88,7 @@ export type UpdateEvent = {
   directions?: string;
   roomNumber?: string;
   foodType?: { id: number};
+  dietaryOptions?: { id : number}[];
   servingsMin?: number;
   servingsMax?: number;
   availableFrom?: string;

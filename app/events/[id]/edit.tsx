@@ -21,7 +21,7 @@ import {
     fetchEventById,
     UpdateEvent,
     PROTOTYPE_CURRENT_USER_ID,
-    updateEvent,
+    updateEvent, FoodType, DietaryOption, fetchFoodTypes, fetchDietaryOptions,
 } from "@/lib/api";
 
 export default function EditEventScreen() {
@@ -35,6 +35,12 @@ export default function EditEventScreen() {
     const [buildings, setBuildings] = useState<Building[]>([]);
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
     const [loadingBuildings, setLoadingBuildings] = useState(false);
+    const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+    const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<number | null>(null);
+    const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
+    const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
+    const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
+    const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -70,6 +76,41 @@ export default function EditEventScreen() {
     }, []);
 
     useEffect(() => {
+        const loadFoodTypes = async () => {
+            setLoadingFoodTypes(true);
+            try {
+                const data = await fetchFoodTypes();
+                setFoodTypes(data);
+            } catch (err) {
+                console.error("Error fetching food types:", err);
+                Alert.alert("Error", "Could not load food type options.");
+            } finally {
+                setLoadingFoodTypes(false);
+            }
+        };
+
+        loadFoodTypes();
+    }, []);
+
+    useEffect(() => {
+        const loadDietaryOptions = async () => {
+            setLoadingDietaryOptions(true);
+            try {
+                const data = await fetchDietaryOptions();
+                setDietaryOptionsList(data);
+
+
+            } catch (err) {
+                console.error("Error fetching dietary options:", err);
+                Alert.alert("Error", "Could not load dietary options.");
+            } finally {
+                setLoadingDietaryOptions(false);
+            }
+        };
+        loadDietaryOptions();
+    }, []);
+
+    useEffect(() => {
         const loadEvent = async () => {
             if (!id) {
                 Alert.alert("Missing event id.");
@@ -95,6 +136,8 @@ export default function EditEventScreen() {
                 setDirections(event.directions ?? "");
                 setRoomNumber(event.roomNumber ?? "");
                 setSelectedBuildingId(event.building?.id ?? null);
+                setSelectedFoodTypeId(event.foodType?.id ?? null);
+                setSelectedDietaryOptionIds(event.dietaryOptions?.map((d) => String(d.id)) ?? []);
                 setServingsMin(event.servingsMin ?? null);
                 setServingsMax(event.servingsMax ?? null);
                 setAvailableFrom(event.availableFrom ? new Date(event.availableFrom) : null);
@@ -109,6 +152,12 @@ export default function EditEventScreen() {
 
         loadEvent();
     }, [id]);
+
+    const toggleDietaryOption = (id: string) => {
+        setSelectedDietaryOptionIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
 
     const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -214,10 +263,13 @@ export default function EditEventScreen() {
             title: title.trim(),
             description: description.trim(),
             building: { id: selectedBuildingId },
+            foodType: selectedFoodTypeId ? {id: Number(selectedFoodTypeId)} : undefined,
+            dietaryOptions: selectedDietaryOptionIds.length > 0  ? selectedDietaryOptionIds.map((id) => ({ id: Number(id) }))
+                : undefined,
             directions: directions.trim() || undefined,
             roomNumber: roomNumber.trim() || undefined,
-            servingsMin: servingsMin || undefined,
-            servingsMax: servingsMax || undefined,
+            servingsMin: servingsMin ?? undefined,
+            servingsMax: servingsMax ?? undefined,
             availableFrom: toLocalDateTimeString(availableFrom),
             availableUntil: toLocalDateTimeString(availableUntil),
             status: "active",
@@ -236,7 +288,7 @@ export default function EditEventScreen() {
         } catch (err: any) {
             console.error("Error updating event:", err);
             setSaveError(
-                err.message ?? "Something went wrong while updaing the event."
+                err.message ?? "Something went wrong while updating the event."
             );
         } finally {
             setSubmitting(false);
@@ -361,6 +413,53 @@ export default function EditEventScreen() {
                         onChangeText={setDirections}
                         editable={!submitting}
                     />
+
+                    <Text style={styles.label}>Food Type (optional)</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedFoodTypeId}
+                            enabled={!submitting && !loadingFoodTypes}
+                            onValueChange={(itemValue) =>
+                                setSelectedFoodTypeId(itemValue ? Number(itemValue) : null)}
+                        >
+                            <Picker.Item
+                                label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+                                value={null}
+                            />
+                            {foodTypes.map((foodType) => (
+                                <Picker.Item
+                                    key={foodType.id}
+                                    label={foodType.typeName}
+                                    value={foodType.id}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                        {dietaryOptionsList.map((option) => {
+                            const idStr = String(option.id);
+                            const selected = selectedDietaryOptionIds.includes(idStr);
+                            return (
+                                <Pressable
+                                    key={option.id}
+                                    onPress={() => toggleDietaryOption(idStr)}
+                                    disabled={submitting || loadingDietaryOptions}
+                                    style={{
+                                        paddingVertical: 6,
+                                        paddingHorizontal: 12,
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: "#005CA9",
+                                        backgroundColor: selected ? "#005CA9" : "#fff",
+                                    }}
+                                >
+                                    <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
+                                </Pressable>
+                            );
+                        })}
+                    </View>
 
                     <Text style={styles.label}>Minimum servings (optional)</Text>
                     <TextInput

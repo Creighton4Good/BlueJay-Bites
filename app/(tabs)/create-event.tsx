@@ -327,6 +327,24 @@ export default function CreateEventScreen() {
         </Picker>
       </View>
 
+      <TextInput
+          style={styles.input}
+          placeholder="Room number (optional)"
+          placeholderTextColor="#999"
+          value={roomNumber}
+          onChangeText={setRoomNumber}
+          editable={!submitting}
+      />
+
+      <TextInput
+          style={styles.input}
+          placeholder="Directions (optional)"
+          placeholderTextColor="#999"
+          value={directions}
+          onChangeText={setDirections}
+          editable={!submitting}
+      />
+
       <Text style={styles.label}>Food Type (optional)</Text>
       <View style={styles.pickerWrapper}>
         <Picker
@@ -409,24 +427,6 @@ export default function CreateEventScreen() {
           }}
           editable={!submitting}
           keyboardType="numeric"
-      />
-
-        <TextInput
-        style={styles.input}
-        placeholder="Room number (optional)"
-        placeholderTextColor="#999"
-        value={roomNumber}
-        onChangeText={setRoomNumber}
-        editable={!submitting}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Directions (optional)"
-        placeholderTextColor="#999"
-        value={directions}
-        onChangeText={setDirections}
-        editable={!submitting}
       />
     
       {Platform.OS === "web" ? (

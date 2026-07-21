@@ -220,9 +220,9 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
-                {!!event.dietaryOptions && (
+                {!!event.dietaryOptions?.length && (
                     <>
-                        <Text style={styles.sectionTitle}>Dietary Option</Text>
+                        <Text style={styles.sectionTitle}>Dietary Options</Text>
                         <Text style={styles.bodyText}>{event.dietaryOptions.map((d) => d.optionName).join(", ")}</Text>
                     </>
                 )}
