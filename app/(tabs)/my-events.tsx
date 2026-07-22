@@ -2,12 +2,10 @@ import React, { useCallback, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { closeEvent, Event, fetchMyEvents } from "@/lib/api";
-
-// TODO: Replace with the signed-in user's id once SSO/auth is wired up.
-// For now this is the test event_organizer account (id 1).
-const CURRENT_USER_ID = 1;
+import { useSession } from "@/app/contexts/session-context";
 
 export default function MyEventsScreen() {
+  const { user } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +15,7 @@ export default function MyEventsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMyEvents(CURRENT_USER_ID);
+      const data = await fetchMyEvents(user.id);
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching my events:", err);
@@ -25,7 +23,7 @@ export default function MyEventsScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user.id]);
 
   // Reload whenever the tab regains focus so newly created, edited, or closed
   // events show without needing a remount.
@@ -58,7 +56,7 @@ export default function MyEventsScreen() {
             setClosingEventId(event.id);
 
             try {
-              await closeEvent(event.id, CURRENT_USER_ID);
+              await closeEvent(event.id, user.id);
               await loadMyEvents();
             } catch (err) {
               console.error("Error closing event:", err);
@@ -115,7 +113,7 @@ export default function MyEventsScreen() {
             return(
               <View style={styles.card}>
               <Pressable
-                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                style={({ pressed }) => [styles.cardContent, pressed && styles.cardPressed]}
                 onPress={() =>
                   router.push({
                     pathname: "/events/[id]",
@@ -132,7 +130,7 @@ export default function MyEventsScreen() {
                   </Text>
                 )}
 
-                < Text style={styles.cardStatus}>Status: {item.status}</Text>
+                <Text style={styles.cardStatus}>Status: {item.status}</Text>
 
                   {(item.availableFrom || item.availableUntil) && (
                     <Text style={styles.cardMeta}>
