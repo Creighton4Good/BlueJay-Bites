@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import { FlatList, Pressable, StyleSheet, Text, View, Image } from "react-native";
-import { router } from "expo-router";
-import { Event, fetchEvents } from "@/lib/api";
+import {router, useFocusEffect} from "expo-router";
+import { BASE_URL, Event, fetchEvents } from "@/lib/api";
 
 export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -21,11 +21,13 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadEvents();
   }, []);
+
+  useFocusEffect(
+      useCallback(() => {
+        loadEvents();
+      }, [loadEvents])
+  );
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
@@ -62,7 +64,12 @@ export default function HomeScreen() {
           data={events}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
+          renderItem={({ item }) => {
+            const displayUrl = item.photoUrl
+                // TODO: Update URL when storing in cloud
+            ? (item.photoUrl.startsWith("http") ? item.photoUrl : `${BASE_URL}${item.photoUrl}`)
+            : undefined;
+            return (
             <Pressable
               style={({ pressed }) => [
                 styles.card,
@@ -76,11 +83,12 @@ export default function HomeScreen() {
               }
             >
 
-              {item.photoUrl ? (
+              {displayUrl ? (
                   <Image
-                      source={{ uri: item.photoUrl }}
+                      source={{ uri: displayUrl }}
                       style={styles.cardImage}
                       resizeMode="cover"
+                      onError={() => console.warn(`Failed to load image for event ${item.id}`)}
                   />
               ) : null}
 
@@ -120,7 +128,7 @@ export default function HomeScreen() {
                 </Text>
               )}
             </Pressable>
-          )}
+          )}}
         />
       )}
     </View>

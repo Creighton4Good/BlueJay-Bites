@@ -78,7 +78,7 @@ public class PhotoService {
             if (Objects.equals(post.getPhotoUrl(), "/api/uploads/photos/" + fileName)) {
 
                 Optional<Photo> replacement = photoRepository
-                        .findFirstByPostOrderByDisplayOrderAsc(post);
+                        .findFirstByPostOrderByDisplayOrderDescIdDesc(post);
 
                 if (replacement.isPresent()) {
                     Photo replacementPhoto = replacement.get();

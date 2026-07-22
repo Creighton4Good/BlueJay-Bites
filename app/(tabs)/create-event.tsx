@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
+import {createEvent, NewEvent, Building, fetchBuildings, uploadPhoto} from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 
@@ -148,7 +148,6 @@ export default function CreateEventScreen() {
       roomNumber: roomNumber.trim() || undefined,
       availableFrom: availableFrom.toISOString(),          
       availableUntil: availableUntil.toISOString(),
-      photoUrl: photoUrl ?? undefined, // send URI as imageUrl
       createdBy: { id: 1 },
       status: "active",
       createdAt: now,
@@ -158,7 +157,16 @@ export default function CreateEventScreen() {
     setSubmitting(true);
 
     try {
-      await createEvent(payload);
+      const createdEvent = await createEvent(payload);
+
+      if (photoUrl) {
+        const filename = photoUrl.split("/").pop() ?? "photo.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        await uploadPhoto({ uri: photoUrl, name: filename, type }, createdEvent.id);
+      }
+
 
       Alert.alert("Success", "Food event created successfully!");
       
