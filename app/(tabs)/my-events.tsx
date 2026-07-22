@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Event, fetchMyEvents } from "@/lib/api";
+import { closeEvent, Event, fetchMyEvents } from "@/lib/api";
 
 // TODO: Replace with the signed-in user's id once SSO/auth is wired up.
 // For now this is the test event_organizer account (id 1).
@@ -11,6 +11,7 @@ export default function MyEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [closingEventId, setClosingEventId] = useState<number | null>(null);
 
   const loadMyEvents = useCallback(async () => {
     setLoading(true);
@@ -33,6 +34,46 @@ export default function MyEventsScreen() {
       loadMyEvents();
     }, [loadMyEvents])
   );
+
+  const handleEdit = (eventId: number) => {
+    router.push({
+      pathname: "/events/[id]/edit",
+      params: { id: String(eventId), from: "my-events" },
+    });
+  };
+
+  const handleClose = (event: Event) => {
+    Alert.alert(
+      "Close event?",
+      `Are you sure you want to close "${event.title}"?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Close Event",
+          style: "destructive",
+          onPress: async () => {
+            setClosingEventId(event.id);
+
+            try {
+              await closeEvent(event.id, CURRENT_USER_ID);
+              await loadMyEvents();
+            } catch (err) {
+              console.error("Error closing event:", err);
+              Alert.alert(
+                "Could not close event",
+                "Something went wrong while closing this event."
+              );
+            } finally {
+              setClosingEventId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
@@ -67,39 +108,74 @@ export default function MyEventsScreen() {
           data={events}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <Pressable
-              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              onPress={() =>
-                router.push({
-                  pathname: "/events/[id]",
-                  params: { id: String(item.id), from: "my-events" },
-                })
-              }
-            >
-              <Text style={styles.cardTitle}>{item.title}</Text>
+          renderItem={({ item }) => {
+            const isClosing = closingEventId === item.id;
+            const isClosed = item.status === "closed";
 
-              {!!item.building && (
-                <Text style={styles.cardLocation}>
-                  {item.building.buildingName}
-                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
-                </Text>
-              )}
+            return(
+              <View style={styles.card}>
+              <Pressable
+                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/events/[id]",
+                    params: { id: String(item.id), from: "my-events" },
+                  })
+                }
+              >
+                <Text style={styles.cardTitle}>{item.title}</Text>
 
-              <Text style={styles.cardStatus}>Status: {item.status}</Text>
+                {!!item.building && (
+                  <Text style={styles.cardLocation}>
+                    {item.building.buildingName}
+                    {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                  </Text>
+                )}
 
-              {(item.availableFrom || item.availableUntil) && (
-                <Text style={styles.cardMeta}>
-                  {item.availableFrom ? `From: ${formatDateTime(item.availableFrom)} ` : ""}
-                  {item.availableUntil ? `To: ${formatDateTime(item.availableUntil)}` : ""}
-                </Text>
-              )}
-            </Pressable>
-          )}
-        />
-      )}
+                < Text style={styles.cardStatus}>Status: {item.status}</Text>
+
+                  {(item.availableFrom || item.availableUntil) && (
+                    <Text style={styles.cardMeta}>
+                      {item.availableFrom ? `From: ${formatDateTime(item.availableFrom)} ` : ""}
+                      {item.availableUntil ? `To: ${formatDateTime(item.availableUntil)}` : ""}
+                    </Text>
+                  )}
+              </Pressable>
+
+              <View style={styles.actionRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    styles.editButton,
+                    pressed && styles.actionButtonPressed,
+                  ]}
+                  onPress={() => handleEdit(item.id)}
+                >
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </Pressable>
+
+                {!isClosed && (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      styles.closeButton,
+                      (pressed || isClosing) && styles.actionButtonPressed,
+                    ]}
+                    onPress={() => handleClose(item)}
+                    disabled={isClosing}
+                  >
+                    <Text style={styles.closeButtonText}>
+                      {isClosing ? "Closing..." : "Close Event"}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          );
+        }}
+      />)}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -147,12 +223,48 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#005CA9",
     borderRadius: 8,
-    padding: 12,
     marginBottom: 10,
     backgroundColor: "#E9F2FB",
+    overflow: "hidden",
+  },
+  cardContent: {
+    padding: 12,
   },
   cardPressed: {
     opacity: 0.9,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editButton: {
+    borderWidth: 1,
+    borderColor: "#005CA9",
+    backgroundColor: "#FFFFFF",
+  },
+  editButtonText: {
+    color: "#005CA9",
+    fontWeight: "600",
+  },
+  closeButton: {
+    backgroundColor: "#B42318",
+  },
+  closeButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  actionButtonPressed: {
+    opacity: 0.65,
   },
   cardTitle: {
     fontSize: 16,
