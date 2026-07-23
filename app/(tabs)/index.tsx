@@ -96,6 +96,12 @@ export default function HomeScreen() {
                 </Text>
               )}
 
+              {!!item.dietaryOptions?.length && (
+                  <Text style={styles.cardMeta}>
+                    Dietary options: {item.dietaryOptions.map((d) => d.optionName).join(", ")}
+                  </Text>
+              )}
+
               {!!item.directions && (
                 <Text style={styles.cardMeta}>
                   Directions: {item.directions}
@@ -112,6 +118,20 @@ export default function HomeScreen() {
                     : ""}
                 </Text>
               )}
+
+              {item.servingsMin != null && (
+                  <Text style={styles.cardMeta}>
+                    Minimum # of servings: {item.servingsMin}
+                  </Text>
+              )}
+
+              {item.servingsMax != null && (
+                  <Text style={styles.cardMeta}>
+                    Maximum # of servings: {item.servingsMax}
+                  </Text>
+              )}
+
+
             </Pressable>
           )}
         />
