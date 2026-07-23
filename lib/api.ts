@@ -91,6 +91,21 @@ const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 
 // Fetch active food events (for home feed)
+// URL that starts the backend's Entra OAuth login flow.
+export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
+
+// Fetch the currently authenticated user. Returns null if not logged in (401).
+export async function fetchCurrentUser(): Promise<User | null> {
+  const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include" });
+  if (res.status === 401) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error("Failed to fetch current user");
+  }
+  return res.json();
+}
+
 export async function fetchEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/active`);
   if (!res.ok) {
