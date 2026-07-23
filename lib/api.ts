@@ -85,7 +85,24 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
-export const BASE_URL =
+export type UpdateEvent = {
+  title: string;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: { id: number };
+  directions?: string;
+  roomNumber?: string;
+  foodType?: { id: number};
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string;
+  availableUntil?: string;
+  status?: EventStatus;
+  updatedAt?: string;
+}
+
+const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
   (Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
@@ -100,6 +117,10 @@ const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 const PHOTO_URL = `${BASE_URL}/api/post-photos`
 const UPLOAD_URL = `${BASE_URL}/api/uploads`
 
+export const PROTOTYPE_CURRENT_USER_ID = Number(
+  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
+);
+
 // Fetch active food events (for home feed)
 export async function fetchEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/active`);
@@ -107,6 +128,17 @@ export async function fetchEvents(): Promise<Event[]> {
     const text = await res.text();
     console.error("Failed to fetch events", res.status, text);
     throw new Error(text || "Failed to fetch events");
+  }
+  return res.json();
+}
+
+// Fetch events created by a specific user (their "My Events")
+export async function fetchMyEvents(userId: number): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/created?userId=${userId}`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch my events", res.status, text);
+    throw new Error(text || "Failed to fetch my events");
   }
   return res.json();
 }
@@ -135,8 +167,37 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
-// Delete an event
-export async function closeEvent(id: number, userId: number): Promise<void> {
+// Update an existing event
+export async function updateEvent(
+  id: number,
+  userId: number,
+  event: UpdateEvent
+): Promise<Event> {
+
+  // TODO: Remove the userId query parameter once authentication is integrated.
+  // The backend should derive the current user from the authenticated session.
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update event failed", res.status, text);
+    throw new Error(
+      `Failed to update event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Close an event
+export async function closeEvent(
+  id: number,
+  userId: number
+): Promise<void> {
   const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
     method: "DELETE",
   });

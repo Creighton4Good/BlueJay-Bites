@@ -17,16 +17,16 @@ export default function HomeScreen() {
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching events:", err);
-      setError("Could not load active food events.");
+      setError(err.message ?? "Failed to load events");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useFocusEffect(
-      useCallback(() => {
-        loadEvents();
-      }, [loadEvents])
+    useCallback(() => {
+      loadEvents();
+    }, [loadEvents])
   );
 
   const formatDateTime = (value?: string | null) => {
@@ -97,7 +97,7 @@ export default function HomeScreen() {
               {!!item.building && (
                 <Text style={styles.cardLocation}>
                   {item.building.buildingName}
-                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
+                  {item.roomNumber ? `, ${item.roomNumber}` : ""}
                 </Text>
               )}
 
