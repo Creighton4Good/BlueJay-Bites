@@ -139,61 +139,20 @@ public class PostController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
-    // Update any post (for admin)
-    /**
-     * Update any post (for admin)
-     * @param id the ID of the post to update
-     * @param postDetails the updated post details
-     * @return a {@code ResponseEntity} containing the updated post with {@code 200 OK},
-     *      or {@code 404 Not Found} if no post exists with the specified ID,
-     *      or {@code 500 Internal Server Error} if an unexpected error occurs
-     */
-    @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/any/{id}")
-    public ResponseEntity<Post> updateAnyPost(@PathVariable int id, @RequestBody Post postDetails) {
-        try {
-        Optional<Post> postData = postRepository.findById(id);
-        
-        if (postData.isPresent()) {
-            Post post = postData.get();
-            post.setTitle(postDetails.getTitle());
-            post.setDescription(postDetails.getDescription());
-            post.setNotes(postDetails.getNotes());
-            post.setPhotoUrl(postDetails.getPhotoUrl());
-            post.setBuilding(postDetails.getBuilding());
-            post.setDirections(postDetails.getDirections());
-            post.setRoomNumber(postDetails.getRoomNumber());
-            post.setFoodType(postDetails.getFoodType());
-            post.setServingsMin(postDetails.getServingsMin());
-            post.setServingsMax(postDetails.getServingsMax());
-            post.setAvailableFrom(postDetails.getAvailableFrom());
-            post.setAvailableUntil(postDetails.getAvailableUntil());
-            post.setUpdatedAt(LocalDateTime.now());
-            post.setStatus(postDetails.getStatus());
-            
-            return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
 
-    // Update a creator's post
+    // Update a post or creator's post
     /**
-     * Update a creator's post
+     * Update any post for admin, or a creator's post for organizer
      * @param id the ID of the post to update
      * @param postDetails the updated post details
      * @param oAuthUser the authenticated user who created the post
-     * @return a {@code ResponseEntity} containing the updated post with {@code 200 OK},
+     * @return a {@code ResponseEntity} containing the updated post by admin or organizer with {@code 200 OK},
      *      or {@code 404 Not Found} if no post exists with the specified ID,
-     *      or {@code 403 Forbidden} if the authenticated user is not the owner of the post that is
+     *      or {@code 403 Forbidden} if the authenticated event organizer is not the owner of the post that is
      *      trying to be updated
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PutMapping("/me")
+    @PutMapping()
     public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id, @RequestBody Post postDetails)
     {
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
@@ -203,10 +162,31 @@ public class PostController {
         if (postData.isPresent()) {
             Post post = postData.get();
 
-            if (Objects.equals(post.getCreatedBy().getId(), currentUser.getId()))
-            // TODO: Ensure user is authenticated
-            {
+            if (Objects.equals(currentUser.getRole().getRoleName(), "event_organizer")) {
 
+                if (Objects.equals(post.getCreatedBy().getId(), currentUser.getId()))
+                // TODO: Ensure user is authenticated
+                {
+                    post.setTitle(postDetails.getTitle());
+                    post.setDescription(postDetails.getDescription());
+                    post.setNotes(postDetails.getNotes());
+                    post.setPhotoUrl(postDetails.getPhotoUrl());
+                    post.setBuilding(postDetails.getBuilding());
+                    post.setDirections(postDetails.getDirections());
+                    post.setRoomNumber(postDetails.getRoomNumber());
+                    post.setFoodType(postDetails.getFoodType());
+                    post.setServingsMin(postDetails.getServingsMin());
+                    post.setServingsMax(postDetails.getServingsMax());
+                    post.setAvailableFrom(postDetails.getAvailableFrom());
+                    post.setAvailableUntil(postDetails.getAvailableUntil());
+                    post.setUpdatedAt(LocalDateTime.now());
+                    post.setStatus(postDetails.getStatus());
+
+                    return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
+                } else {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            } else {
                 post.setTitle(postDetails.getTitle());
                 post.setDescription(postDetails.getDescription());
                 post.setNotes(postDetails.getNotes());
@@ -221,54 +201,25 @@ public class PostController {
                 post.setAvailableUntil(postDetails.getAvailableUntil());
                 post.setUpdatedAt(LocalDateTime.now());
                 post.setStatus(postDetails.getStatus());
-
-                return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+
         }
         return ResponseEntity.notFound().build();
 
     }
 
-    // Delete any post (soft delete by changing status)
+    // Delete a post or creator's post (soft delete by changing status)
     /**
-     * Delete any post (soft delete by changing status)
-     * @param id the ID of the post to delete
-     * @return {@code 204 No Content} if post is successfully deleted,
-     *      or {@code 404 Not Found} if no post exists with the specified ID,
-     *      or {@code 500 Internal Server Error} if an unexpected error occurs
-     */
-    @PreAuthorize("hasAuthority('admin')")
-    @DeleteMapping("/any/{id}")
-    public ResponseEntity<Void> deleteAnyPost(@PathVariable int id) {
-        try {
-            Optional<Post> post = postRepository.findById(id);
-            if (post.isPresent()) {
-                Post existingPost = post.get();
-                existingPost.setStatus("closed");
-                postRepository.save(existingPost);
-                return ResponseEntity.noContent().build();
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    // Delete a creator's post (soft delete by changing status)
-    /**
-     * Delete a creator's post (soft delete by changing status)
+     * Delete any post for admin, or a creator's post for organizer (soft delete by changing status)
      * @param id the ID of the post to delete
      * @param oAuthUser the authenticated user who created the post
-     * @return {@code 204 No Content} if post is successfully deleted,
+     * @return {@code 204 No Content} if post is successfully deleted by admin or owner,
      *      or {@code 404 Not Found} if no post exists with the specified ID,
-     *      or {@code 403 Forbidden} if the authenticated user is not the owner of the post that is
+     *      or {@code 403 Forbidden} if the authenticated event organizer is not the owner of the post that is
      *      trying to be deleted
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @DeleteMapping("/me")
+    @DeleteMapping()
     public ResponseEntity<Void> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
         User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
 
@@ -276,6 +227,9 @@ public class PostController {
 
             if (postData.isPresent()) {
                 Post existingPost = postData.get();
+
+                if (Objects.equals(currentUser.getRole().getRoleName(), "event_organizer")) {
+
 
                 if (Objects.equals(existingPost.getCreatedBy().getId(), currentUser.getId()))
                 // TODO: Ensure user is authenticated
@@ -287,6 +241,12 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
+        else {
+                    existingPost.setStatus("closed");
+                    postRepository.save(existingPost);
+                    return ResponseEntity.noContent().build();
+                }
+                }
         return ResponseEntity.notFound().build();
     }
 
