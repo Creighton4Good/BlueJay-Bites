@@ -21,9 +21,6 @@ import {
 } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import {TypeGuard} from "@sinclair/typebox";
-import TInteger = TypeGuard.TInteger;
-
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
@@ -170,8 +167,12 @@ export default function CreateEventScreen() {
 
     const min = servingsMin ?? 0;
     const max = servingsMax ?? 0;
+    let validType: boolean = true;
+    if (!Number.isInteger(min) || !Number.isInteger(max) || max < 0 || min < 0) {
+      validType = false;
+    }
 
-    if (max < min && servingsMax!= null) {
+    if (max < min && servingsMax!= null && validType) {
       Alert.alert(
           "Invalid serving estimate",
           "Minimum servings must be less or equal to maximum servings."

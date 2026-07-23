@@ -227,14 +227,14 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
-                {!!event.servingsMin && (
+                {event.servingsMin != null && (
                     <>
                         <Text style={styles.sectionTitle}>Minimum # of servings</Text>
                         <Text style={styles.bodyText}>{event.servingsMin}</Text>
                     </>
                 )}
 
-                {!!event.servingsMax && (
+                {event.servingsMax != null && (
                     <>
                         <Text style={styles.sectionTitle}>Maximum # of servings</Text>
                         <Text style={styles.bodyText}>{event.servingsMax}</Text>

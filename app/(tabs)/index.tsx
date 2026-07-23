@@ -119,13 +119,13 @@ export default function HomeScreen() {
                 </Text>
               )}
 
-              {!!item.servingsMin && (
+              {item.servingsMin != null && (
                   <Text style={styles.cardMeta}>
                     Minimum # of servings: {item.servingsMin}
                   </Text>
               )}
 
-              {!!item.servingsMax && (
+              {item.servingsMax != null && (
                   <Text style={styles.cardMeta}>
                     Maximum # of servings: {item.servingsMax}
                   </Text>

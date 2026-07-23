@@ -232,8 +232,12 @@ export default function EditEventScreen() {
 
         const min = servingsMin ?? 0;
         const max = servingsMax ?? 0;
+        let validType: boolean = true;
+        if (!Number.isInteger(min) || !Number.isInteger(max) || max < 0 || min < 0) {
+            validType = false;
+        }
 
-        if (max < min && servingsMax != null) {
+        if (max < min && servingsMax != null && validType) {
             Alert.alert(
                 "Invalid serving estimate",
                 "Minimum servings must be less or equal to maximum servings."
