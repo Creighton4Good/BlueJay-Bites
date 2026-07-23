@@ -11,10 +11,9 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
-    List<Post> findByStatus(String status);
     List<Post> findByOrderByCreatedAtDesc();
     List<Post> findByStatusOrderByCreatedAtDesc(String status);
-    List<Post> findByCreatedBy_Id(Integer userId);
+    List<Post> findByCreatedBy_IdOrderByCreatedAtDesc(Integer userId);
 
     // Active events that have not yet passed the grace cutoff.
     // Events with no end time (availableUntil is null) are always included.
