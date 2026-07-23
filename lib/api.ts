@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 export type EventStatus = "active" | "closed";
 
@@ -77,13 +78,36 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ??
-  (Platform.OS === "android"
-    ? "http://10.0.2.2:8080" // Android emulator
-    : "http://localhost:8080"); // iOS simulator
-// Use your local IP instead if testing on a physical device:
-// const BASE_URL = "http://123.456.7.890:8080";
+// Resolve the backend host automatically so the same code works on web,
+// simulators, and physical devices without editing .env:
+//   - EXPO_PUBLIC_API_URL always wins when it is set
+//   - web talks to localhost
+//   - a physical device reuses the LAN IP of the Expo dev server
+//   - simulators fall back to their usual loopback addresses
+const BACKEND_PORT = 8080;
+
+function resolveBaseUrl(): string {
+  const configured = process.env.EXPO_PUBLIC_API_URL;
+  if (configured) return configured;
+
+  if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
+
+  // hostUri looks like "192.168.86.154:8081" when served to a device.
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants.expoGoConfig as { debuggerHost?: string } | undefined)?.debuggerHost;
+
+  const host = hostUri?.split(":")[0];
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
+    return `http://${host}:${BACKEND_PORT}`;
+  }
+
+  return Platform.OS === "android"
+    ? `http://10.0.2.2:${BACKEND_PORT}` // Android emulator
+    : `http://localhost:${BACKEND_PORT}`; // iOS simulator
+}
+
+const BASE_URL = resolveBaseUrl();
 
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;

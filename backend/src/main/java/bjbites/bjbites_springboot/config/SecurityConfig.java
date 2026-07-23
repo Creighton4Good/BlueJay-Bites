@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
 import bjbites.bjbites_springboot.service.CustomOidcUserService;
 
 @Configuration
@@ -14,6 +16,11 @@ public class SecurityConfig {
 
     @Autowired
     private CustomOidcUserService customOidcUserService;
+
+    // Where users land after a successful login. Defaults to the local Expo
+    // dev server; staging and production override this via app.frontend-url.
+    @Value("${app.frontend-url:http://localhost:8081}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -32,7 +39,10 @@ public class SecurityConfig {
             // Azure AD starter. Hitting a protected route redirects to Entra login.
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
-                    .oidcUserService(customOidcUserService)));
+                    .oidcUserService(customOidcUserService))
+                // Send the user back to the app after login instead of falling
+                // through to the backend root, which has no page mapped.
+                .defaultSuccessUrl(frontendUrl, true));
 
         return http.build();
     }
