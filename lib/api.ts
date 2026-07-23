@@ -48,6 +48,7 @@ export type Event = {
   directions?: string;
   roomNumber?: string;
   foodType?: FoodType;
+  dietaryOptions?: DietaryOption[];
   servingsMin?: number;
   servingsMax?: number;
   availableFrom?: string; // ISO string
@@ -68,6 +69,7 @@ export type NewEvent = {
   directions?: string;
   roomNumber?: string;
   foodType?: { id: number };
+  dietaryOptions?: { id : number}[];
   servingsMin?: number;
   servingsMax?: number;
   availableFrom?: string;
@@ -87,6 +89,7 @@ export type UpdateEvent = {
   directions?: string;
   roomNumber?: string;
   foodType?: { id: number};
+  dietaryOptions?: { id : number}[];
   servingsMin?: number;
   servingsMax?: number;
   availableFrom?: string;

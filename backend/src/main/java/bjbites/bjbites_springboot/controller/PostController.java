@@ -177,6 +177,7 @@ public class PostController {
                     post.setDirections(postDetails.getDirections());
                     post.setRoomNumber(postDetails.getRoomNumber());
                     post.setFoodType(postDetails.getFoodType());
+                    post.setDietaryOptions(postDetails.getDietaryOptions());
                     post.setServingsMin(postDetails.getServingsMin());
                     post.setServingsMax(postDetails.getServingsMax());
                     post.setAvailableFrom(postDetails.getAvailableFrom());

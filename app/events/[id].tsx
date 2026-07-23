@@ -220,6 +220,27 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
+                {!!event.dietaryOptions?.length && (
+                    <>
+                        <Text style={styles.sectionTitle}>Dietary Options</Text>
+                        <Text style={styles.bodyText}>{event.dietaryOptions.map((d) => d.optionName).join(", ")}</Text>
+                    </>
+                )}
+
+                {event.servingsMin != null && (
+                    <>
+                        <Text style={styles.sectionTitle}>Minimum # of servings</Text>
+                        <Text style={styles.bodyText}>{event.servingsMin}</Text>
+                    </>
+                )}
+
+                {event.servingsMax != null && (
+                    <>
+                        <Text style={styles.sectionTitle}>Maximum # of servings</Text>
+                        <Text style={styles.bodyText}>{event.servingsMax}</Text>
+                    </>
+                )}
+
                 {(event.availableFrom || event.availableUntil) && (
                     <>
                         <Text style={styles.sectionTitle}>Availability</Text>
