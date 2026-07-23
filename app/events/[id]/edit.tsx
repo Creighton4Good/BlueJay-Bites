@@ -237,7 +237,14 @@ export default function EditEventScreen() {
             validType = false;
         }
 
-        if (max < min && servingsMax != null && validType) {
+        if (!validType) {
+            Alert.alert(
+                "Invalid entry",
+                "Please enter a positive whole number for serving sizes.",
+            )
+        }
+
+        if (max < min && servingsMax != null) {
             Alert.alert(
                 "Invalid serving estimate",
                 "Minimum servings must be less or equal to maximum servings."
