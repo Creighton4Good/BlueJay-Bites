@@ -22,7 +22,7 @@ export default function CreateEventScreen() {
   const [directions, setDirections] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
   const [buildings, setBuildings] = useState<Building[]>([]);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
@@ -46,6 +46,40 @@ export default function CreateEventScreen() {
 
     loadBuildings();
   }, []);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const formatDateForWebInput = (date: Date | null) => {
+    if (!date || Number.isNaN(date.getTime())) return "";
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  };
+
+  const formatTimeForWebInput = (date: Date | null) => {
+    if (!date || Number.isNaN(date.getTime())) return "";
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const updateDatePart = (current: Date | null, dateValue: string) => {
+    if (!dateValue) return null;
+    const [year, month, day] = dateValue.split("-").map(Number);
+    const base = 
+      current && !Number.isNaN(current.getTime()) ? new Date(current) : new Date();
+    base.setFullYear(year, month - 1, day);
+    return base;
+  };
+
+  const updateTimePart = (current: Date | null, timeValue: string) => {
+    if (!timeValue) return current;
+    const [hours, minutes] = timeValue.split(":").map(Number);
+    const base = 
+      current && !Number.isNaN(current.getTime()) ? new Date(current) : new Date();
+    base.setHours(hours, minutes, 0, 0);
+    return base;
+  };
+
+  const toLocalDateTimeString = (date: Date) => {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  };
 
   const formatDisplayDateTime = (date: Date | null) => {
     if (!date) return "";
@@ -97,11 +131,11 @@ export default function CreateEventScreen() {
     const payload: NewEvent = {
       title: title.trim(),
       description: description.trim(),    
-      building: { id: selectedBuildingId },
+      building: { id: Number(selectedBuildingId) },
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
-      availableFrom: availableFrom.toISOString(),          
-      availableUntil: availableUntil.toISOString(),        
+      availableFrom: toLocalDateTimeString(availableFrom),          
+      availableUntil: toLocalDateTimeString(availableUntil),        
       createdBy: { id: 1 },
       status: "active",
       createdAt: now,
@@ -119,7 +153,7 @@ export default function CreateEventScreen() {
       setDescription("");
       setDirections("");
       setRoomNumber("");
-      setSelectedBuildingId(null);
+      setSelectedBuildingId("");
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -131,6 +165,36 @@ export default function CreateEventScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const WebNativeInput = ({
+    type,
+    value,
+    onChange,
+    placeholder,
+  }: {
+    type: "date" | "time";
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+  }) => {
+    return React.createElement("input", {
+      type,
+      value,
+      placeholder,
+      disabled: submitting,
+      onChange: (e: any) => onChange(e.target.value),
+      style: {
+        width: "100%",
+        height: 44,
+        border: "1px solid #ccc",
+        borderRadius: 8,
+        padding: "0 10px",
+        fontSize: 16,
+        backgroundColor: "#fff",
+        boxSizing: "border-box",
+      },
+    });
   };
 
   return (
@@ -167,18 +231,18 @@ export default function CreateEventScreen() {
           selectedValue={selectedBuildingId}
           enabled={!submitting && !loadingBuildings}
           onValueChange={(itemValue) => 
-            setSelectedBuildingId(itemValue ? Number(itemValue) : null)
-          }
+            setSelectedBuildingId(String(itemValue))}
+          style={styles.picker}
         >
           <Picker.Item
             label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
-            value={null}
+            value=""
           />
           {buildings.map((building) => (
             <Picker.Item
               key={building.id}
               label={building.buildingName}
-              value={building.id}
+              value={String(building.id)}
             />
           ))}
         </Picker>
@@ -202,57 +266,114 @@ export default function CreateEventScreen() {
         editable={!submitting}
       />
     
-      <Pressable
-        style={styles.input}
-        onPress={() => setShowFromPicker(true)}
-        disabled={submitting}
-      >
-        <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
-          {availableFrom
-            ? formatDisplayDateTime(availableFrom)
-            : "Available from * (tap to pick date & time)"}
-        </Text>
-      </Pressable>
+      {Platform.OS === "web" ? (
+        <>
+          <Text style={styles.label}>Available from *</Text>
+          <View style={styles.webDateTimeRow}>
+            <View style={styles.webInputGroup}>
+              <Text style={styles.webInputLabel}>Date</Text>
+              <WebNativeInput
+                type="date"
+                value={formatDateForWebInput(availableFrom)}
+                onChange={(value) =>
+                  setAvailableFrom(updateDatePart(availableFrom, value))
+                }
+              />
+            </View>
 
-      <Pressable 
-        style={styles.input} 
-        onPress={() => setShowUntilPicker(true)} 
-        disabled={submitting} 
-      >
-        <Text
-          style={availableUntil ? styles.inputText : styles.placeholderText}>
-          {availableUntil
-            ? formatDisplayDateTime(availableUntil)
-            : "Available until * (tap to pick date & time)"}
-        </Text>
-      </Pressable>
+            <View style={styles.webInputGroup}>
+              <Text style={styles.webInputLabel}>Time</Text>
+              <WebNativeInput
+                type="time"
+                value={formatTimeForWebInput(availableFrom)}
+                onChange={(value) =>
+                  setAvailableFrom(updateTimePart(availableFrom, value))
+                }
+              />
+            </View>
+          </View>
+        </>
+      ) : (
+        <Pressable
+          style={styles.input}
+          onPress={() => setShowFromPicker(true)}
+          disabled={submitting}
+        >
+          <Text style={availableFrom ? styles.inputText : styles.placeholderText}>
+            {availableFrom
+              ? formatDisplayDateTime(availableFrom)
+              : "Available from * (tap to pick date & time)"}
+          </Text>
+        </Pressable>
+      )}
 
-      {showFromPicker && (
+      {Platform.OS === "web" ? (
+        <>
+          <Text style={styles.label}>Available until *</Text>
+          <View style={styles.webDateTimeRow}>
+            <View style={styles.webInputGroup}>
+              <Text style={styles.webInputLabel}>Date</Text>
+              <WebNativeInput
+                type="date"
+                value={formatDateForWebInput(availableUntil)}
+                onChange={(value) => 
+                  setAvailableUntil(updateDatePart(availableUntil, value))
+                }
+              />
+            </View>
+
+            <View style={styles.webInputGroup}>
+              <Text style={styles.webInputLabel}>Time</Text>
+              <WebNativeInput
+                type="time"
+                value={formatTimeForWebInput(availableUntil)}
+                onChange={(value) =>
+                  setAvailableUntil(updateTimePart(availableUntil, value))
+                }
+              />
+            </View>
+          </View>
+        </>
+      ) : (
+        <Pressable
+          style={styles.input}
+          onPress={() => setShowUntilPicker(true)}
+          disabled={submitting}
+        >
+          <Text style={availableUntil ? styles.inputText : styles.placeholderText}>
+            {availableUntil
+              ? formatDisplayDateTime(availableUntil)
+              : "Available until * (tap to pick date & time)"}
+          </Text>
+        </Pressable>
+      )}
+
+      {Platform.OS !== "web" && showFromPicker && (
         <DateTimePicker
           value={availableFrom ?? new Date()}
           mode="datetime"
           display={Platform.OS === "ios" ? "inline" : "default"}
-          onChange={(_event, selectedDate) => {
+          onChange={(event, selectedDate) => {
             if (Platform.OS !== "ios") {
               setShowFromPicker(false);
             }
-            if (selectedDate) {
+            if (event.type === "set" && selectedDate) {
               setAvailableFrom(selectedDate);
             }
           }}
         />
       )}
 
-      {showUntilPicker && (
+      {Platform.OS !== "web" && showUntilPicker && (
         <DateTimePicker 
           value={availableUntil ?? availableFrom ?? new Date()}
           mode="datetime"
           display={Platform.OS === "ios" ? "inline" : "default"}
-          onChange={(_event, selectedDate) => {
+          onChange={(event, selectedDate) => {
             if (Platform.OS !== "ios") {
               setShowUntilPicker(false);
             }
-            if (selectedDate) {
+            if (event.type === "set" && selectedDate) {
               setAvailableUntil(selectedDate);
             }
           }}
@@ -325,5 +446,30 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     marginTop: 16
+  },
+  webDateTimeRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  webDateInput: {
+    flex: 2,
+    marginBottom: 0,
+  },
+  webTimeInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  webInputGroup: {
+    flex: 1,
+  },
+  webInputLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 6,
+    color: "#555",
+  },
+  picker: {
+    color: "#000",
   },
 });

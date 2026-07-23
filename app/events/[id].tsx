@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
+    Button,
     Linking,
     Platform,
     Pressable,
@@ -9,8 +11,8 @@ import {
     Text,
     View,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { Event, fetchEventById } from "@/lib/api";
+import { Stack, router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { Event, closeEvent, fetchEventById, PROTOTYPE_CURRENT_USER_ID } from "@/lib/api";
 
 // Format a building's coordinates into a maps URL that opens the
 // native maps app (Apple Maps on iOS, Google Maps on Android).
@@ -34,27 +36,32 @@ export default function EventDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const loadEvent = async () => {
-            if (!id) {
-                setError("Missing event id.");
-                setLoading(false);
-                return;
-            }
+    const loadEvent = React.useCallback(async () => {
+        if (!id) {
+            setError("Missing event id.");
+            setLoading(false);
+            return;
+        }
 
-            try {
-                const data = await fetchEventById(Number(id));
-                setEvent(data);
-            } catch (err: any) {
-                console.error("Error fetching event details: ", err);
-                setError("Could not load event details.");
-            } finally {
-                setLoading(false);
-            }
-        };
+        setLoading(true);
+        setError(null);
 
-        loadEvent();
+        try {
+            const data = await fetchEventById(Number(id));
+            setEvent(data);
+        } catch (err: any) {
+            console.error("Error fetching event details: ", err);
+            setError("Could not load event details.");
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            loadEvent();
+        }, [loadEvent])
+    );
 
     const formatDateTime = (value?: string | null) => {
         if (!value) return "";
@@ -75,11 +82,75 @@ export default function EventDetailsScreen() {
         );
     };
 
+    const handleCloseEvent = async () => {
+        if (!event) return;
+
+        if (Platform.OS === "web") {
+            const confirmed = window.confirm(
+                "Are you sure you want to close this event? It will no longer appear in active event views."
+            );
+
+            if (!confirmed) return;
+
+            try {
+                await closeEvent(event.id, PROTOYPE_CURRENT_USER_ID);
+                window.alert("Event closed successfully.");
+                router.replace("/");
+            } catch (err: any) {
+                console.error("Error closing event:", err);
+                window.alert(
+                    err.message ?? "Something went wrong while closing the event."
+                );
+            }
+
+            return;
+        }
+
+        Alert.alert(
+            "Close Event",
+            "Are you sure you want to close this event? It will no longer appear in active event views.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Close Event",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await closeEvent(event.id, PROTOTYPE_CURRENT_USER_ID);
+                            Alert.alert("Success", "Event closed successfully.", [
+                                {
+                                    text: "OK",
+                                    onPress: () => {
+                                        router.replace("/");
+                                    },
+                                },
+                            ]);
+                        } catch (err: any) {
+                            console.error("Error closing event:", err);
+                            Alert.alert(
+                                "Error",
+                                err.message ?? "Something went wrong while closing the event."
+                            );
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     if (loading) {
         return (
             <View style={styles.centered}>
                 <ActivityIndicator />
                 <Text style={styles.statusText}>Loading event details...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.centered}>
+                <Text style={styles.errorText}>{error}</Text>
             </View>
         );
     }
@@ -95,6 +166,9 @@ export default function EventDetailsScreen() {
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
+    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
+    const canEdit = event.createdBy?.id === currentUserId;
+    
     return (
         <>
             <Stack.Screen
@@ -120,7 +194,7 @@ export default function EventDetailsScreen() {
                 )}
 
                 {!!event.roomNumber && (
-                    <Text style={styles.bodyText}>Room: {event.roomNumber}</Text>
+                    <Text style={styles.bodyText}>{event.roomNumber}</Text>
                 )}
 
                 {!!event.directions && (
@@ -161,12 +235,39 @@ export default function EventDetailsScreen() {
                         )}
                     </>
                 )}
+
+                {canEdit && (
+                  <>
+                    <View style={styles.buttonWrapper}>
+                        <Button
+                            title="Edit Event"
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/events/[id]/edit",
+                                    params: { id: String(event.id) },
+                                })
+                            }
+                        />
+                    </View>
+                    
+                    <View style={styles.buttonWrapper}>
+                      <Button
+                        title="Close Event"
+                        onPress={handleCloseEvent}
+                        color="#C62828"
+                      />
+                    </View>
+                  </>
+                )}
             </ScrollView>
         </>
     );
 }
 
 const styles = StyleSheet.create({
+    buttonWrapper: {
+        marginTop: 24,
+    },
     container: {
         padding: 20,
         backgroundColor: "#fff",
@@ -221,5 +322,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "red",
         textAlign: "center",
+    },
+    buttonWrapper: {
+        marginTop: 16,
     },
 });

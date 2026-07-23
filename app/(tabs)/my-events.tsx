@@ -1,32 +1,37 @@
-import React, { useState, useCallback} from "react";
+import React, { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { useFocusEffect, router } from "expo-router";
-import { Event, fetchEvents } from "@/lib/api";
+import { router, useFocusEffect } from "expo-router";
+import { Event, fetchMyEvents } from "@/lib/api";
 
-export default function HomeScreen() {
+// TODO: Replace with the signed-in user's id once SSO/auth is wired up.
+// For now this is the test event_organizer account (id 1).
+const CURRENT_USER_ID = 1;
+
+export default function MyEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = useCallback(async () => {
+  const loadMyEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await fetchEvents();
+      const data = await fetchMyEvents(CURRENT_USER_ID);
       setEvents(data);
     } catch (err: any) {
-      console.error("Error fetching events:", err);
-      setError(err.message ?? "Failed to load events");
+      console.error("Error fetching my events:", err);
+      setError("Could not load your events.");
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Reload whenever the tab regains focus so newly created, edited, or closed
+  // events show without needing a remount.
   useFocusEffect(
     useCallback(() => {
-      loadEvents();
-    }, [loadEvents])
+      loadMyEvents();
+    }, [loadMyEvents])
   );
 
   const formatDateTime = (value?: string | null) => {
@@ -40,16 +45,14 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>BlueJay-Bites</Text>
-      <Text style={styles.subtitle}>Find free food on campus</Text>
+      <Text style={styles.title}>My Events</Text>
+      <Text style={styles.subtitle}>Events you have created</Text>
 
       <View style={styles.separator} />
 
-      <Text style={styles.sectionTitle}>Available Food Events</Text>
-
       {loading ? (
         <View style={styles.stateContainer}>
-          <Text style={styles.statusText}>Loading events...</Text>
+          <Text style={styles.statusText}>Loading your events...</Text>
         </View>
       ) : error ? (
         <View style={styles.stateContainer}>
@@ -57,7 +60,7 @@ export default function HomeScreen() {
         </View>
       ) : events.length === 0 ? (
         <View style={styles.stateContainer}>
-          <Text style={styles.emptyText}>No active food events right now.</Text>
+          <Text style={styles.emptyText}>You have not created any events yet.</Text>
         </View>
       ) : (
         <FlatList
@@ -66,14 +69,11 @@ export default function HomeScreen() {
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <Pressable
-              style={({ pressed }) => [
-                styles.card,
-                pressed && styles.cardPressed,
-              ]}
+              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
               onPress={() =>
                 router.push({
                   pathname: "/events/[id]",
-                  params: { id: String(item.id), from: "dashboard" },
+                  params: { id: String(item.id), from: "my-events" },
                 })
               }
             >
@@ -82,34 +82,16 @@ export default function HomeScreen() {
               {!!item.building && (
                 <Text style={styles.cardLocation}>
                   {item.building.buildingName}
-                  {item.roomNumber ? `, ${item.roomNumber}` : ""}
+                  {item.roomNumber ? `, Room ${item.roomNumber}` : ""}
                 </Text>
               )}
 
-              {!!item.description && (
-                <Text style={styles.cardDescription}>{item.description}</Text>
-              )}
-
-              {!!item.foodType && (
-                <Text style={styles.cardMeta}>
-                  Food type: {item.foodType.typeName}
-                </Text>
-              )}
-
-              {!!item.directions && (
-                <Text style={styles.cardMeta}>
-                  Directions: {item.directions}
-                </Text>
-              )}
+              <Text style={styles.cardStatus}>Status: {item.status}</Text>
 
               {(item.availableFrom || item.availableUntil) && (
                 <Text style={styles.cardMeta}>
-                  {item.availableFrom
-                    ? `From: ${formatDateTime(item.availableFrom)} `
-                    : ""}
-                  {item.availableUntil
-                    ? `To: ${formatDateTime(item.availableUntil)}`
-                    : ""}
+                  {item.availableFrom ? `From: ${formatDateTime(item.availableFrom)} ` : ""}
+                  {item.availableUntil ? `To: ${formatDateTime(item.availableUntil)}` : ""}
                 </Text>
               )}
             </Pressable>
@@ -121,10 +103,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  stateContainer: {
-    paddingVertical: 24,
-    alignItems: "center",
-  },
   container: {
     flex: 1,
     padding: 20,
@@ -134,6 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 4,
+    color: "#00235D",
   },
   subtitle: {
     fontSize: 16,
@@ -145,10 +124,9 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#eee",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
+  stateContainer: {
+    paddingVertical: 24,
+    alignItems: "center",
   },
   statusText: {
     fontSize: 14,
@@ -161,7 +139,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     color: "red",
-    marginBottom: 8,
   },
   listContent: {
     paddingVertical: 8,
@@ -181,14 +158,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
+    color: "#00235D",
   },
   cardLocation: {
     fontSize: 14,
     marginBottom: 4,
   },
-  cardDescription: {
-    fontSize: 14,
-    marginTop: 4,
+  cardStatus: {
+    fontSize: 13,
+    color: "#444",
+    marginTop: 2,
   },
   cardMeta: {
     marginTop: 4,

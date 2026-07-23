@@ -78,6 +78,23 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
+export type UpdateEvent = {
+  title: string;
+  description: string;
+  notes?: string;
+  photoUrl?: string;
+  building?: { id: number };
+  directions?: string;
+  roomNumber?: string;
+  foodType?: { id: number};
+  servingsMin?: number;
+  servingsMax?: number;
+  availableFrom?: string;
+  availableUntil?: string;
+  status?: EventStatus;
+  updatedAt?: string;
+}
+
 // Resolve the backend host automatically so the same code works on web,
 // simulators, and physical devices without editing .env:
 //   - EXPO_PUBLIC_API_URL always wins when it is set
@@ -114,6 +131,10 @@ const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 
+export const PROTOTYPE_CURRENT_USER_ID = Number(
+  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
+);
+
 // Fetch active food events (for home feed)
 // URL that starts the backend's Entra OAuth login flow.
 export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
@@ -140,6 +161,17 @@ export async function fetchEvents(): Promise<Event[]> {
   return res.json();
 }
 
+// Fetch events created by a specific user (their "My Events")
+export async function fetchMyEvents(userId: number): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/created?userId=${userId}`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch my events", res.status, text);
+    throw new Error(text || "Failed to fetch my events");
+  }
+  return res.json();
+}
+
 // Fetch a single event by ID
 export async function fetchEventById(id: number): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/${id}`);
@@ -162,6 +194,50 @@ export async function createEvent(event: NewEvent): Promise<Event> {
     throw new Error(`Failed to create event (${res.status})${text ? `: ${text}` : ""}`);
   }
   return res.json();
+}
+
+// Update an existing event
+export async function updateEvent(
+  id: number,
+  userId: number,
+  event: UpdateEvent
+): Promise<Event> {
+
+  // TODO: Remove the userId query parameter once authentication is integrated.
+  // The backend should derive the current user from the authenticated session.
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update event failed", res.status, text);
+    throw new Error(
+      `Failed to update event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Close an event
+export async function closeEvent(
+  id: number,
+  userId: number
+): Promise<void> {
+  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Close event failed", res.status, text);
+    throw new Error(
+      `Failed to close event (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
 }
 
 // Fetch all buildings (for create event dropdown)

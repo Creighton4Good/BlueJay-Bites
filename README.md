@@ -17,7 +17,7 @@ Our app helps students find free food on the Creighton University campus while r
 ---
 
 ## For a quick demo of the app's structure:
-Take a look [here](https://jhb09808.github.io/)
+Take a look [here](https://creighton4good.github.io/BlueJay-Bites/prototype.html)
 
 ---
 
