@@ -11,10 +11,16 @@ import {
   View,
   KeyboardAvoidingView,
 } from "react-native";
-import { createEvent, NewEvent, Building, fetchBuildings } from "@/lib/api";
+import {
+    createEvent,
+    NewEvent,
+    Building,
+    fetchBuildings,
+    FoodType,
+    fetchFoodTypes, DietaryOption, fetchDietaryOptions,
+} from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
@@ -24,6 +30,14 @@ export default function CreateEventScreen() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+  const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<string>("");
+  const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
+  const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
+  const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
+  const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
+  const [servingsMin, setServingsMin] = useState<number | null>(null);
+  const [servingsMax, setServingsMax] = useState<number | null>(null);
   const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -47,7 +61,49 @@ export default function CreateEventScreen() {
     loadBuildings();
   }, []);
 
-  const pad = (n: number) => String(n).padStart(2, "0");
+  useEffect(() => {
+    const loadFoodTypes = async () => {
+      setLoadingFoodTypes(true);
+      try {
+        const data = await fetchFoodTypes();
+        setFoodTypes(data);
+      } catch (err) {
+        console.error("Error fetching food types:", err);
+        Alert.alert("Error", "Could not load food type options.");
+      } finally {
+        setLoadingFoodTypes(false);
+      }
+    };
+
+    loadFoodTypes();
+  }, []);
+
+    useEffect(() => {
+        const loadDietaryOptions = async () => {
+            setLoadingDietaryOptions(true);
+            try {
+                const data = await fetchDietaryOptions();
+                setDietaryOptionsList(data);
+
+
+            } catch (err) {
+                console.error("Error fetching dietary options:", err);
+                Alert.alert("Error", "Could not load dietary options.");
+            } finally {
+                setLoadingDietaryOptions(false);
+            }
+        };
+    loadDietaryOptions();
+}, []);
+
+
+    const toggleDietaryOption = (id: string) => {
+        setSelectedDietaryOptionIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
+
+    const pad = (n: number) => String(n).padStart(2, "0");
 
   const formatDateForWebInput = (date: Date | null) => {
     if (!date || Number.isNaN(date.getTime())) return "";
@@ -109,6 +165,28 @@ export default function CreateEventScreen() {
       return;
     }
 
+    const min = servingsMin ?? 0;
+    const max = servingsMax ?? 0;
+    let validType: boolean = true;
+    if (!Number.isInteger(min) || !Number.isInteger(max) || max < 0 || min < 0) {
+      validType = false;
+    }
+
+    if (!validType) {
+      Alert.alert(
+          "Invalid entry",
+          "Please enter a positive whole number for serving sizes.",
+      )
+    }
+
+    if (max < min && servingsMax != null) {
+      Alert.alert(
+          "Invalid serving estimate",
+          "Minimum servings must be less or equal to maximum servings."
+      );
+      return;
+    }
+
     if (!availableFrom || !availableUntil) {
       Alert.alert(
         "Missing availability",
@@ -132,10 +210,15 @@ export default function CreateEventScreen() {
       title: title.trim(),
       description: description.trim(),    
       building: { id: Number(selectedBuildingId) },
+      foodType: selectedFoodTypeId ? {id: Number(selectedFoodTypeId)} : undefined,
+      dietaryOptions: selectedDietaryOptionIds.length > 0  ? selectedDietaryOptionIds.map((id) => ({ id: Number(id) }))
+            : undefined,
       directions: directions.trim() || undefined,
       roomNumber: roomNumber.trim() || undefined,
+      servingsMin: servingsMin ?? undefined,
+      servingsMax: servingsMax ?? undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
-      availableUntil: toLocalDateTimeString(availableUntil),        
+      availableUntil: toLocalDateTimeString(availableUntil),
       createdBy: { id: 1 },
       status: "active",
       createdAt: now,
@@ -154,6 +237,10 @@ export default function CreateEventScreen() {
       setDirections("");
       setRoomNumber("");
       setSelectedBuildingId("");
+      setSelectedFoodTypeId("");
+      setSelectedDietaryOptionIds([]);
+      setServingsMin(null);
+      setServingsMax(null);
       setAvailableFrom(null);
       setAvailableUntil(null);
     } catch (err: any) {
@@ -249,21 +336,105 @@ export default function CreateEventScreen() {
       </View>
 
       <TextInput
-        style={styles.input}
-        placeholder="Room number (optional)"
-        placeholderTextColor="#999"
-        value={roomNumber}
-        onChangeText={setRoomNumber}
-        editable={!submitting}
+          style={styles.input}
+          placeholder="Room number (optional)"
+          placeholderTextColor="#999"
+          value={roomNumber}
+          onChangeText={setRoomNumber}
+          editable={!submitting}
       />
 
       <TextInput
-        style={styles.input}
-        placeholder="Directions (optional)"
-        placeholderTextColor="#999"
-        value={directions}
-        onChangeText={setDirections}
-        editable={!submitting}
+          style={styles.input}
+          placeholder="Directions (optional)"
+          placeholderTextColor="#999"
+          value={directions}
+          onChangeText={setDirections}
+          editable={!submitting}
+      />
+
+      <Text style={styles.label}>Food Type (optional)</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+            selectedValue={selectedFoodTypeId}
+            enabled={!submitting && !loadingFoodTypes}
+            onValueChange={(itemValue) =>
+                setSelectedFoodTypeId(String(itemValue))}
+            style={styles.picker}
+        >
+          <Picker.Item
+              label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+              value=""
+          />
+          {foodTypes.map((foodType) => (
+              <Picker.Item
+                  key={foodType.id}
+                  label={foodType.typeName}
+                  value={String(foodType.id)}
+              />
+          ))}
+        </Picker>
+      </View>
+
+
+        <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            {dietaryOptionsList.map((option) => {
+                const idStr = String(option.id);
+                const selected = selectedDietaryOptionIds.includes(idStr);
+                return (
+                    <Pressable
+                        key={option.id}
+                        onPress={() => toggleDietaryOption(idStr)}
+                        disabled={submitting || loadingDietaryOptions}
+                        style={{
+                            paddingVertical: 6,
+                            paddingHorizontal: 12,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: "#005CA9",
+                            backgroundColor: selected ? "#005CA9" : "#fff",
+                        }}
+                    >
+                        <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
+                    </Pressable>
+                );
+            })}
+        </View>
+
+      <Text style={styles.label}>Minimum servings (optional)</Text>
+      <TextInput
+          style={styles.input}
+          placeholderTextColor="#999"
+          value={servingsMin === null ? "" : servingsMin.toString()}
+          onChangeText={(text) => {
+            if (text === "") {
+              setServingsMin(null);
+            } else {
+              const n = Number(text);
+              if (!Number.isNaN(n)) setServingsMin(n);
+            }
+          }}
+          editable={!submitting}
+          keyboardType="numeric"
+      />
+
+
+      <Text style={styles.label}>Maximum servings (optional)</Text>
+      <TextInput
+          style={styles.input}
+          placeholderTextColor="#999"
+          value={servingsMax === null ? "" : servingsMax.toString()}
+          onChangeText={(text) => {
+            if (text === "") {
+              setServingsMax(null);
+            } else {
+              const n = Number(text);
+              if (!Number.isNaN(n)) setServingsMax(n);
+            }
+          }}
+          editable={!submitting}
+          keyboardType="numeric"
       />
     
       {Platform.OS === "web" ? (
