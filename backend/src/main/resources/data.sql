@@ -54,3 +54,42 @@ INSERT IGNORE INTO dietary_options (id, option_name) VALUES
 (7, 'Kosher'),
 (8, 'Organic'),
 (9, 'Low-Carb');
+
+-- Sample Food Events
+-- Times are relative to startup so seeded events are always currently active.
+INSERT IGNORE INTO posts
+  (id, title, description, notes, building_id, directions, room_number,
+   food_type_id, servings_min, servings_max, available_from, available_until,
+   status, created_by, created_at, updated_at)
+VALUES
+(101, 'Leftover Pizza from Business Club',
+ 'About ten boxes of cheese and pepperoni pizza left over from our evening meeting. Plates and napkins provided.',
+ 'Please take only what you will eat.',
+ 1, 'Second floor, past the main staircase.', '227',
+ 1, 20, 40,
+ NOW() - INTERVAL 1 HOUR, NOW() + INTERVAL 4 HOUR,
+ 'active', 1, NOW(), NOW()),
+
+(102, 'Sandwich Trays After Career Fair',
+ 'Assorted turkey, ham, and vegetarian sandwich trays remaining from the afternoon career fair.',
+ NULL,
+ 2, 'Main level ballroom, near the north entrance.', 'Ballroom',
+ 2, 15, 30,
+ NOW() - INTERVAL 30 MINUTE, NOW() + INTERVAL 3 HOUR,
+ 'active', 1, NOW(), NOW()),
+
+(103, 'Breakfast Pastries from Faculty Meeting',
+ 'Muffins, croissants, and fruit left from the morning faculty meeting. Coffee still available.',
+ 'Vegetarian options available.',
+ 5, 'First floor lounge, across from the elevators.', '110',
+ 3, 10, 20,
+ NOW() - INTERVAL 2 HOUR, NOW() + INTERVAL 2 HOUR,
+ 'active', 1, NOW(), NOW()),
+
+(104, 'Dessert Table from Alumni Reception',
+ 'Cookies, brownies, and cheesecake bites from the alumni reception.',
+ NULL,
+ 8, 'Enter through the main doors, event space is on the right.', 'Hall A',
+ 6, 25, 50,
+ NOW(), NOW() + INTERVAL 5 HOUR,
+ 'active', 1, NOW(), NOW());
