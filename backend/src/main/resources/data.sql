@@ -93,3 +93,21 @@ VALUES
  6, 25, 50,
  NOW(), NOW() + INTERVAL 5 HOUR,
  'active', 1, NOW(), NOW());
+
+-- Dietary tags for the sample events
+INSERT IGNORE INTO post_dietary_options (post_id, dietary_option_id) VALUES
+(101, 1),
+(102, 1),
+(102, 3),
+(103, 1),
+(103, 5),
+(104, 1);
+
+-- Dietary tags for the sample events
+INSERT IGNORE INTO post_dietary_options (post_id, dietary_option_id) VALUES
+(101, 1),
+(102, 1),
+(102, 3),
+(103, 1),
+(103, 5),
+(104, 1);
