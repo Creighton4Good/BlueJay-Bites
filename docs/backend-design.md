@@ -13,6 +13,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - **Spring Data JPA / Hibernate** for ORM
 - **Spring Security** for role-based authorization
 - **Maven** for dependency management
+- **OAuth2 & Azure** for authentication
 
 ## Database
 
@@ -38,6 +39,9 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - **user_preferences** - Supports the notification preference for the user ("on" or "off")
 - **post_photos** - Supports photo uploads for organizers when creating posts
 
+### Junction Tables
+- **post_dietary_options** - Allows users to select multiple dietary options when creating an event; associates each option with its events, and the event with its options
+
 ## Admin Dashboard Server
 
 - Accessible using localhost:8080/admin when running backend
@@ -58,6 +62,11 @@ User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, a
 - Allows navigating object references in repository queries (e.g., `findByCreatedBy_Id(Integer userId)`)
 - Aligns with proper JPA practices and database design feedback
 
+### @ManyToMany
+
+- Post has a `post_dietary_options` junction table, as many events can have the same dietary option, and many dietary options can apply to one event
+- This same structure could be used to support a `user_dietary_preferences` junction table, as many dietary preferences can apply to a specific user, and many users can apply to a specific dietary preference
+
 ### Pickup window over single expiration time
 
 Posts use `availableFrom` and `availableUntil` instead of a single `expirationTime`. Users need to know when to show up, not just when food runs out. This gives organizers explicit control over the pickup window.
@@ -76,11 +85,11 @@ Posts are never hard-deleted. Status changes from `active` to `closed`, where on
 
 ### Admin/organizer actions
 
-Admins and organizers have separate endpoints for editing and deleting an event, to ensure that organizers are only performing these actions on events they own. Only admins can promote and demote users to other roles. Users can update their own personal information, such as their display name.
+Admins and organizers can both edit and delete their own event, but admins can edit or delete any event. There are security checks to ensure that organizers are only performing these actions on events they own. Only admins can promote and demote users to other roles. Any user can update their own personal information, such as their display name.
 
 ### Admin/organizer views
 
-Admins can do anything that an organizer can do, so they will also be able to see the page of events only they created. Admins will also have admin only views such as get all closed posts, get a post by id, or recover a post. This helps to ensure that admins do not need to be assigned the organizer role separately.
+Admins can do anything that an organizer can do, so they will also be able to see the page of events only they created. Admin only views are supported in conroller classes, such as get all closed posts, get a post by id, or recover a post. This helps to ensure that admins do not need to be assigned the organizer role separately.
 
 ### Buildings table = indoor structures only
 
@@ -100,7 +109,20 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 
 ### Photos
 
-Photos can be uploaded to each event with no limit, and with a display order. This order can be changed, as well as the photo itself. Photo endpoints support viewing photos and managing them.
+- A photo can be uploaded and attached to an event and be associated with that event
+- `PhotoController`, `PhotoUploadController`, and `PhotoService` work together to handle uploading, retrieving, and storing photos, based on the photo that was uploaded
+- Currently, photo upload only allows one photo per event. However, backend integration can support multiple if this is a future addition
+  - `displayOrder` field to be used to display photos in event details page in creation order
+  - `photoUrl` would include the primary photo in main events page to display; this would be auto assigned to the newest created photo that is existing (highest in displayOrder)
+- Photos are stored using a UUID (Universally Unique Identifier), to allow for unique filenames and proper storage
+- `photoUrl` is used to get photo data from the frontend
+- Currently, photos are being stored locally through an env variable "file.upload-dir". When testing, feel free to set this to your preferred destination in an environment variable
+
+### Environment Variables
+- `file.upload-dir` - Storing photos
+- `DB_USERNAME` - Username for SQL
+- `DB_PASSWORD` - Password for SQL
+- `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET` - credentials for authentication
 
 ## API Conventions
 
@@ -113,6 +135,7 @@ Photos can be uploaded to each event with no limit, and with a display order. Th
 - `/api/foodtypes` — food type lookup
 - `/api/dietary-options` — dietary option lookup
 - `api/post-photos` - photo lookup
+- `api/uploads` - photo upload
 
 ### Standard endpoints used in controllers
 
@@ -134,6 +157,7 @@ Photos can be uploaded to each event with no limit, and with a display order. Th
   - Using the documentation provided by Microsoft [here](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configure-spring-boot-starter-java-app-with-entra), which includes dependencies and configuration information
   - OAUTH was chosen over SAML due to being more compatible with Spring-Boot
 - Endpoints are temporarily all accessible for local development
+- `@AuthenticatedPrincipal` annotations on endpoints in order to get the authenticated OAuth2 user for checks involving type of user, ownership, or actions involving a particular user
 
 ## Repository Patterns
 
