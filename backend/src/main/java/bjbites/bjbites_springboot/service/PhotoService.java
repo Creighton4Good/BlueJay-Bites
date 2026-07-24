@@ -4,6 +4,7 @@ import bjbites.bjbites_springboot.entity.Photo;
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PhotoRepository;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
+@Transactional
 @Service
 public class PhotoService {
 
@@ -33,7 +36,7 @@ public class PhotoService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         // Save the file to the directory
-        String fileName = saveImage(file);
+        UUID fileName = saveImage(file);
 
         Photo photo = new Photo(post, "/api/uploads/photos/" + fileName);
         photo.setPost(post);
@@ -46,19 +49,22 @@ public class PhotoService {
     }
 
     // Save photo
-    private String saveImage(MultipartFile file) throws IOException {
+    private UUID saveImage(MultipartFile file) throws IOException {
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // TODO: Use a UUID for file storage to prevent overwriting images
-        // and can also implement path validation
-        String fileName = file.getOriginalFilename();
-        Path filePath = uploadPath.resolve(fileName);
+        String contentType = file.getContentType();
+        if (!Objects.equals(contentType, "image/jpeg") && !Objects.equals(contentType, "image/png")) {
+            throw new IllegalArgumentException("Only JPEG or PNG images are allowed");
+        }
+
+        UUID randomFileName = UUID.randomUUID();
+        Path filePath = uploadPath.resolve(String.valueOf(randomFileName));
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        return fileName;
+        return randomFileName;
     }
 
     public void deletePhoto(int id) throws IOException {

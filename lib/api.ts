@@ -22,7 +22,7 @@ export type DietaryOption = {
 
 export type Photo = {
   id: number;
-  event: Event;
+  post: Event;
   photoUrl: string;
   displayOrder: number;
   createdAt?: string;
@@ -105,7 +105,7 @@ export type UpdateEvent = {
   updatedAt?: string;
 }
 
-const BASE_URL =
+export const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ??
   (Platform.OS === "android"
     ? "http://10.0.2.2:8080" // Android emulator
@@ -237,7 +237,7 @@ export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
 
 // Fetch all photos for an event (for retrieving multiple photos)
 export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
-  const res = await fetch(`${PHOTO_URL}/post/{postId}`);
+  const res = await fetch(`${PHOTO_URL}/post/${postId}`);
   if (!res.ok) throw new Error("Failed to fetch event photos");
   return res.json();
 }
