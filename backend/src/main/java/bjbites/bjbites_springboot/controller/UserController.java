@@ -251,19 +251,15 @@ public class UserController {
      */
     @PutMapping("/me")
     public ResponseEntity<User> updateUser(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestBody User userDetails) {
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<User> userData = userRepository.findById(currentUser.getId());
         if (userData.isPresent()) {
             User user = userData.get();
-                // TODO: change userId to authenticated user
-                user.setEmail(userDetails.getEmail());
-                user.setDisplayName(userDetails.getDisplayName());
-                // sensitive fields commented out
-                // user.setEntraId(userDetails.getEntraId());
-                // user.setAuthProvider(userDetails.getAuthProvider());
-
-                return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+            // Only displayName is user-editable. Email, entraId, and authProvider
+            // are owned by Entra/SSO and changing them here would desync the DB.
+            user.setDisplayName(userDetails.getDisplayName());
+            return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
         }
         return ResponseEntity.notFound().build();
     }
