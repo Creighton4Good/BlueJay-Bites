@@ -1,7 +1,7 @@
-import React, { useState, useCallback} from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { useFocusEffect, router } from "expo-router";
-import { Event, fetchEvents } from "@/lib/api";
+import React, {useCallback, useEffect, useState} from "react";
+import { FlatList, Pressable, StyleSheet, Text, View, Image } from "react-native";
+import {router, useFocusEffect} from "expo-router";
+import { BASE_URL, Event, fetchEvents } from "@/lib/api";
 
 export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -64,7 +64,12 @@ export default function HomeScreen() {
           data={events}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
+          renderItem={({ item }) => {
+            const displayUrl = item.photoUrl
+                // TODO: Update URL when storing in cloud
+            ? (item.photoUrl.startsWith("http") ? item.photoUrl : `${BASE_URL}${item.photoUrl}`)
+            : undefined;
+            return (
             <Pressable
               style={({ pressed }) => [
                 styles.card,
@@ -77,6 +82,16 @@ export default function HomeScreen() {
                 })
               }
             >
+
+              {displayUrl ? (
+                  <Image
+                      source={{ uri: displayUrl }}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                      onError={() => console.warn(`Failed to load image for event ${item.id}`)}
+                  />
+              ) : null}
+
               <Text style={styles.cardTitle}>{item.title}</Text>
 
               {!!item.building && (
@@ -133,7 +148,7 @@ export default function HomeScreen() {
 
 
             </Pressable>
-          )}
+          )}}
         />
       )}
     </View>
@@ -209,6 +224,12 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     marginTop: 4,
+  },
+  cardImage: {
+    width: "100%",
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   cardMeta: {
     marginTop: 4,

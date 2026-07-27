@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Alert,
   Button,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -11,13 +12,17 @@ import {
   View,
   KeyboardAvoidingView,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import {
     createEvent,
     NewEvent,
     Building,
     fetchBuildings,
     FoodType,
-    fetchFoodTypes, DietaryOption, fetchDietaryOptions,
+    fetchFoodTypes, 
+    DietaryOption, 
+    fetchDietaryOptions,
+    uploadPhoto
 } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
@@ -44,6 +49,7 @@ export default function CreateEventScreen() {
   const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const { user } = useSession();
@@ -153,6 +159,49 @@ export default function CreateEventScreen() {
     });
   };
 
+  const pickFromLibrary = async () => {
+    const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+          "Permission needed",
+          "We need access to your photos to attach an image."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPhotoUrl(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+          "Permission needed",
+          "We need camera access so you can take a picture."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPhotoUrl(result.assets[0].uri);
+    }
+  };
+
+
   const handleSubmit = async () => {
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
@@ -232,7 +281,16 @@ export default function CreateEventScreen() {
     setSubmitting(true);
 
     try {
-      await createEvent(payload);
+      const createdEvent = await createEvent(payload);
+
+      if (photoUrl) {
+        const filename = photoUrl.split("/").pop() ?? "photo.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        await uploadPhoto({ uri: photoUrl, name: filename, type }, createdEvent.id);
+      }
+
 
       Alert.alert("Success", "Food event created successfully!");
       
@@ -247,6 +305,7 @@ export default function CreateEventScreen() {
       setServingsMax(null);
       setAvailableFrom(null);
       setAvailableUntil(null);
+      setPhotoUrl(null);
     } catch (err: any) {
       console.error("Error creating event:", err);
       Alert.alert(
@@ -381,7 +440,6 @@ export default function CreateEventScreen() {
             </Picker>
           </View>
 
-
             <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 {dietaryOptionsList.map((option) => {
@@ -407,6 +465,31 @@ export default function CreateEventScreen() {
                 })}
             </View>
 
+          <Text style={{ marginTop: 8, marginBottom: 4, fontWeight: "600" }}>
+        Add a photo (optional)
+      </Text>
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Button title="Take Photo" onPress={takePhoto} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button title="Choose from Library" onPress={pickFromLibrary} />
+        </View>
+      </View>
+
+      {photoUrl && (
+          <View style={{ marginBottom: 12, alignItems: "center" }}>
+            <Image
+                source={{ uri: photoUrl }}
+                style={{ width: "100%", height: 180, borderRadius: 8 }}
+                resizeMode="cover"
+            />
+            <Text style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
+              This image will be attached to the event.
+            </Text>
+          </View>
+      )}
+        
           <Text style={styles.label}>Minimum servings (optional)</Text>
           <TextInput
               style={styles.input}
