@@ -1,7 +1,8 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import React from "react";
-
+import { SessionProvider } from "@/app/contexts/session-context";
+ 
 const MyTheme = {
   ...DefaultTheme,
   colors: {
@@ -39,8 +40,10 @@ function InitialLayout() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={MyTheme}>
-      <InitialLayout />
-    </ThemeProvider>
+    <SessionProvider>
+      <ThemeProvider value={MyTheme}>
+        <InitialLayout />
+      </ThemeProvider>
+    </SessionProvider>
   );
 }

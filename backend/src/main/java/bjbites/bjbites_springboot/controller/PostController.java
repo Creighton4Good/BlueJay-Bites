@@ -92,7 +92,7 @@ public class PostController {
     public ResponseEntity<List<Post>> getCreatedPosts(@AuthenticationPrincipal OAuth2User oAuthUser) {
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
-        List<Post> posts = postRepository.findByCreatedBy_Id(currentUser.getId());
+        List<Post> posts = postRepository.findByCreatedBy_IdOrderByCreatedAtDesc(currentUser.getId());
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
 

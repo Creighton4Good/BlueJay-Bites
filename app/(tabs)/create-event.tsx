@@ -21,6 +21,8 @@ import {
 } from "@/lib/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { useSession } from "@/app/contexts/session-context";
+import { OrganizerRouteGuard } from "@/components/organizer-route-guard";
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
@@ -43,6 +45,8 @@ export default function CreateEventScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const { user } = useSession();
 
   useEffect(() => {
     const loadBuildings = async () => {
@@ -218,8 +222,8 @@ export default function CreateEventScreen() {
       servingsMin: servingsMin ?? undefined,
       servingsMax: servingsMax ?? undefined,
       availableFrom: toLocalDateTimeString(availableFrom),          
-      availableUntil: toLocalDateTimeString(availableUntil),
-      createdBy: { id: 1 },
+      availableUntil: toLocalDateTimeString(availableUntil),        
+      createdBy: { id: user.id },
       status: "active",
       createdAt: now,
       updatedAt: now,
@@ -285,157 +289,158 @@ export default function CreateEventScreen() {
   };
 
   return (
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : undefined}
-  >
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.bigText}>Create Food Event</Text>
-      <Text style={styles.subText}>
-        Prototype mode: posting as test organizer
-      </Text>
+    <OrganizerRouteGuard>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.bigText}>Create Food Event</Text>
+        <Text style={styles.subText}>
+          Prototype mode: posting as test organizer
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Title *"
-        placeholderTextColor="#999"
-        value={title}
-        onChangeText={setTitle}
-        editable={!submitting}
-      />
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="Description *"
-        placeholderTextColor="#999"
-        value={description}
-        onChangeText={setDescription}
-        editable={!submitting}
-        multiline
-      />
-      <Text style={styles.label}>Building *</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={selectedBuildingId}
-          enabled={!submitting && !loadingBuildings}
-          onValueChange={(itemValue) => 
-            setSelectedBuildingId(String(itemValue))}
-          style={styles.picker}
-        >
-          <Picker.Item
-            label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
-            value=""
-          />
-          {buildings.map((building) => (
-            <Picker.Item
-              key={building.id}
-              label={building.buildingName}
-              value={String(building.id)}
-            />
-          ))}
-        </Picker>
-      </View>
-
-      <TextInput
+        <TextInput
           style={styles.input}
-          placeholder="Room number (optional)"
+          placeholder="Title *"
           placeholderTextColor="#999"
-          value={roomNumber}
-          onChangeText={setRoomNumber}
+          value={title}
+          onChangeText={setTitle}
           editable={!submitting}
-      />
-
-      <TextInput
-          style={styles.input}
-          placeholder="Directions (optional)"
+        />
+        <TextInput
+          style={[styles.input, styles.multiline]}
+          placeholder="Description *"
           placeholderTextColor="#999"
-          value={directions}
-          onChangeText={setDirections}
+          value={description}
+          onChangeText={setDescription}
           editable={!submitting}
-      />
-
-      <Text style={styles.label}>Food Type (optional)</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-            selectedValue={selectedFoodTypeId}
-            enabled={!submitting && !loadingFoodTypes}
-            onValueChange={(itemValue) =>
-                setSelectedFoodTypeId(String(itemValue))}
+          multiline
+        />
+        <Text style={styles.label}>Building *</Text>
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={selectedBuildingId}
+            enabled={!submitting && !loadingBuildings}
+            onValueChange={(itemValue) => 
+              setSelectedBuildingId(String(itemValue))}
             style={styles.picker}
-        >
-          <Picker.Item
-              label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+          >
+            <Picker.Item
+              label={loadingBuildings ? "Loading buildings..." : "Select a building..."}
               value=""
-          />
-          {foodTypes.map((foodType) => (
+            />
+            {buildings.map((building) => (
               <Picker.Item
-                  key={foodType.id}
-                  label={foodType.typeName}
-                  value={String(foodType.id)}
+                key={building.id}
+                label={building.buildingName}
+                value={String(building.id)}
               />
-          ))}
-        </Picker>
-      </View>
-
-
-        <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-            {dietaryOptionsList.map((option) => {
-                const idStr = String(option.id);
-                const selected = selectedDietaryOptionIds.includes(idStr);
-                return (
-                    <Pressable
-                        key={option.id}
-                        onPress={() => toggleDietaryOption(idStr)}
-                        disabled={submitting || loadingDietaryOptions}
-                        style={{
-                            paddingVertical: 6,
-                            paddingHorizontal: 12,
-                            borderRadius: 16,
-                            borderWidth: 1,
-                            borderColor: "#005CA9",
-                            backgroundColor: selected ? "#005CA9" : "#fff",
-                        }}
-                    >
-                        <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
-                    </Pressable>
-                );
-            })}
+            ))}
+          </Picker>
         </View>
 
-      <Text style={styles.label}>Minimum servings (optional)</Text>
-      <TextInput
-          style={styles.input}
-          placeholderTextColor="#999"
-          value={servingsMin === null ? "" : servingsMin.toString()}
-          onChangeText={(text) => {
-            if (text === "") {
-              setServingsMin(null);
-            } else {
-              const n = Number(text);
-              if (!Number.isNaN(n)) setServingsMin(n);
-            }
-          }}
-          editable={!submitting}
-          keyboardType="numeric"
-      />
+          <TextInput
+              style={styles.input}
+              placeholder="Room number (optional)"
+              placeholderTextColor="#999"
+              value={roomNumber}
+              onChangeText={setRoomNumber}
+              editable={!submitting}
+          />
+
+          <TextInput
+              style={styles.input}
+              placeholder="Directions (optional)"
+              placeholderTextColor="#999"
+              value={directions}
+              onChangeText={setDirections}
+              editable={!submitting}
+          />
+
+          <Text style={styles.label}>Food Type (optional)</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+                selectedValue={selectedFoodTypeId}
+                enabled={!submitting && !loadingFoodTypes}
+                onValueChange={(itemValue) =>
+                    setSelectedFoodTypeId(String(itemValue))}
+                style={styles.picker}
+            >
+              <Picker.Item
+                  label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+                  value=""
+              />
+              {foodTypes.map((foodType) => (
+                  <Picker.Item
+                      key={foodType.id}
+                      label={foodType.typeName}
+                      value={String(foodType.id)}
+                  />
+              ))}
+            </Picker>
+          </View>
 
 
-      <Text style={styles.label}>Maximum servings (optional)</Text>
-      <TextInput
-          style={styles.input}
-          placeholderTextColor="#999"
-          value={servingsMax === null ? "" : servingsMax.toString()}
-          onChangeText={(text) => {
-            if (text === "") {
-              setServingsMax(null);
-            } else {
-              const n = Number(text);
-              if (!Number.isNaN(n)) setServingsMax(n);
-            }
-          }}
-          editable={!submitting}
-          keyboardType="numeric"
-      />
+            <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                {dietaryOptionsList.map((option) => {
+                    const idStr = String(option.id);
+                    const selected = selectedDietaryOptionIds.includes(idStr);
+                    return (
+                        <Pressable
+                            key={option.id}
+                            onPress={() => toggleDietaryOption(idStr)}
+                            disabled={submitting || loadingDietaryOptions}
+                            style={{
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 16,
+                                borderWidth: 1,
+                                borderColor: "#005CA9",
+                                backgroundColor: selected ? "#005CA9" : "#fff",
+                            }}
+                        >
+                            <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
+                        </Pressable>
+                    );
+                })}
+            </View>
+
+          <Text style={styles.label}>Minimum servings (optional)</Text>
+          <TextInput
+              style={styles.input}
+              placeholderTextColor="#999"
+              value={servingsMin === null ? "" : servingsMin.toString()}
+              onChangeText={(text) => {
+                if (text === "") {
+                  setServingsMin(null);
+                } else {
+                  const n = Number(text);
+                  if (!Number.isNaN(n)) setServingsMin(n);
+                }
+              }}
+              editable={!submitting}
+              keyboardType="numeric"
+          />
+
+
+          <Text style={styles.label}>Maximum servings (optional)</Text>
+          <TextInput
+              style={styles.input}
+              placeholderTextColor="#999"
+              value={servingsMax === null ? "" : servingsMax.toString()}
+              onChangeText={(text) => {
+                if (text === "") {
+                  setServingsMax(null);
+                } else {
+                  const n = Number(text);
+                  if (!Number.isNaN(n)) setServingsMax(n);
+                }
+              }}
+              editable={!submitting}
+              keyboardType="numeric"
+          />
     
       {Platform.OS === "web" ? (
         <>
@@ -551,15 +556,16 @@ export default function CreateEventScreen() {
         />
       )}
 
-      <View style={styles.buttonWrapper}>
-        <Button
-          title={submitting ? "Posting..." : "Post Food Event"}
-          onPress={handleSubmit}
-          disabled={submitting || loadingBuildings}
-        />
-      </View>
-    </ScrollView>
-  </KeyboardAvoidingView>
+          <View style={styles.buttonWrapper}>
+            <Button
+              title={submitting ? "Posting..." : "Post Food Event"}
+              onPress={handleSubmit}
+              disabled={submitting || loadingBuildings}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </OrganizerRouteGuard>
   );
 }
 
@@ -642,5 +648,17 @@ const styles = StyleSheet.create({
   },
   picker: {
     color: "#000",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
+    textAlign: "center",
   },
 });
