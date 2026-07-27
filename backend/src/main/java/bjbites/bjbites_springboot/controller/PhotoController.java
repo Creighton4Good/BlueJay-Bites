@@ -18,7 +18,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/post-photos")
-@CrossOrigin(origins = "*")
 public class PhotoController {
 
     @Autowired

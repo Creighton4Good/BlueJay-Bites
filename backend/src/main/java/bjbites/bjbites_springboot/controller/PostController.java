@@ -24,7 +24,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "*") // Configure this properly for production
 public class PostController {
     
     @Autowired

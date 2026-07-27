@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/dietary-options")
-@CrossOrigin(origins = "*")
 public class DietaryOptionController {
 
     @Autowired

@@ -18,7 +18,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user-preferences")
-@CrossOrigin(origins = "*")
 public class UserPreferenceController {
 
     @Autowired
