@@ -3,7 +3,6 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Event, fetchMyEvents } from "@/lib/api";
 
-// TODO: Replace with the signed-in user's id once SSO/auth is wired up.
 // For now this is the test event_organizer account (id 1).
 
 export default function MyEventsScreen() {
