@@ -117,12 +117,17 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - Photos are stored using a UUID (Universally Unique Identifier), to allow for unique filenames and proper storage
 - `photoUrl` is used to get photo data from the frontend
 - Currently, photos are being stored locally through an env variable "file.upload-dir". When testing, feel free to set this to your preferred destination in an environment variable
+- Testing through CURL (client URL) commands on command prompt:
+  - Create image: curl.exe -X POST http://localhost:8080/api/uploads/photos -F file=@{your-file-path} -F “postId={your-post-id}”
+  -	Retrieve image: http://localhost:8080/api/uploads/photos/{filename}
+  -	Delete image: curl.exe -X DELETE http://localhost:8080/api/post-photos/{your-photo-id}
+
 
 ### Environment Variables
-- `file.upload-dir` - Storing photos
+- `file.upload-dir` - Local storage for photos
 - `DB_USERNAME` - Username for SQL
 - `DB_PASSWORD` - Password for SQL
-- `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET` - credentials for authentication
+- `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET` - credentials for authentication through Microsoft SSO
 
 ## API Conventions
 
@@ -136,6 +141,7 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - `/api/dietary-options` — dietary option lookup
 - `api/post-photos` - photo lookup
 - `api/uploads` - photo upload
+- `api/notifications` - noitification lookup
 
 ### Standard endpoints used in controllers
 
@@ -173,6 +179,6 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - Continue building notification system (delivery method — in-app vs email — pending IT meeting)
   - Current approach: SSE (Single-Server Events, websockets)
 - Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
-- •	Support for uploading and converting photos end-to-end
+- Support for uploading and converting photos end-to-end
 - Add `servingsRemaining` tracking for "running low" UI
 
