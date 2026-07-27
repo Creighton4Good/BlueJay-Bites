@@ -21,6 +21,14 @@ export type DietaryOption = {
   optionName: string;
 };
 
+export type Photo = {
+  id: number;
+  post: Event;
+  photoUrl: string;
+  displayOrder: number;
+  createdAt?: string;
+};
+
 export type Role = {
   id: number;
   roleName: string;
@@ -127,12 +135,14 @@ function resolveBaseUrl(): string {
     : `http://localhost:${BACKEND_PORT}`; // iOS simulator
 }
 
-const BASE_URL = resolveBaseUrl();
+export const BASE_URL = resolveBaseUrl();
 
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
+const PHOTO_URL = `${BASE_URL}/api/post-photos`
+const UPLOAD_URL = `${BASE_URL}/api/uploads`
 
 export const PROTOTYPE_CURRENT_USER_ID = Number(
   process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
@@ -261,5 +271,29 @@ export async function fetchFoodTypes(): Promise<FoodType[]> {
 export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   const res = await fetch(`${DIETARY_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch dietary options");
+  return res.json();
+}
+
+// Fetch all photos for an event (for retrieving multiple photos)
+export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
+  const res = await fetch(`${PHOTO_URL}/post/${postId}`);
+  if (!res.ok) throw new Error("Failed to fetch event photos");
+  return res.json();
+}
+
+// Upload a photo for an event
+export async function uploadPhoto(file: { uri: string; name: string; type: string }, postId: number): Promise<Photo> {
+  const formData = new FormData();
+  formData.append("file", file as any);
+  formData.append("postId", String(postId));
+
+  const res = await fetch(`${UPLOAD_URL}/photos`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Failed to upload photo");
+  }
   return res.json();
 }

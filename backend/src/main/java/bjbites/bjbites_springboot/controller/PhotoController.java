@@ -4,12 +4,15 @@ import bjbites.bjbites_springboot.entity.Photo;
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PhotoRepository;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import bjbites.bjbites_springboot.service.PhotoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +25,8 @@ public class PhotoController {
     private PhotoRepository photoRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private PhotoService photoService;
 
 
     // Get all photos
@@ -59,32 +64,11 @@ public class PhotoController {
      *          or {@code 404 Not Found} if no photo exists with specified url
      */
     @PreAuthorize("hasAuthority('admin')")
-    @GetMapping("/url/{photoUrl}")
-    public ResponseEntity<Photo> getPhotoByUrl(@PathVariable String photoUrl) {
+    @GetMapping("/url/")
+    public ResponseEntity<Photo> getPhotoByUrl(@RequestParam String photoUrl) {
         Optional<Photo> photo = photoRepository.findByPhotoUrl(photoUrl);
         return photo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // Create photo
-    /**
-     * Create new photo
-     * @param photo the photo to create
-     * @return a {@code ResponseEntity} containing the created photo with {@code 201 Created},
-     *          or {@code 500 Internal Server Error} if an unexpected error occurs
-     */
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PostMapping("/create")
-    public ResponseEntity<Photo> createPhoto(@RequestBody Photo photo) {
-       // TODO: Support photo uploads & conversion
-        Post post = postRepository.findById(photo.getPost().getId())
-            .orElseThrow(() -> new RuntimeException("Post not found"));
-
-        photo.setPost(post);
-
-        photoRepository.save(photo);
-
-        return new ResponseEntity<>(photo, HttpStatus.CREATED);
     }
 
     // Update photo (for changing uploads and display order changes)
@@ -102,7 +86,6 @@ public class PhotoController {
         Optional<Photo> photoData = photoRepository.findById(id);
         if (photoData.isPresent()) {
             Photo photo = photoData.get();
-            photo.setPhotoUrl((photoDetails.getPhotoUrl()));
             photo.setDisplayOrder(photoDetails.getDisplayOrder());
             return new ResponseEntity<>(photoRepository.save(photo), HttpStatus.OK);
         }
@@ -118,14 +101,19 @@ public class PhotoController {
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Photo> deletePhoto(@PathVariable int id) {
-            Optional<Photo> photo = photoRepository.findById(id);
-            if (photo.isPresent()) {
-                Photo existingPhoto = photo.get();
-                photoRepository.delete(existingPhoto);
-                return ResponseEntity.noContent().build(); }
-            else {
-                return ResponseEntity.notFound().build(); }
+    public ResponseEntity<Void> deletePhoto(@PathVariable int id) {
+           try {
+                photoService.deletePhoto(id);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+           catch (NoSuchFileException e) {
+               return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+           }
+
+           catch (IOException e) {
+               return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+           }
         }
 
     // Get all photos for a post (by display order)
