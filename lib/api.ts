@@ -212,15 +212,12 @@ export async function createEvent(event: NewEvent): Promise<Event> {
 // Update an existing event
 export async function updateEvent(
   id: number,
-  userId: number,
   event: UpdateEvent
 ): Promise<Event> {
-
-  // TODO: Remove the userId query parameter once authentication is integrated.
-  // The backend should derive the current user from the authenticated session.
-  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+  const res = await fetch(`${POSTS_URL}/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(event),
   });
 
@@ -237,11 +234,11 @@ export async function updateEvent(
 
 // Close an event
 export async function closeEvent(
-  id: number,
-  userId: number
+  id: number
 ): Promise<void> {
-  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+  const res = await fetch(`${POSTS_URL}/${id}`, {
     method: "DELETE",
+    credentials: "include",
   });
 
   if (!res.ok) {
