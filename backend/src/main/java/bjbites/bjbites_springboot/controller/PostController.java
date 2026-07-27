@@ -166,7 +166,6 @@ public class PostController {
             if (Objects.equals(currentUser.getRole().getRoleName(), "event_organizer")) {
 
                 if (Objects.equals(post.getCreatedBy().getId(), currentUser.getId()))
-                // TODO: Ensure user is authenticated
                 {
                     post.setTitle(postDetails.getTitle());
                     post.setDescription(postDetails.getDescription());
@@ -235,7 +234,6 @@ public class PostController {
 
 
                 if (Objects.equals(existingPost.getCreatedBy().getId(), currentUser.getId()))
-                // TODO: Ensure user is authenticated
                 {
                 existingPost.setStatus("closed");
                 postRepository.save(existingPost);

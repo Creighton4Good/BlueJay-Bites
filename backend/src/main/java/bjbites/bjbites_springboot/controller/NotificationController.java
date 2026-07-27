@@ -89,7 +89,6 @@ public class NotificationController {
      */
     @PatchMapping("/me/read")
     public ResponseEntity<Void> readNotification(@AuthenticationPrincipal OAuth2User oAuthUser) {
-        // TODO: Ensure user is authenticated
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<Notification> notification = notificationRepository.findByUser_Id(currentUser.getId());
@@ -107,7 +106,6 @@ public class NotificationController {
    @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser) {
-        // TODO: Ensure user is authenticated
        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
        return notificationSseService.subscribe(currentUser.getId()); }

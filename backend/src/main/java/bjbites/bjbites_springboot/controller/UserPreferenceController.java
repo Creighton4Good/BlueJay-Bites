@@ -62,7 +62,6 @@ public class UserPreferenceController {
      */
     @PatchMapping("/me/update/on")
     public ResponseEntity<Void> updateUserPreferenceToOn(@AuthenticationPrincipal OAuth2User oAuthUser) {
-           // TODO: Ensure spring security checks authenticated user
            User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
            Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
@@ -91,7 +90,6 @@ public class UserPreferenceController {
      */
     @PatchMapping("/me/update/off")
     public ResponseEntity<Void> updateUserPreferenceToOff(@AuthenticationPrincipal OAuth2User oAuthUser) {
-        // TODO: Ensure spring security checks authenticated user
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
