@@ -4,6 +4,7 @@ import bjbites.bjbites_springboot.entity.Role;
 import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.repository.RoleRepository;
 import bjbites.bjbites_springboot.repository.UserRepository;
+import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class UserController {
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
-    private bjbites.bjbites_springboot.service.UserProvisioningService userProvisioningService;
+    private UserProvisioningService userProvisioningService;
 
     /**
      * Get the currently authenticated user. The frontend calls this after the

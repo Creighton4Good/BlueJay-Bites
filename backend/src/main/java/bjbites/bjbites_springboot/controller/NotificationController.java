@@ -3,8 +3,8 @@ package bjbites.bjbites_springboot.controller;
 import bjbites.bjbites_springboot.entity.Notification;
 import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.repository.NotificationRepository;
-import bjbites.bjbites_springboot.repository.UserRepository;
 import bjbites.bjbites_springboot.service.NotificationSseService;
+import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,7 +28,7 @@ public class NotificationController {
     @Autowired
     private NotificationSseService notificationSseService;
     @Autowired
-    private UserRepository userRepository;
+    private UserProvisioningService userProvisioningService;
 
     // Get all notifications
     /**
@@ -91,7 +91,7 @@ public class NotificationController {
     @PatchMapping("/me/read")
     public ResponseEntity<Void> readNotification(@AuthenticationPrincipal OAuth2User oAuthUser) {
         // TODO: Ensure user is authenticated
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<Notification> notification = notificationRepository.findByUser_Id(currentUser.getId());
 
@@ -107,9 +107,9 @@ public class NotificationController {
     // User subscribes to notifications
    @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable Integer userId) {
+    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser) {
         // TODO: Ensure user is authenticated
-       User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+       User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
        return notificationSseService.subscribe(currentUser.getId()); }
 

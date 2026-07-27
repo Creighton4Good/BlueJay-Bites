@@ -3,7 +3,7 @@ package bjbites.bjbites_springboot.controller;
 import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.entity.UserPreference;
 import bjbites.bjbites_springboot.repository.UserPreferenceRepository;
-import bjbites.bjbites_springboot.repository.UserRepository;
+import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +24,9 @@ public class UserPreferenceController {
     @Autowired
     private UserPreferenceRepository userPreferenceRepository;
     @Autowired
-    private UserRepository userRepository;
+    private UserProvisioningService userProvisioningService;
 
-   // Get all user preferences
+    // Get all user preferences
     /**
      * Get all user preferences
      * @return a {@code ResponseEntity} containing all the user preferences with {@code 200 OK}
@@ -64,7 +64,7 @@ public class UserPreferenceController {
     @PatchMapping("/me/update/on")
     public ResponseEntity<Void> updateUserPreferenceToOn(@AuthenticationPrincipal OAuth2User oAuthUser) {
            // TODO: Ensure spring security checks authenticated user
-           User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+           User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
            Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
 
@@ -93,7 +93,7 @@ public class UserPreferenceController {
     @PatchMapping("/me/update/off")
     public ResponseEntity<Void> updateUserPreferenceToOff(@AuthenticationPrincipal OAuth2User oAuthUser) {
         // TODO: Ensure spring security checks authenticated user
-        User currentUser = userRepository.findByEmail(oAuthUser.getAttribute("email")).orElseThrow();
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
         Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
 
