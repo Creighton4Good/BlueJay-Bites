@@ -175,8 +175,8 @@ export async function fetchEvents(): Promise<Event[]> {
 }
 
 // Fetch events created by a specific user (their "My Events")
-export async function fetchMyEvents(userId: number): Promise<Event[]> {
-  const res = await fetch(`${POSTS_URL}/created?userId=${userId}`);
+export async function fetchMyEvents(): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/created`, { credentials: "include" });
   if (!res.ok) {
     const text = await res.text();
     console.error("Failed to fetch my events", res.status, text);

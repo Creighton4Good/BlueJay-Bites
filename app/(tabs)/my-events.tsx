@@ -5,7 +5,6 @@ import { Event, fetchMyEvents } from "@/lib/api";
 
 // TODO: Replace with the signed-in user's id once SSO/auth is wired up.
 // For now this is the test event_organizer account (id 1).
-const CURRENT_USER_ID = 1;
 
 export default function MyEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -16,7 +15,7 @@ export default function MyEventsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMyEvents(CURRENT_USER_ID);
+      const data = await fetchMyEvents();
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching my events:", err);
