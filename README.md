@@ -109,5 +109,9 @@ npm start
 
 For details on contributing to the application, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
 
+## Questions?
+
+Feel free to email creighton4good@gmail.com
+
 ## License:
 This project is licensed uner the MIT license - take a look at the [license](https://github.com/Creighton4Good/BlueJay-Bites?tab=License-1-ov-file) for details

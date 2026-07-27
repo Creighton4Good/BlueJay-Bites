@@ -20,9 +20,9 @@ import {
     fetchBuildings,
     fetchEventById,
     UpdateEvent,
-    PROTOTYPE_CURRENT_USER_ID,
     updateEvent, FoodType, DietaryOption, fetchFoodTypes, fetchDietaryOptions,
 } from "@/lib/api";
+import { useSession } from "@/app/contexts/session-context";
 
 export default function EditEventScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,7 +56,7 @@ export default function EditEventScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
+    const { user, isOrganizer, isAdmin } = useSession();
 
     useEffect(() => {
         const loadBuildings = async () => {
@@ -121,7 +121,10 @@ export default function EditEventScreen() {
             try {
                 const event: Event = await fetchEventById(Number(id));
 
-                if (event.createdBy?.id !== currentUserId) {
+                const isCreator = event.createdBy?.id === user?.id;
+                const canEdit = isAdmin || (isOrganizer && isCreator);
+
+                if (!canEdit) {
                     Alert.alert("Not allowed", "Only the event creator can edit this event.", [
                         {
                             text: "OK",
@@ -151,7 +154,7 @@ export default function EditEventScreen() {
         };
 
         loadEvent();
-    }, [id]);
+    }, [id, user?.id, isOrganizer, isAdmin]);
 
     const toggleDietaryOption = (id: string) => {
         setSelectedDietaryOptionIds((prev) =>
@@ -210,8 +213,8 @@ export default function EditEventScreen() {
     const handleSubmit = async () => {
         setSaveMessage(null);
         setSaveError(null);
-        if (!id) {
-            Alert.alert("Error", "Missing event id.");
+        if (!user) {
+            Alert.alert("Error", "You must be signed in to edit an event.");
             return;
         }
 
@@ -290,7 +293,7 @@ export default function EditEventScreen() {
         setSubmitting(true);
 
         try {
-            await updateEvent(Number(id), currentUserId, payload);
+            await updateEvent(Number(id), user.id, payload);
             setSaveMessage("Food event updated successfully!");
 
             setTimeout(() => {
@@ -362,7 +365,7 @@ export default function EditEventScreen() {
                 <ScrollView contentContainerStyle={styles.container}>
                     <Text style={styles.bigText}>Edit Food Event</Text>
                     <Text style={styles.subText}>
-                        Prototype mode: editing as test organizer
+                        Update the event details below.
                     </Text>
 
                     <TextInput

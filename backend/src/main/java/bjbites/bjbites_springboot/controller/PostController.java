@@ -58,12 +58,12 @@ public class PostController {
                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // Get only posts that they created
+    // Get only posts that they created (active or closed)
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @GetMapping("/created")
     public ResponseEntity<List<Post>> getCreatedPosts(@RequestParam int userId) {
 
-        List<Post> posts = postRepository.findByCreatedBy_Id(userId);
+        List<Post> posts = postRepository.findByCreatedBy_IdOrderByCreatedAtDesc(userId);
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
 
