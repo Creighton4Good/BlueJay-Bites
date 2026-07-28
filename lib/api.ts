@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 export type EventStatus = "active" | "closed";
 
@@ -105,13 +106,36 @@ export type UpdateEvent = {
   updatedAt?: string;
 }
 
-export const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ??
-  (Platform.OS === "android"
-    ? "http://10.0.2.2:8080" // Android emulator
-    : "http://localhost:8080"); // iOS simulator
-// Use your local IP instead if testing on a physical device:
-// const BASE_URL = "http://123.456.7.890:8080";
+// Resolve the backend host automatically so the same code works on web,
+// simulators, and physical devices without editing .env:
+//   - EXPO_PUBLIC_API_URL always wins when it is set
+//   - web talks to localhost
+//   - a physical device reuses the LAN IP of the Expo dev server
+//   - simulators fall back to their usual loopback addresses
+const BACKEND_PORT = 8080;
+
+function resolveBaseUrl(): string {
+  const configured = process.env.EXPO_PUBLIC_API_URL;
+  if (configured) return configured;
+
+  if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
+
+  // hostUri looks like "192.168.86.154:8081" when served to a device.
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants.expoGoConfig as { debuggerHost?: string } | undefined)?.debuggerHost;
+
+  const host = hostUri?.split(":")[0];
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
+    return `http://${host}:${BACKEND_PORT}`;
+  }
+
+  return Platform.OS === "android"
+    ? `http://10.0.2.2:${BACKEND_PORT}` // Android emulator
+    : `http://localhost:${BACKEND_PORT}`; // iOS simulator
+}
+
+export const BASE_URL = resolveBaseUrl();
 
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
@@ -125,6 +149,21 @@ export const PROTOTYPE_CURRENT_USER_ID = Number(
 );
 
 // Fetch active food events (for home feed)
+// URL that starts the backend's Entra OAuth login flow.
+export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
+
+// Fetch the currently authenticated user. Returns null if not logged in (401).
+export async function fetchCurrentUser(): Promise<User | null> {
+  const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include" });
+  if (res.status === 401) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error("Failed to fetch current user");
+  }
+  return res.json();
+}
+
 export async function fetchEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/active`);
   if (!res.ok) {
@@ -136,8 +175,8 @@ export async function fetchEvents(): Promise<Event[]> {
 }
 
 // Fetch events created by a specific user (their "My Events")
-export async function fetchMyEvents(userId: number): Promise<Event[]> {
-  const res = await fetch(`${POSTS_URL}/created?userId=${userId}`);
+export async function fetchMyEvents(): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/created`, { credentials: "include" });
   if (!res.ok) {
     const text = await res.text();
     console.error("Failed to fetch my events", res.status, text);
@@ -173,15 +212,12 @@ export async function createEvent(event: NewEvent): Promise<Event> {
 // Update an existing event
 export async function updateEvent(
   id: number,
-  userId: number,
   event: UpdateEvent
 ): Promise<Event> {
-
-  // TODO: Remove the userId query parameter once authentication is integrated.
-  // The backend should derive the current user from the authenticated session.
-  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+  const res = await fetch(`${POSTS_URL}/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(event),
   });
 
@@ -198,11 +234,11 @@ export async function updateEvent(
 
 // Close an event
 export async function closeEvent(
-  id: number,
-  userId: number
+  id: number
 ): Promise<void> {
-  const res = await fetch(`${POSTS_URL}/${id}?userId=${userId}`, {
+  const res = await fetch(`${POSTS_URL}/${id}`, {
     method: "DELETE",
+    credentials: "include",
   });
 
   if (!res.ok) {

@@ -5,35 +5,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class NotificationSseService {
 
-    private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<Integer, SseEmitter> notificationEmitters = new ConcurrentHashMap<>();
 
     public SseEmitter subscribe(Integer userId) {
-        SseEmitter emitter = new SseEmitter(0L); // no timeout
-        emitters.put(userId, emitter);
+        SseEmitter notificationEmitter = new SseEmitter(Long.MAX_VALUE);
+        notificationEmitters.put(userId, notificationEmitter);
 
-        emitter.onCompletion(() -> emitters.remove(userId));
-        emitter.onTimeout(() -> emitters.remove(userId));
+        notificationEmitter.onCompletion(() -> notificationEmitters.remove(userId));
+        notificationEmitter.onTimeout(() -> notificationEmitters.remove(userId));
 
-        return emitter;
+        return notificationEmitter;
+
     }
 
-    public void publish(Integer userId, Notification notification) {
-        SseEmitter emitter = emitters.get(userId);
+    public void publishNotification(Integer userId, Notification notification) {
+        SseEmitter notificationEmitter = notificationEmitters.get(userId);
 
         // TODO: Add support for storing multiple emitters for a user
-        if (emitter == null) {
+
+        if (notificationEmitter == null) {
             return; }
+
             try {
-                emitter.send(SseEmitter.event().name("notification").data(notification));
-            } catch (IOException e) {
-                emitters.remove(userId);
+                notificationEmitter.send(SseEmitter.event().name("notification").data(notification));
+            } catch (Exception e) {
+                notificationEmitters.remove(userId);
             }
-        }
     }
+        }
