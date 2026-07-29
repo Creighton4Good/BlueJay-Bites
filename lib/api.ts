@@ -258,3 +258,15 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
   }
   return res.json();
 }
+
+export async function fetchAllEvents(): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/all`);
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch all events", res.status, text);
+    throw new Error(text || "Failed to fetch all events");
+  }
+
+  return res.json();
+}
