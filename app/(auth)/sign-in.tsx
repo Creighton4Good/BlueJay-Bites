@@ -1,25 +1,60 @@
 import { Link, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
-  Button,
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { ENTRA_LOGIN_URL, fetchCurrentUser } from "@/lib/api";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Open the backend's Entra OAuth login in a browser. The backend handles
+      // the OAuth flow and establishes the session.
+      await WebBrowser.openAuthSessionAsync(ENTRA_LOGIN_URL);
+
+      // After the browser flow, confirm the session by asking the backend who we are.
+      const user = await fetchCurrentUser();
+      if (user) {
+        router.replace("/(tabs)");
+      } else {
+        setError("Sign-in did not complete. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("Sign-in error:", err);
+      setError("Something went wrong during sign-in.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>BlueJay-Bites</Text>
       <Text style={styles.subtitle}>
-        Sign-in is temporarily disabled in prototype mode.
+        Sign in with your Creighton account to continue.
       </Text>
-      
-      <Button title="Continue to App" onPress={() => router.replace("/(tabs)")} />
-      
+
+      {loading ? (
+        <ActivityIndicator />
+      ) : (
+        <Pressable style={styles.button} onPress={handleSignIn}>
+          <Text style={styles.buttonText}>Sign in with Creighton</Text>
+        </Pressable>
+      )}
+
+      {!!error && <Text style={styles.errorText}>{error}</Text>}
+
       <Link href="/sign-up" asChild>
         <Pressable style={styles.link}>
           <Text style={styles.linkText}>View prototype sign-up screen</Text>
@@ -29,7 +64,6 @@ export default function SignInScreen() {
   );
 }
 
-// Add some basic styling to make it look nice
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -47,10 +81,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 30,
-    color: "#555"
+    color: "#555",
+  },
+  button: {
+    backgroundColor: "#005CA9",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 16,
   },
   link: {
-    marginTop: 15,
+    marginTop: 20,
     alignItems: "center",
   },
   linkText: {

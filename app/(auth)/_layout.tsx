@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 
 export default function AuthLayout() {
   const { colors } = useTheme();
+
   return (
     <Stack
       screenOptions={{
@@ -11,9 +12,10 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="sign-in" options={{ title: "Sign In" }} />
+      {/* No header on sign-in: there is nothing to navigate back to when
+          the user is signed out, and a back arrow let them reach the tabs. */}
+      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       <Stack.Screen name="sign-up" options={{ title: "Create Account" }} />
-      <Stack.Screen name="forgot-password" options={{ title: "Forgot Password" }} />
     </Stack>
   );
 }

@@ -293,7 +293,7 @@ export default function EditEventScreen() {
         setSubmitting(true);
 
         try {
-            await updateEvent(Number(id), user.id, payload);
+            await updateEvent(Number(id), payload);
             setSaveMessage("Food event updated successfully!");
 
             setTimeout(() => {

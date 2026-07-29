@@ -1,13 +1,17 @@
 package bjbites.bjbites_springboot.controller;
 
 import bjbites.bjbites_springboot.entity.Notification;
+import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.repository.NotificationRepository;
 import bjbites.bjbites_springboot.service.NotificationSseService;
+import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -16,15 +20,20 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/notifications")
-@CrossOrigin(origins = "*")
 public class NotificationController {
 
     @Autowired
     private NotificationRepository notificationRepository;
     @Autowired
     private NotificationSseService notificationSseService;
+    @Autowired
+    private UserProvisioningService userProvisioningService;
 
     // Get all notifications
+    /**
+     * Get all notifications
+     * @return a {@code ResponseEntity} containing all the notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/all")
     public ResponseEntity<List<Notification>> getAllNotifications() {
@@ -33,15 +42,25 @@ public class NotificationController {
     }
 
     // Get notification by id
+    /**
+     * Get notification by id
+     * @param id the ID of the notification to retrieve
+     * @return a {@code ResponseEntity} containing the notification by ID with {@code 200 OK},
+     *          or {@code 404 Not Found} if no notification exists with specified ID
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/{id}")
     public ResponseEntity<Notification> getNotificationById(@PathVariable int id) {
         Optional<Notification> notification = notificationRepository.findById(id);
         return notification.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get all unread notifications
+    /**
+     * Get all unread notifications
+     * @return a {@code ResponseEntity} containing the unread notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/unread")
     public ResponseEntity<List<Notification>> getAllUnread() {
@@ -50,6 +69,10 @@ public class NotificationController {
     }
 
     // Get all read notifications
+    /**
+     * Get all read notifications
+     * @return a {@code ResponseEntity} containing the read notifications with {@code 200 OK}
+     */
     @PreAuthorize("hasAuthority('admin')")
     @GetMapping("/read")
     public ResponseEntity<List<Notification>> getAllRead() {
@@ -58,26 +81,34 @@ public class NotificationController {
     }
 
     // Change notification status to read (for a specific user)
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<HttpStatus> readNotification(@PathVariable int id) {
-        // TODO: Ensure user is authenticated
-        Optional<Notification> notification = notificationRepository.findById(id);
+    /**
+     * Update notification status to read
+     * @param oAuthUser the authenticated user who created the notification
+     * @return {@code 200 OK} if notification status is successfully changed to read
+     *      or {@code 404 Not Found} if no notification exists with the specified ID
+     */
+    @PatchMapping("/me/read")
+    public ResponseEntity<Void> readNotification(@AuthenticationPrincipal OAuth2User oAuthUser) {
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
+
+        Optional<Notification> notification = notificationRepository.findByUser_Id(currentUser.getId());
 
         if (notification.isPresent()) {
             Notification existingNotification = notification.get();
             existingNotification.setIsRead(true);
             notificationRepository.save(existingNotification);
-            return new ResponseEntity<>(HttpStatus.OK); }
+            return ResponseEntity.ok().build(); }
         else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
     }
 
-    // Client subscribes to notifications
-    @PreAuthorize("hasAuthority('user')")
+    // User subscribes to notifications
+   @PreAuthorize("hasAuthority('user')")
     @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@PathVariable Integer userId) {
-        // TODO: Ensure user is authenticated
-       return notificationSseService.subscribe(userId); }
+    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser) {
+       User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
+
+       return notificationSseService.subscribe(currentUser.getId()); }
 
     // TODO: Add GET /user endpoint for user to receive notifications that
     //  they missed when they were not on app/inactive
@@ -88,9 +119,9 @@ public class NotificationController {
 
        Notification notification = new Notification();
 
-       notificationSseService.publish(userId, notification);
+       notificationSseService.publishNotification(userId, notification);
 
-        return ResponseEntity.ok("Sent");
+        return new ResponseEntity<>("Sent", HttpStatus.OK);
     }
 
 }

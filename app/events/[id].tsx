@@ -96,7 +96,7 @@ export default function EventDetailsScreen() {
             if (!confirmed) return;
 
             try {
-                await closeEvent(event.id, user.id);
+                await closeEvent(event.id);
                 window.alert("Event closed successfully.");
                 router.replace("/");
             } catch (err: any) {
@@ -119,7 +119,7 @@ export default function EventDetailsScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            await closeEvent(event.id, user.id);
+                            await closeEvent(event.id);
                             Alert.alert("Success", "Event closed successfully.", [
                                 {
                                     text: "OK",

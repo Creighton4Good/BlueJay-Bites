@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/uploads")
-@CrossOrigin(origins = "*")
 public class PhotoUploadController {
 
     @Value("${file.upload-dir}")
