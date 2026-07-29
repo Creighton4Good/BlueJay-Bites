@@ -153,7 +153,7 @@ public class PostController {
      *      trying to be updated
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @PutMapping()
+    @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id, @RequestBody Post postDetails)
     {
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
@@ -203,6 +203,7 @@ public class PostController {
                 post.setAvailableUntil(postDetails.getAvailableUntil());
                 post.setUpdatedAt(LocalDateTime.now());
                 post.setStatus(postDetails.getStatus());
+                return new ResponseEntity<>(postRepository.save(post), HttpStatus.OK);
             }
 
         }
@@ -221,7 +222,7 @@ public class PostController {
      *      trying to be deleted
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
-    @DeleteMapping()
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@AuthenticationPrincipal OAuth2User oAuthUser, @PathVariable int id) {
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
