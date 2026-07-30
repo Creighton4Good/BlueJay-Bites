@@ -115,10 +115,10 @@ export type UpdateEvent = {
 const BACKEND_PORT = 8080;
 
 function resolveBaseUrl(): string {
+  if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
+
   const configured = process.env.EXPO_PUBLIC_API_URL;
   if (configured) return configured;
-
-  if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
 
   // hostUri looks like "192.168.86.154:8081" when served to a device.
   const hostUri =
