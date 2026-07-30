@@ -24,4 +24,10 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
            "ORDER BY p.createdAt DESC")
     List<Post> findActiveWithinGrace(@Param("status") String status,
                                      @Param("cutoff") LocalDateTime cutoff);
+
+    // Events still marked active whose end time has passed. Used to close them out.
+    @Query("SELECT p FROM Post p WHERE p.status = :status " +
+           "AND p.availableUntil IS NOT NULL AND p.availableUntil < :now")
+    List<Post> findExpiredActive(@Param("status") String status,
+                                 @Param("now") LocalDateTime now);
 }
