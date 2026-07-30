@@ -45,6 +45,11 @@ export type User = {
   createdAt?: string;
 };
 
+export type UpdateUser = {
+  displayName: string;
+  updatedAt?: string;
+};
+
 // Post / Event — matches backend Post entity with @ManyToOne relationships
 export type Event = {
   id: number;
@@ -115,10 +120,11 @@ export type UpdateEvent = {
 const BACKEND_PORT = 8080;
 
 function resolveBaseUrl(): string {
-  const configured = process.env.EXPO_PUBLIC_API_URL;
-  if (configured) return configured;
 
   if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
+
+  const configured = process.env.EXPO_PUBLIC_API_URL;
+  if (configured) return configured;
 
   // hostUri looks like "192.168.86.154:8081" when served to a device.
   const hostUri =
@@ -143,6 +149,8 @@ const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 const PHOTO_URL = `${BASE_URL}/api/post-photos`
 const UPLOAD_URL = `${BASE_URL}/api/uploads`
+const USERS_URL = `${BASE_URL}/api/users`
+const ROLES_URL = `${BASE_URL}/api/roles`
 
 export const PROTOTYPE_CURRENT_USER_ID = Number(
   process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
@@ -278,6 +286,20 @@ export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
   return res.json();
 }
 
+// Fetch all roles (for role changes)
+export async function fetchRoles(): Promise<Role[]> {
+  const res = await fetch(`${ROLES_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch roles");
+  return res.json();
+}
+
+// Fetch all users (for role changes)
+export async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(`${USERS_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
 // Upload a photo for an event
 export async function uploadPhoto(file: { uri: string; name: string; type: string }, postId: number): Promise<Photo> {
   const formData = new FormData();
@@ -292,5 +314,84 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
     const text = await res.text();
     throw new Error(text || "Failed to upload photo");
   }
+  return res.json();
+}
+
+// Assign the admin role
+export async function assignAdmin(id: number | null): Promise<User> {
+const res = await fetch(`${USERS_URL}/${id}/admin`, {
+  method: "PUT",
+      headers: { "Content-Type": "application/json" },
+  credentials: "include",
+});
+
+if (!res.ok) {
+  const text = await res.text();
+  console.error("Assign to admin failed", res.status, text);
+  throw new Error(
+      `Failed to assign the admin role (${res.status})${text ? `: ${text}` : ""}`
+  );
+}
+
+return res.json();
+}
+
+// Assign the organizer role
+export async function assignOrganizer(id: number | null): Promise<User> {
+  const res = await fetch(`${USERS_URL}/${id}/event-organizer`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Assign to organizer failed", res.status, text);
+    throw new Error(
+        `Failed to assign the organizer role (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Assign the user role
+export async function assignUser(id: number | null): Promise<User> {
+  const res = await fetch(`${USERS_URL}/${id}/user`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Assign to user failed", res.status, text);
+    throw new Error(
+        `Failed to assign the user role (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Update the user details (display name)
+export async function updateUser(
+    user: UpdateUser
+): Promise<User> {
+  const res = await fetch(`${USERS_URL}/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(user),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update user failed", res.status, text);
+    throw new Error(
+        `Failed to update user (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
   return res.json();
 }

@@ -1,0 +1,326 @@
+import React, {useEffect, useState} from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    StyleSheet,
+    Platform,
+    ScrollView, Alert, Button, KeyboardAvoidingView,
+} from 'react-native';
+import {
+    assignAdmin,
+    assignOrganizer,
+    assignUser,
+    fetchRoles,
+    fetchUsers,
+    updateUser,
+    Role,
+    UpdateUser,
+    User
+} from "@/lib/api";
+import {Stack} from "expo-router";
+import {Picker} from "@react-native-picker/picker";
+//import { LinearGradient } from 'expo-linear-gradient';
+
+export default function SettingsScreen() {
+    const [displayName, setDisplayName] = useState("");
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+    const [users, setUsers] = useState<User[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        const loadRoles = async () => {
+            setLoadingRoles(true);
+            try {
+                const data = await fetchRoles();
+                setRoles(data);
+            } catch (err) {
+                console.error("Error fetching roles:", err);
+                Alert.alert("Error", "Could not load role options.");
+            } finally {
+                setLoadingRoles(false);
+            }
+        };
+
+        loadRoles();
+    }, []);
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            setLoadingUsers(true);
+            try {
+                const data = await fetchUsers();
+                setUsers(data);
+            } catch (err) {
+                console.error("Error fetching users:", err);
+                Alert.alert("Error", "Could not load user options.");
+            } finally {
+                setLoadingUsers(false);
+            }
+        };
+
+        loadUsers();
+    }, []);
+
+    const handleSubmit = async () => {
+
+
+        const payload: UpdateUser = {
+            displayName: displayName.trim(),
+        };
+
+        setSubmitting(true);
+
+        try {
+            console.log("calling updateUser", payload);
+            const result = await updateUser(payload);
+            console.log("updateUser succeeded", result);
+
+
+            if (selectedRoleId && selectedUserId != null) {
+                if (selectedRoleId == 3) {
+                    await assignAdmin(selectedUserId); }
+                else if (selectedRoleId == 2) {
+                    await assignOrganizer(selectedUserId); }
+                else {
+                    await assignUser(selectedUserId); } }
+
+            if (selectedRoleId && selectedUserId != null) {
+            Alert.alert("Success", "User role updated successfully!"); }
+
+            setDisplayName("");
+        } catch (err: any) {
+            console.error("Error updating user role:", err);
+            Alert.alert(
+                "Error",
+                err.message ?? "Something went wrong while updating the user role."
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+            <>
+                <Stack.Screen options={{ title: "Settings" }} />
+                <ScrollView contentContainerStyle={styles.scrollContainer}
+                            keyboardShouldPersistTaps="handled">
+                    <Text style={styles.bigText}>Edit User Details</Text>
+                    <Text style={styles.subText}>
+                        Update the user details below.
+                    </Text>
+
+                    <Text style={styles.label}>Update Your Display Name</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Update Your Display Name"
+                        placeholderTextColor="#999"
+                        value={displayName}
+                        onChangeText={setDisplayName}
+                        editable={!submitting}
+                    />
+
+
+                    <Text style={styles.label}>User</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedUserId}
+                            enabled={!submitting && !loadingUsers}
+                            onValueChange={(itemValue) =>
+                                setSelectedUserId(itemValue ? Number(itemValue) : null)
+                            }
+                        >
+                            <Picker.Item
+                                label={loadingUsers ? "Loading users..." : "Select a user..."}
+                                value={null}
+                            />
+                            {users.map((user) => (
+                                <Picker.Item
+                                    key={user.id}
+                                    label={user.displayName}
+                                    value={user.id}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+
+
+
+
+
+
+                    <Text style={styles.label}>Role</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedRoleId}
+                            enabled={!submitting && !loadingRoles}
+                            onValueChange={(itemValue) =>
+                                setSelectedRoleId(itemValue ? Number(itemValue) : null)
+                            }
+                        >
+                            <Picker.Item
+                                label={loadingRoles ? "Loading roles..." : "Select a role..."}
+                                value={null}
+                            />
+                            {roles.map((role) => (
+                                <Picker.Item
+                                    key={role.id}
+                                    label={role.roleName}
+                                    value={role.id}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+
+    {saveMessage && <Text style={styles.successText}>{saveMessage}</Text>}
+    {saveError && <Text style={styles.errorText}>{saveError}</Text>}
+
+    <View style={styles.buttonWrapper}>
+        <Button
+            title={submitting ? "Saving..." : "Save Changes"}
+            onPress={handleSubmit}
+            disabled={submitting}
+        />
+    </View>
+</ScrollView>
+</>
+</KeyboardAvoidingView>
+);
+}
+
+
+
+    const styles = StyleSheet.create({
+        gradient: {
+            flex: 1,
+        },
+        scrollContainer: {
+            flexGrow: 1,
+            padding: 16,
+            paddingBottom: 40,
+        },
+        bigText: {
+            fontSize: 24,
+            fontWeight: "bold",
+            marginBottom: 8,
+            textAlign: "center",
+        },
+        subText: {
+            fontSize: 14,
+            color: "#555",
+            marginBottom: 16,
+            textAlign: "center",
+        },
+        label: {
+            fontSize: 16,
+            fontWeight: "600",
+            marginBottom: 6,
+            color: "#00235D",
+        },
+        pickerWrapper: {
+            borderWidth: 1,
+            borderColor: "#ccc",
+            borderRadius: 8,
+            marginBottom: 12,
+            backgroundColor: "#fff",
+            overflow: "hidden",
+        },
+        title: {
+            fontSize: 36,
+            fontWeight: '800',
+            color: 'white',
+            textAlign: 'center',
+            marginBottom: 4,
+        },
+        subheader: {
+            color: 'white',
+            fontSize: 16,
+            opacity: 0.85,
+            textAlign: 'center',
+            marginBottom: 30,
+        },
+        settingRow: {
+            marginBottom: 28,
+        },
+        settingLabel: {
+            fontSize: 18,
+            color: 'white',
+            fontWeight: '700',
+            marginBottom: 12,
+        },
+        inputRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        input: {
+            width: 180,
+            height: 40,
+            borderWidth: 1,
+            borderColor: 'white',
+            borderRadius: 8,
+            padding: 12,
+            color: 'white',
+            marginRight: 10,
+            marginBottom: 20,
+        },
+        addButton: {
+            backgroundColor: 'white',
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+            borderRadius: 10,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.2,
+            shadowRadius: 6,
+            elevation: 4,
+        },
+        addButtonText: {
+            fontWeight: '700',
+            color: '#0054A6',
+        },
+        buttonWrapper: {
+            marginTop: 16,
+        },
+        errorText: {
+            fontSize: 16,
+            color: "red",
+            textAlign: "center",
+        },
+        restrictionRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 8,
+            paddingVertical: 4,
+            paddingHorizontal: 8,
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: 8,
+        },
+        restrictionItem: {
+            color: 'white',
+            fontSize: 16,
+        },
+        removeText: {
+            color: '#FF5555',
+            fontSize: 14,
+            fontWeight: '600',
+        },
+        successText: {
+            fontSize: 16,
+            color: "green",
+            textAlign: "center",
+            marginBottom: 12,
+        },
+    });
