@@ -48,6 +48,14 @@ export default function TabsLayout() {
           href: canManageEvents ? undefined : null,
         }}
       />
+      <Tabs.Screen
+        name="admin-events"
+        options={{
+          title: "All Events",
+          tabBarLabel: "Admin",
+          href: isAdmin ? undefined : null,
+        }}
+      />
     </Tabs>
   );
 }
