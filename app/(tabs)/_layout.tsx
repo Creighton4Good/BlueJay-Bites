@@ -48,6 +48,14 @@ export default function TabsLayout() {
           href: canManageEvents ? undefined : null,
         }}
       />
+      // TODO: Show only for admins after role-based session access is merged.
+      <Tabs.Screen
+        name="admin-events"
+        options={{
+          title: "All Events",
+          tabBarLabel: "Admin",
+        }}
+      />
     </Tabs>
   );
 }
