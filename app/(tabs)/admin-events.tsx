@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Event, fetchAllEvents } from "@/lib/api";
+import { AdminRouteGuard } from "@/components/admin-route-guard";
 
 export default function AdminEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -49,6 +50,7 @@ export default function AdminEventsScreen() {
   };
 
   return (
+    <AdminRouteGuard>
     <View style={styles.container}>
       <Text style={styles.title}>All Events</Text>
       <Text style={styles.subtitle}>
@@ -142,6 +144,7 @@ export default function AdminEventsScreen() {
         />
       )}
     </View>
+    </AdminRouteGuard>
   );
 }
 
