@@ -56,8 +56,8 @@ INSERT IGNORE INTO dietary_options (id, option_name) VALUES
 (9, 'Low-Carb');
 
 -- Sample Food Events
--- Times are relative to startup so seeded events are always currently active.
-INSERT IGNORE INTO posts
+-- Times are relative to startup and refreshed on every restart, so seeded events stay active.
+INSERT INTO posts
   (id, title, description, notes, building_id, directions, room_number,
    food_type_id, servings_min, servings_max, available_from, available_until,
    status, created_by, created_at, updated_at)
@@ -67,7 +67,7 @@ VALUES
  'Please take only what you will eat.',
  1, 'Second floor, past the main staircase.', '227',
  1, 20, 40,
- NOW() - INTERVAL 1 HOUR, NOW() + INTERVAL 4 HOUR,
+ NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 30 DAY,
  'active', 1, NOW(), NOW()),
 
 (102, 'Sandwich Trays After Career Fair',
@@ -75,7 +75,7 @@ VALUES
  NULL,
  2, 'Main level ballroom, near the north entrance.', 'Ballroom',
  2, 15, 30,
- NOW() - INTERVAL 30 MINUTE, NOW() + INTERVAL 3 HOUR,
+ NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 30 DAY,
  'active', 1, NOW(), NOW()),
 
 (103, 'Breakfast Pastries from Faculty Meeting',
@@ -83,7 +83,7 @@ VALUES
  'Vegetarian options available.',
  5, 'First floor lounge, across from the elevators.', '110',
  3, 10, 20,
- NOW() - INTERVAL 2 HOUR, NOW() + INTERVAL 2 HOUR,
+ NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 30 DAY,
  'active', 1, NOW(), NOW()),
 
 (104, 'Dessert Table from Alumni Reception',
@@ -91,8 +91,12 @@ VALUES
  NULL,
  8, 'Enter through the main doors, event space is on the right.', 'Hall A',
  6, 25, 50,
- NOW(), NOW() + INTERVAL 5 HOUR,
- 'active', 1, NOW(), NOW());
+ NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 30 DAY,
+ 'active', 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  available_from = VALUES(available_from),
+  available_until = VALUES(available_until),
+  status = 'active';
 
 -- Dietary tags for the sample events
 INSERT IGNORE INTO post_dietary_options (post_id, dietary_option_id) VALUES
