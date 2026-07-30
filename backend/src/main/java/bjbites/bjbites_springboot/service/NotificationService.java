@@ -32,7 +32,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
         
-        notificationSseService.publish(
+        notificationSseService.publishNotification(
                 user.getId(),
                 notification);
 

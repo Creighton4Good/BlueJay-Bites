@@ -17,7 +17,7 @@ Our app helps students find free food on the Creighton University campus while r
 ---
 
 ## For a quick demo of the app's structure:
-Take a look [here](https://jhb09808.github.io/)
+Take a look [here](https://creighton4good.github.io/BlueJay-Bites/prototype.html)
 
 ---
 
@@ -105,9 +105,21 @@ npm start
 
 ---
 
+## Creighton Student Development Team (past and present)
+_Erika Germinario_
+
+_Jerome Bustarga_
+
+_Torin O'Connor_
+* A Creighton University student of the class of 2028, with a major in Data Science. In his free time, he enjoys playing sports, his trombone, and traveling the world. He saw the opportunity this project provided to help the environment and local communities and was excited to make a positive impact.
+
 ## Contributions
 
 For details on contributing to the application, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
+
+## Questions?
+
+Feel free to email creighton4good@gmail.com
 
 ## License:
 This project is licensed uner the MIT license - take a look at the [license](https://github.com/Creighton4Good/BlueJay-Bites?tab=License-1-ov-file) for details

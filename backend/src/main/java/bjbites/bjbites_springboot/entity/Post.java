@@ -1,7 +1,10 @@
 package bjbites.bjbites_springboot.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "posts")
@@ -36,6 +39,15 @@ public class Post {
     @ManyToOne
     @JoinColumn(name = "food_type_id")
     private FoodType foodType;
+
+    @ManyToMany
+    @JoinTable(
+            name = "post_dietary_options",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "dietary_option_id")
+    )
+    @JsonIgnoreProperties("posts")
+    private Set<DietaryOption> dietaryOptions = new HashSet<>();
 
     @Column(name = "servings_min")
     private Integer servingsMin;
@@ -99,6 +111,9 @@ public class Post {
 
     public FoodType getFoodType() { return foodType; }
     public void setFoodType(FoodType foodType) { this.foodType = foodType; }
+
+    public Set<DietaryOption> getDietaryOptions() { return dietaryOptions; }
+    public void setDietaryOptions(Set<DietaryOption> dietaryOptions) { this.dietaryOptions = dietaryOptions; }
 
     public Integer getServingsMin() { return servingsMin; }
     public void setServingsMin(Integer servingsMin) { this.servingsMin = servingsMin; }

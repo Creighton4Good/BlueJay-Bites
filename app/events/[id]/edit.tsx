@@ -20,9 +20,9 @@ import {
     fetchBuildings,
     fetchEventById,
     UpdateEvent,
-    PROTOTYPE_CURRENT_USER_ID,
-    updateEvent,
+    updateEvent, FoodType, DietaryOption, fetchFoodTypes, fetchDietaryOptions,
 } from "@/lib/api";
+import { useSession } from "@/app/contexts/session-context";
 
 export default function EditEventScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,8 +35,17 @@ export default function EditEventScreen() {
     const [buildings, setBuildings] = useState<Building[]>([]);
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
     const [loadingBuildings, setLoadingBuildings] = useState(false);
+    const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+    const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<number | null>(null);
+    const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
+    const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
+    const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
+    const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+
+    const [servingsMin, setServingsMin] = useState<number | null>(null);
+    const [servingsMax, setServingsMax] = useState<number | null>(null);
 
     const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
     const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
@@ -47,7 +56,7 @@ export default function EditEventScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const currentUserId = PROTOTYPE_CURRENT_USER_ID;
+    const { user, isOrganizer, isAdmin } = useSession();
 
     useEffect(() => {
         const loadBuildings = async () => {
@@ -67,6 +76,41 @@ export default function EditEventScreen() {
     }, []);
 
     useEffect(() => {
+        const loadFoodTypes = async () => {
+            setLoadingFoodTypes(true);
+            try {
+                const data = await fetchFoodTypes();
+                setFoodTypes(data);
+            } catch (err) {
+                console.error("Error fetching food types:", err);
+                Alert.alert("Error", "Could not load food type options.");
+            } finally {
+                setLoadingFoodTypes(false);
+            }
+        };
+
+        loadFoodTypes();
+    }, []);
+
+    useEffect(() => {
+        const loadDietaryOptions = async () => {
+            setLoadingDietaryOptions(true);
+            try {
+                const data = await fetchDietaryOptions();
+                setDietaryOptionsList(data);
+
+
+            } catch (err) {
+                console.error("Error fetching dietary options:", err);
+                Alert.alert("Error", "Could not load dietary options.");
+            } finally {
+                setLoadingDietaryOptions(false);
+            }
+        };
+        loadDietaryOptions();
+    }, []);
+
+    useEffect(() => {
         const loadEvent = async () => {
             if (!id) {
                 Alert.alert("Missing event id.");
@@ -77,7 +121,10 @@ export default function EditEventScreen() {
             try {
                 const event: Event = await fetchEventById(Number(id));
 
-                if (event.createdBy?.id !== currentUserId) {
+                const isCreator = event.createdBy?.id === user?.id;
+                const canEdit = isAdmin || (isOrganizer && isCreator);
+
+                if (!canEdit) {
                     Alert.alert("Not allowed", "Only the event creator can edit this event.", [
                         {
                             text: "OK",
@@ -92,6 +139,10 @@ export default function EditEventScreen() {
                 setDirections(event.directions ?? "");
                 setRoomNumber(event.roomNumber ?? "");
                 setSelectedBuildingId(event.building?.id ?? null);
+                setSelectedFoodTypeId(event.foodType?.id ?? null);
+                setSelectedDietaryOptionIds(event.dietaryOptions?.map((d) => String(d.id)) ?? []);
+                setServingsMin(event.servingsMin ?? null);
+                setServingsMax(event.servingsMax ?? null);
                 setAvailableFrom(event.availableFrom ? new Date(event.availableFrom) : null);
                 setAvailableUntil(event.availableUntil ? new Date(event.availableUntil) : null);
             } catch (err) {
@@ -103,7 +154,13 @@ export default function EditEventScreen() {
         };
 
         loadEvent();
-    }, [id]);
+    }, [id, user?.id, isOrganizer, isAdmin]);
+
+    const toggleDietaryOption = (id: string) => {
+        setSelectedDietaryOptionIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
 
     const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -156,8 +213,8 @@ export default function EditEventScreen() {
     const handleSubmit = async () => {
         setSaveMessage(null);
         setSaveError(null);
-        if (!id) {
-            Alert.alert("Error", "Missing event id.");
+        if (!user) {
+            Alert.alert("Error", "You must be signed in to edit an event.");
             return;
         }
 
@@ -173,6 +230,28 @@ export default function EditEventScreen() {
 
         if (!selectedBuildingId) {
             Alert.alert("Missing building", "Please select a building for this event.");
+            return;
+        }
+
+        const min = servingsMin ?? 0;
+        const max = servingsMax ?? 0;
+        let validType: boolean = true;
+        if (!Number.isInteger(min) || !Number.isInteger(max) || max < 0 || min < 0) {
+            validType = false;
+        }
+
+        if (!validType) {
+            Alert.alert(
+                "Invalid entry",
+                "Please enter a positive whole number for serving sizes.",
+            )
+        }
+
+        if (max < min && servingsMax != null) {
+            Alert.alert(
+                "Invalid serving estimate",
+                "Minimum servings must be less or equal to maximum servings."
+            );
             return;
         }
 
@@ -198,8 +277,13 @@ export default function EditEventScreen() {
             title: title.trim(),
             description: description.trim(),
             building: { id: selectedBuildingId },
+            foodType: selectedFoodTypeId ? {id: Number(selectedFoodTypeId)} : undefined,
+            dietaryOptions: selectedDietaryOptionIds.length > 0  ? selectedDietaryOptionIds.map((id) => ({ id: Number(id) }))
+                : undefined,
             directions: directions.trim() || undefined,
             roomNumber: roomNumber.trim() || undefined,
+            servingsMin: servingsMin ?? undefined,
+            servingsMax: servingsMax ?? undefined,
             availableFrom: toLocalDateTimeString(availableFrom),
             availableUntil: toLocalDateTimeString(availableUntil),
             status: "active",
@@ -209,7 +293,7 @@ export default function EditEventScreen() {
         setSubmitting(true);
 
         try {
-            await updateEvent(Number(id), currentUserId, payload);
+            await updateEvent(Number(id), payload);
             setSaveMessage("Food event updated successfully!");
 
             setTimeout(() => {
@@ -218,7 +302,7 @@ export default function EditEventScreen() {
         } catch (err: any) {
             console.error("Error updating event:", err);
             setSaveError(
-                err.message ?? "Something went wrong while updaing the event."
+                err.message ?? "Something went wrong while updating the event."
             );
         } finally {
             setSubmitting(false);
@@ -281,7 +365,7 @@ export default function EditEventScreen() {
                 <ScrollView contentContainerStyle={styles.container}>
                     <Text style={styles.bigText}>Edit Food Event</Text>
                     <Text style={styles.subText}>
-                        Prototype mode: editing as test organizer
+                        Update the event details below.
                     </Text>
 
                     <TextInput
@@ -342,6 +426,89 @@ export default function EditEventScreen() {
                         value={directions}
                         onChangeText={setDirections}
                         editable={!submitting}
+                    />
+
+                    <Text style={styles.label}>Food Type (optional)</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedFoodTypeId}
+                            enabled={!submitting && !loadingFoodTypes}
+                            onValueChange={(itemValue) =>
+                                setSelectedFoodTypeId(itemValue ? Number(itemValue) : null)}
+                        >
+                            <Picker.Item
+                                label={loadingFoodTypes ? "Loading food types..." : "Select a food type..."}
+                                value={null}
+                            />
+                            {foodTypes.map((foodType) => (
+                                <Picker.Item
+                                    key={foodType.id}
+                                    label={foodType.typeName}
+                                    value={foodType.id}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                        {dietaryOptionsList.map((option) => {
+                            const idStr = String(option.id);
+                            const selected = selectedDietaryOptionIds.includes(idStr);
+                            return (
+                                <Pressable
+                                    key={option.id}
+                                    onPress={() => toggleDietaryOption(idStr)}
+                                    disabled={submitting || loadingDietaryOptions}
+                                    style={{
+                                        paddingVertical: 6,
+                                        paddingHorizontal: 12,
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: "#005CA9",
+                                        backgroundColor: selected ? "#005CA9" : "#fff",
+                                    }}
+                                >
+                                    <Text style={{ color: selected ? "#fff" : "#005CA9" }}>{option.optionName}</Text>
+                                </Pressable>
+                            );
+                        })}
+                    </View>
+
+                    <Text style={styles.label}>Minimum servings (optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Servings (minimum)"
+                        placeholderTextColor="#999"
+                        value={servingsMin === null ? "" : servingsMin.toString()}
+                        onChangeText={(text) => {
+                            if (text === "") {
+                                setServingsMin(null);
+                            } else {
+                                const n = Number(text);
+                                if (!Number.isNaN(n)) setServingsMin(n);
+                            }
+                        }}
+                        editable={!submitting}
+                        keyboardType="numeric"
+                    />
+
+                    <Text style={styles.label}>Maximum servings (optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Servings (maximum)"
+                        placeholderTextColor="#999"
+                        value={servingsMax === null ? "" : servingsMax.toString()}
+                        onChangeText={(text) => {
+                            if (text === "") {
+                                setServingsMax(null);
+                            } else {
+                                const n = Number(text);
+                                if (!Number.isNaN(n)) setServingsMax(n);
+                            }
+                        }}
+                        editable={!submitting}
+                        keyboardType="numeric"
                     />
 
                     {Platform.OS === "web" ? (

@@ -44,6 +44,16 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
+    // Constructor for users provisioned through Microsoft Entra on first sign-in.
+    public User(String email, String displayName, Role role, String entraId) {
+        this.email = email;
+        this.displayName = displayName;
+        this.role = role;
+        this.entraId = entraId;
+        this.authProvider = "entra";
+        this.createdAt = LocalDateTime.now();
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

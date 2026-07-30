@@ -15,7 +15,7 @@ export default function MyEventsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMyEvents(user.id);
+      const data = await fetchMyEvents();
       setEvents(data);
     } catch (err: any) {
       console.error("Error fetching my events:", err);
@@ -56,7 +56,7 @@ export default function MyEventsScreen() {
             setClosingEventId(event.id);
 
             try {
-              await closeEvent(event.id, user.id);
+              await closeEvent(event.id);
               await loadMyEvents();
             } catch (err) {
               console.error("Error closing event:", err);
