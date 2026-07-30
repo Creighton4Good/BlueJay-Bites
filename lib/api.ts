@@ -296,7 +296,7 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
 }
 
 export async function fetchAllEvents(): Promise<Event[]> {
-  const res = await fetch(`${POSTS_URL}/all`);
+  const res = await fetch(`${POSTS_URL}/all`, { credentials: "include" });
 
   if (!res.ok) {
     const text = await res.text();
