@@ -52,10 +52,6 @@ export default function TabsLayout() {
             name="settings"
             options={{
                 title: "Settings",
-                //  href: isAdmin ? undefined : null,
-                // commented out for local testing, role changes will only be viewable for admins
-                // while settings page will be viewable for all for notification preferences
-                // and display name changes
             }}
         />
     </Tabs>

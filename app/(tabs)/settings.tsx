@@ -20,6 +20,7 @@ import {
 } from "@/lib/api";
 import {Stack} from "expo-router";
 import {Picker} from "@react-native-picker/picker";
+import {useSession} from "@/app/contexts/session-context";
 //import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SettingsScreen() {
@@ -34,6 +35,8 @@ export default function SettingsScreen() {
 
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
+
+    const {isAdmin} = useSession();
 
 
     useEffect(() => {
@@ -132,7 +135,8 @@ export default function SettingsScreen() {
                         editable={!submitting}
                     />
 
-
+                    {isAdmin && (
+                    <>
                     <Text style={styles.label}>User</Text>
                     <View style={styles.pickerWrapper}>
                         <Picker
@@ -156,11 +160,6 @@ export default function SettingsScreen() {
                         </Picker>
                     </View>
 
-
-
-
-
-
                     <Text style={styles.label}>Role</Text>
                     <View style={styles.pickerWrapper}>
                         <Picker
@@ -183,6 +182,8 @@ export default function SettingsScreen() {
                             ))}
                         </Picker>
                     </View>
+                    </>
+                )}
 
     {saveMessage && <Text style={styles.successText}>{saveMessage}</Text>}
     {saveError && <Text style={styles.errorText}>{saveError}</Text>}

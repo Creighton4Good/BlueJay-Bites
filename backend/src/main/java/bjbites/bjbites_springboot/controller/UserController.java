@@ -129,7 +129,6 @@ public class UserController {
         }
     }
 
-
     // Assign the organizer role
     /**
      * Assign the organizer
@@ -169,7 +168,7 @@ public class UserController {
         }
     }
 
-    // Assign the user
+    // Assign the user role
     /**
      * Assign the user
      * @param id the ID of the user to retrieve

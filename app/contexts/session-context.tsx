@@ -54,6 +54,17 @@ const prototypeUsers: Record<number, User> = {
             description: "Can create and manage their own food events",
         },
     },
+    4: {
+        id: 4,
+        email: "testadmin@example.com",
+        displayName: "Test Admin",
+        authProvider: "local",
+        role: {
+            id: 3,
+            roleName: "admin",
+            description: "Full platform oversight and management",
+        },
+    },
 };
 
 const SessionContext = createContext<SessionContextValue | undefined>(
