@@ -2,6 +2,7 @@ import React from "react";
 import { useTheme } from "@react-navigation/native";
 import { Tabs } from "expo-router";
 import { useSession } from "@/app/contexts/session-context";
+import {IconSymbol} from "@/components/ui/icon-symbol";
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -24,6 +25,7 @@ export default function TabsLayout() {
         options={{
           title: "Dashboard",
           tabBarLabel: "Dashboard",
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="arrowtriangle.up.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -31,13 +33,14 @@ export default function TabsLayout() {
         options={{
           title: "Map",
           tabBarLabel: "Map",
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="mappin" color={color} />,
         }}
       />
       <Tabs.Screen
         name="my-events"
         options={{
           title: "My Events",
-          tabBarLabel: "My Events",
+          tabBarLabel: "My Events", tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
           href: canManageEvents ? undefined : null,
         }}
       />
@@ -45,13 +48,15 @@ export default function TabsLayout() {
         name="create-event"
         options={{
           title: "Create Event",
-          href: canManageEvents ? undefined : null,
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus" color={color} />,
+            href: canManageEvents ? undefined : null,
         }}
       />
         <Tabs.Screen
             name="settings"
             options={{
                 title: "Settings",
+                tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
             }}
         />
     </Tabs>
