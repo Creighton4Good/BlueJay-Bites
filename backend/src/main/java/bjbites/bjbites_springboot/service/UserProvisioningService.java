@@ -2,7 +2,9 @@ package bjbites.bjbites_springboot.service;
 
 import bjbites.bjbites_springboot.entity.Role;
 import bjbites.bjbites_springboot.entity.User;
+import bjbites.bjbites_springboot.entity.UserPreference;
 import bjbites.bjbites_springboot.repository.RoleRepository;
+import bjbites.bjbites_springboot.repository.UserPreferenceRepository;
 import bjbites.bjbites_springboot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,9 @@ public class UserProvisioningService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private UserPreferenceRepository userPreferenceRepository;
 
     /**
      * Returns the application {@link User} matching the authenticated Entra
@@ -64,9 +69,13 @@ public class UserProvisioningService {
         if (displayName == null) {
             displayName = email;
         }
+        String startingPreference = "on";
+        UserPreference userPreference = userPreferenceRepository.findByNotificationPreference(startingPreference)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Preference '" + startingPreference + "' is not present in the database."));
 
         String entraId = oAuthUser.getAttribute("oid");
-        User newUser = new User(email, displayName, role, entraId);
+        User newUser = new User(email, displayName, role, userPreference, entraId);
 
         return userRepository.save(newUser);
     }

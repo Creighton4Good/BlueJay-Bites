@@ -13,33 +13,31 @@ public class UserPreference {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
-
     @Column(name = "notification_preference")
     private String notificationPreference = "on";
+
+    private String description;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     protected UserPreference() {}
 
-    public UserPreference(User user) {
-        this.user = user;
+    public UserPreference(String description) {
         this.notificationPreference = "on";
+        this.description = description;
         this.updatedAt = LocalDateTime.now();
     }
 
     public Integer getId() {return id;}
     public void setId(Integer id) {this.id = id;}
 
-    public User getUser() {return user;}
-    public void setUser(User user) {this.user = user;}
-
     public String getNotificationPreference() {return notificationPreference;}
     public void setNotificationPreference(String notificationPreference)
     {this.notificationPreference = notificationPreference;}
+
+    public String getDescription() {return description;}
+    public void setDescription(String description) {this.description = description;}
 
     public LocalDateTime getUpdatedAt() {return updatedAt;}
     public void setUpdatedAt(LocalDateTime updatedAt) {this.updatedAt = updatedAt;}
