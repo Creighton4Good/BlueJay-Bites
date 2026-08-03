@@ -2,6 +2,7 @@ package bjbites.bjbites_springboot.service;
 
 import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.repository.PostRepository;
+import bjbites.bjbites_springboot.config.EventConstants;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +27,10 @@ public class EventStatusService {
     @Scheduled(fixedRate = 600000)
     public void closeExpiredEvents() {
         LocalDateTime now = LocalDateTime.now();
-        List<Post> expired = postRepository.findExpiredActive("active", now);
+        // Wait out the same grace period the active feed uses before closing,
+        // so an event isn't pulled from the feed before its countdown ends.
+        LocalDateTime cutoff = now.minusMinutes(EventConstants.GRACE_PERIOD_MINUTES);
+        List<Post> expired = postRepository.findExpiredActive("active", cutoff);
         for (Post post : expired) {
             post.setStatus("closed");
             post.setUpdatedAt(now);
