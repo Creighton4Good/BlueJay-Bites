@@ -1,7 +1,13 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
-import React from "react";
-import { SessionProvider } from "@/app/contexts/session-context";
+import { Stack, useRouter, useSegments } from "expo-router";
+import React, { useEffect } from "react";
+import {
+  ActivityIndicator, StyleSheet, View,
+} from "react-native";
+import { 
+  SessionProvider,
+  useSession,
+} from "@/app/contexts/session-context";
  
 const MyTheme = {
   ...DefaultTheme,
@@ -17,13 +23,42 @@ const MyTheme = {
 };
 
 export { ErrorBoundary } from "expo-router";
-export const unstable_settings = { initialRouteName: "(tabs)" };
 
 /**
  * Main layout component. Will be expanded to handle Entra SSO
  * authentication routing once that's wired up.
  */
 function InitialLayout() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { loading, isAuthenticated } = useSession();
+
+  useEffect(() => {
+    // Wait until SessionContext has checked /api/users/me
+    if (loading) return;
+
+    const isInAuthGroup = segments[0] === "(auth)";
+
+    // Signed-out users should not remain on sign-in or sign-up
+    if (!isAuthenticated && !isInAuthGroup) {
+      router.replace("/(auth)/sign-in");
+      return;
+    }
+
+    // Signed-in users should not remain on sign-in or sign-up
+    if (isAuthenticated && isInAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [loading, isAuthenticated, segments, router]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <Stack
       screenOptions={{
@@ -47,3 +82,12 @@ export default function RootLayout() {
     </SessionProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: MyTheme.colors.background,
+  },
+});
