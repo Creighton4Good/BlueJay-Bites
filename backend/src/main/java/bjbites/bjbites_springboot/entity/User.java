@@ -24,6 +24,10 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "preference_id", nullable = false)
+    private UserPreference userPreference;
+
     @Column(name = "entra_id", unique = true)
     private String entraId;
 
@@ -35,20 +39,22 @@ public class User {
 
     protected User() {}
 
-    public User(String email, String passwordHash, String displayName, Role role) {
+    public User(String email, String passwordHash, String displayName, Role role, UserPreference userPreference) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.displayName = displayName;
         this.role = role;
+        this.userPreference = userPreference;
         this.authProvider = "local";
         this.createdAt = LocalDateTime.now();
     }
 
     // Constructor for users provisioned through Microsoft Entra on first sign-in.
-    public User(String email, String displayName, Role role, String entraId) {
+    public User(String email, String displayName, Role role, UserPreference userPreference, String entraId) {
         this.email = email;
         this.displayName = displayName;
         this.role = role;
+        this.userPreference = userPreference;
         this.entraId = entraId;
         this.authProvider = "entra";
         this.createdAt = LocalDateTime.now();
@@ -68,6 +74,9 @@ public class User {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public UserPreference getUserPreference() {return userPreference; }
+    public void setUserPreference(UserPreference userPreference) {this.userPreference = userPreference; }
 
     public String getEntraId() { return entraId; }
     public void setEntraId(String entraId) { this.entraId = entraId; }

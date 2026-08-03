@@ -50,6 +50,14 @@ export type UpdateUser = {
   updatedAt?: string;
 };
 
+export type UserPreference = {
+  id: number;
+  user: User;
+  notificationPreference: string;
+  updatedAt?: string;
+
+}
+
 // Post / Event — matches backend Post entity with @ManyToOne relationships
 export type Event = {
   id: number;
@@ -150,6 +158,7 @@ const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 const PHOTO_URL = `${BASE_URL}/api/post-photos`
 const UPLOAD_URL = `${BASE_URL}/api/uploads`
 const USERS_URL = `${BASE_URL}/api/users`
+const PREFERENCE_URL = `${BASE_URL}/api/user-preferences`
 const ROLES_URL = `${BASE_URL}/api/roles`
 
 export const PROTOTYPE_CURRENT_USER_ID = Number(
@@ -300,6 +309,13 @@ export async function fetchUsers(): Promise<User[]> {
   return res.json();
 }
 
+// Fetch all user preferences (for notification settings)
+export async function fetchUserPreferences(): Promise<UserPreference[]> {
+  const res = await fetch(`${PREFERENCE_URL}/all`);
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
 // Upload a photo for an event
 export async function uploadPhoto(file: { uri: string; name: string; type: string }, postId: number): Promise<Photo> {
   const formData = new FormData();
@@ -390,6 +406,44 @@ export async function updateUser(
     console.error("Update user failed", res.status, text);
     throw new Error(
         `Failed to update user (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Update the user preference to on
+export async function updatePreferenceToOn(): Promise<UserPreference> {
+  const res = await fetch(`${PREFERENCE_URL}/me/update/on`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update preference failed", res.status, text);
+    throw new Error(
+        `Failed to update the user preference (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Update the user preference to off
+export async function updatePreferenceToOff(): Promise<UserPreference> {
+  const res = await fetch(`${PREFERENCE_URL}/me/update/off`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update preference failed", res.status, text);
+    throw new Error(
+        `Failed to update the user preference (${res.status})${text ? `: ${text}` : ""}`
     );
   }
 

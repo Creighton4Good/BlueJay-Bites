@@ -16,7 +16,8 @@ import {
     updateUser,
     Role,
     UpdateUser,
-    User
+    User, UserPreference, updatePreferenceToOff,
+    updatePreferenceToOn, fetchUserPreferences
 } from "@/lib/api";
 import {Stack} from "expo-router";
 import {Picker} from "@react-native-picker/picker";
@@ -26,11 +27,14 @@ import {useSession} from "@/app/contexts/session-context";
 export default function SettingsScreen() {
     const [displayName, setDisplayName] = useState("");
     const [roles, setRoles] = useState<Role[]>([]);
-    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+    const [selectedRoleId, setSelectedRoleId] = useState<string>("");
     const [loadingRoles, setLoadingRoles] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
-    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [userPreference, setUserPreference] = useState<UserPreference[]>([]);
+    const [selectedUserPreferenceId, setSelectedUserPreferenceId] = useState<string>("");
+    const [loadingUserPreferences, setLoadingUserPreferences] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -73,8 +77,26 @@ export default function SettingsScreen() {
         loadUsers();
     }, []);
 
-    const handleSubmit = async () => {
+    useEffect(() => {
+        const loadUserPreferences = async () => {
+            setLoadingUserPreferences(true);
+            try {
+                const data = await fetchUserPreferences();
+                setUserPreference(data);
+            } catch (err) {
+                console.error("Error fetching user preferences:", err);
+                Alert.alert("Error", "Could not load user preference options.");
+            } finally {
+                setLoadingUserPreferences(false);
+            }
+        };
 
+        loadUserPreferences();
+    }, []);
+
+    const handleSubmit = async () => {
+        setSaveMessage(null);
+        setSaveError(null);
 
         const payload: UpdateUser = {
             displayName: displayName.trim(),
@@ -83,28 +105,41 @@ export default function SettingsScreen() {
         setSubmitting(true);
 
         try {
+
+            if (displayName != "") {
             console.log("calling updateUser", payload);
             const result = await updateUser(payload);
-            console.log("updateUser succeeded", result);
+            console.log("updateUser succeeded", result); }
 
+            if (selectedUserPreferenceId != "") {
+                if (selectedUserPreferenceId == "1") {
+                    await updatePreferenceToOn()
+                } else if (selectedUserPreferenceId == "2") {
+                    await updatePreferenceToOff()
+                }
+            }
 
-            if (selectedRoleId && selectedUserId != null) {
-                if (selectedRoleId == 3) {
-                    await assignAdmin(selectedUserId); }
-                else if (selectedRoleId == 2) {
-                    await assignOrganizer(selectedUserId); }
-                else {
-                    await assignUser(selectedUserId); } }
+            if (selectedRoleId && selectedUserId != "") {
+                const userId = Number(selectedUserId);
+                if (selectedRoleId == "3") {
+                    await assignAdmin(userId); }
+                else if (selectedRoleId == "2") {
+                    await assignOrganizer(userId); }
+                else if (selectedRoleId == "1") {
+                    await assignUser(userId); } }
 
-            if (selectedRoleId && selectedUserId != null) {
-            Alert.alert("Success", "User role updated successfully!"); }
+            if (selectedRoleId || selectedUserId || selectedUserPreferenceId || displayName != "") {
+            setSaveMessage("User details updated successfully!"); }
 
             setDisplayName("");
+            setSelectedUserPreferenceId("");
+            setSelectedUserId("");
+            setSelectedRoleId("");
+
         } catch (err: any) {
-            console.error("Error updating user role:", err);
-            Alert.alert(
-                "Error",
-                err.message ?? "Something went wrong while updating the user role."
+            console.error("Error updating user details:", err);
+            setSaveError(
+                err.message ?? "Something went wrong while updating user details."
             );
         } finally {
             setSubmitting(false);
@@ -128,12 +163,38 @@ export default function SettingsScreen() {
                     <Text style={styles.label}>Update Your Display Name</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Update Your Display Name"
+                        placeholder="Update Display Name"
                         placeholderTextColor="#999"
                         value={displayName}
                         onChangeText={setDisplayName}
                         editable={!submitting}
                     />
+
+
+                        <Text style={styles.label}>Update Notification Settings</Text>
+                        <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedUserPreferenceId}
+                            enabled={!submitting && !loadingUserPreferences}
+                            onValueChange={(itemValue) =>
+                                setSelectedUserPreferenceId(String(itemValue))
+                            }
+                        >
+
+                        <Picker.Item
+                                label={loadingUsers ? "Loading preferences..." : "Select a preference..."}
+                                value=""
+                        />
+
+                        {userPreference.map((userPreference) => (
+                            <Picker.Item
+                                key={userPreference.id}
+                                label={userPreference.notificationPreference}
+                                value={userPreference.id}
+                            />
+                        ))}
+                        </Picker>
+                        </View>
 
                     {isAdmin && (
                     <>
@@ -143,17 +204,17 @@ export default function SettingsScreen() {
                             selectedValue={selectedUserId}
                             enabled={!submitting && !loadingUsers}
                             onValueChange={(itemValue) =>
-                                setSelectedUserId(itemValue ? Number(itemValue) : null)
+                                setSelectedUserId(String(itemValue))
                             }
                         >
                             <Picker.Item
                                 label={loadingUsers ? "Loading users..." : "Select a user..."}
-                                value={null}
+                                value=""
                             />
                             {users.map((user) => (
                                 <Picker.Item
                                     key={user.id}
-                                    label={user.displayName}
+                                    label={user.email}
                                     value={user.id}
                                 />
                             ))}
@@ -166,12 +227,12 @@ export default function SettingsScreen() {
                             selectedValue={selectedRoleId}
                             enabled={!submitting && !loadingRoles}
                             onValueChange={(itemValue) =>
-                                setSelectedRoleId(itemValue ? Number(itemValue) : null)
+                                setSelectedRoleId(String(itemValue))
                             }
                         >
                             <Picker.Item
                                 label={loadingRoles ? "Loading roles..." : "Select a role..."}
-                                value={null}
+                                value=""
                             />
                             {roles.map((role) => (
                                 <Picker.Item

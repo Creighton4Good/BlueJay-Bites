@@ -3,6 +3,7 @@ package bjbites.bjbites_springboot.controller;
 import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.entity.UserPreference;
 import bjbites.bjbites_springboot.repository.UserPreferenceRepository;
+import bjbites.bjbites_springboot.repository.UserRepository;
 import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,8 @@ public class UserPreferenceController {
     private UserPreferenceRepository userPreferenceRepository;
     @Autowired
     private UserProvisioningService userProvisioningService;
+    @Autowired
+    private UserRepository userRepository;
 
     // Get all user preferences
     /**
@@ -61,21 +64,24 @@ public class UserPreferenceController {
      *      or {@code 400 Bad Request} if the user's current preference is already "on"
      */
     @PatchMapping("/me/update/on")
-    public ResponseEntity<Void> updateUserPreferenceToOn(@AuthenticationPrincipal OAuth2User oAuthUser) {
+    public ResponseEntity<User> updateUserPreferenceToOn(@AuthenticationPrincipal OAuth2User oAuthUser) {
            User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
-           Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
+           Optional<User> userData = userRepository.findById(currentUser.getId());
 
-           if (preferenceData.isPresent()) {
-               UserPreference preference = preferenceData.get();
+           if (userData.isPresent()) {
+               User user = userData.get();
 
-               if (Objects.equals("on", preference.getNotificationPreference())) {
+               if (Objects.equals("on", user.getUserPreference().getNotificationPreference())) {
                    return ResponseEntity.badRequest().build();
                }
 
-               preference.setNotificationPreference("on");
-               userPreferenceRepository.save(preference);
-               return ResponseEntity.ok().build(); }
+               UserPreference onPreference = userPreferenceRepository.findByNotificationPreference("on")
+                       .orElseThrow(() -> new RuntimeException("On preference not found"));
+
+               user.setUserPreference(onPreference);
+               userRepository.save(user);
+               return new ResponseEntity<>(user, HttpStatus.OK); }
            else
                return ResponseEntity.notFound().build();
    }
@@ -89,21 +95,24 @@ public class UserPreferenceController {
      *      or {@code 400 Bad Request} if the user's current preference is already "off"
      */
     @PatchMapping("/me/update/off")
-    public ResponseEntity<Void> updateUserPreferenceToOff(@AuthenticationPrincipal OAuth2User oAuthUser) {
+    public ResponseEntity<User> updateUserPreferenceToOff(@AuthenticationPrincipal OAuth2User oAuthUser) {
         User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
 
-        Optional<UserPreference> preferenceData = userPreferenceRepository.findByUser_Id(currentUser.getId());
+        Optional<User> userData = userRepository.findById(currentUser.getId());
 
-        if (preferenceData.isPresent()) {
-            UserPreference preference = preferenceData.get();
+        if (userData.isPresent()) {
+            User user = userData.get();
 
-            if (Objects.equals("off", preference.getNotificationPreference())) {
+            if (Objects.equals("off", user.getUserPreference().getNotificationPreference())) {
                 return ResponseEntity.badRequest().build();
             }
 
-            preference.setNotificationPreference("off");
-            userPreferenceRepository.save(preference);
-            return ResponseEntity.ok().build(); }
+            UserPreference offPreference = userPreferenceRepository.findByNotificationPreference("off")
+                    .orElseThrow(() -> new RuntimeException("Off preference not found"));
+
+            user.setUserPreference(offPreference);
+            userRepository.save(user);
+            return new ResponseEntity<>(user, HttpStatus.OK); }
         else
             return ResponseEntity.notFound().build();
     }
