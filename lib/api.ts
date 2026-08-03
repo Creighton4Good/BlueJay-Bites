@@ -199,6 +199,7 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(event),
   });
   if (!res.ok) {

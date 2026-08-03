@@ -117,11 +117,10 @@ public class PostController {
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
-    public ResponseEntity<Post> createPost(@RequestBody Post post) {
+    public ResponseEntity<Post> createPost(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestBody Post post) {
         try {
 
-            User creator = userRepository.findById(post.getCreatedBy().getId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User creator = userProvisioningService.getOrCreateUser(oAuthUser);
 
             post.setCreatedBy(creator);
 
