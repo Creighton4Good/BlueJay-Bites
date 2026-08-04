@@ -40,10 +40,12 @@ export default function SettingsScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const {isAdmin} = useSession();
+    const { isAdmin, refreshSession } = useSession();
 
 
     useEffect(() => {
+        if (!isAdmin) return;
+
         const loadRoles = async () => {
             setLoadingRoles(true);
             try {
@@ -58,9 +60,11 @@ export default function SettingsScreen() {
         };
 
         loadRoles();
-    }, []);
+    }, [isAdmin]);
 
     useEffect(() => {
+        if (!isAdmin) return;
+
         const loadUsers = async () => {
             setLoadingUsers(true);
             try {
@@ -75,7 +79,7 @@ export default function SettingsScreen() {
         };
 
         loadUsers();
-    }, []);
+    }, [isAdmin]);
 
     useEffect(() => {
         const loadUserPreferences = async () => {
@@ -97,6 +101,14 @@ export default function SettingsScreen() {
     const handleSubmit = async () => {
         setSaveMessage(null);
         setSaveError(null);
+
+        if (
+            (selectedRoleId && !selectedUserId) ||
+            (!selectedRoleId && selectedUserId) 
+        ) {
+            setSaveError("Please select both a user and a role.");
+            return;
+        }
 
         const payload: UpdateUser = {
             displayName: displayName.trim(),
@@ -127,6 +139,8 @@ export default function SettingsScreen() {
                     await assignOrganizer(userId); }
                 else if (selectedRoleId == "1") {
                     await assignUser(userId); } }
+
+            await refreshSession();
 
             if (selectedRoleId || selectedUserId || selectedUserPreferenceId || displayName != "") {
             setSaveMessage("User details updated successfully!"); }
@@ -182,7 +196,7 @@ export default function SettingsScreen() {
                         >
 
                         <Picker.Item
-                                label={loadingUsers ? "Loading preferences..." : "Select a preference..."}
+                                label={loadingUserPreferences ? "Loading preferences..." : "Select a preference..."}
                                 value=""
                         />
 
@@ -190,7 +204,7 @@ export default function SettingsScreen() {
                             <Picker.Item
                                 key={userPreference.id}
                                 label={userPreference.notificationPreference}
-                                value={userPreference.id}
+                                value={String(userPreference.id)}
                             />
                         ))}
                         </Picker>
@@ -215,7 +229,7 @@ export default function SettingsScreen() {
                                 <Picker.Item
                                     key={user.id}
                                     label={user.email}
-                                    value={user.id}
+                                    value={String(user.id)}
                                 />
                             ))}
                         </Picker>
@@ -238,7 +252,7 @@ export default function SettingsScreen() {
                                 <Picker.Item
                                     key={role.id}
                                     label={role.roleName}
-                                    value={role.id}
+                                    value={String(role.id)}
                                 />
                             ))}
                         </Picker>
