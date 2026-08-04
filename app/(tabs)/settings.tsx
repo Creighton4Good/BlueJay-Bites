@@ -40,12 +40,10 @@ export default function SettingsScreen() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const { isAdmin, refreshSession } = useSession();
+    const { user, isAdmin, refreshSession } = useSession();
 
 
     useEffect(() => {
-        if (!isAdmin) return;
-
         const loadRoles = async () => {
             setLoadingRoles(true);
             try {
@@ -60,26 +58,41 @@ export default function SettingsScreen() {
         };
 
         loadRoles();
-    }, [isAdmin]);
+    }, []);
 
     useEffect(() => {
+        if (!user) return;
+
+        setUsers([user]);
+        setSelectedUserId(String(user.id));
+
         if (!isAdmin) return;
 
         const loadUsers = async () => {
             setLoadingUsers(true);
             try {
                 const data = await fetchUsers();
+
+                const allUsers = data.some(
+                    (userOption) => userOption.id === user.id
+                )
+                    ? data
+                    : [user, ...data];
+    
                 setUsers(data);
             } catch (err) {
                 console.error("Error fetching users:", err);
                 Alert.alert("Error", "Could not load user options.");
+
+                setUsers([user]);
+                setSelectedUserId(String(user.id));
             } finally {
                 setLoadingUsers(false);
             }
         };
 
         loadUsers();
-    }, [isAdmin]);
+    }, [user, isAdmin]);
 
     useEffect(() => {
         const loadUserPreferences = async () => {
@@ -170,15 +183,12 @@ export default function SettingsScreen() {
                 <ScrollView contentContainerStyle={styles.scrollContainer}
                             keyboardShouldPersistTaps="handled">
                     <Text style={styles.bigText}>Edit User Details</Text>
-                    <Text style={styles.subText}>
-                        Update the user details below.
-                    </Text>
 
                     <Text style={styles.label}>Update Your Display Name</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Update Display Name"
-                        placeholderTextColor="#999"
+                        placeholder="Enter a new display name"
+                        placeholderTextColor="#666"
                         value={displayName}
                         onChangeText={setDisplayName}
                         editable={!submitting}
@@ -210,8 +220,6 @@ export default function SettingsScreen() {
                         </Picker>
                         </View>
 
-                    {isAdmin && (
-                    <>
                     <Text style={styles.label}>User</Text>
                     <View style={styles.pickerWrapper}>
                         <Picker
@@ -257,8 +265,6 @@ export default function SettingsScreen() {
                             ))}
                         </Picker>
                     </View>
-                    </>
-                )}
 
     {saveMessage && <Text style={styles.successText}>{saveMessage}</Text>}
     {saveError && <Text style={styles.errorText}>{saveError}</Text>}
@@ -341,14 +347,14 @@ export default function SettingsScreen() {
             alignItems: 'center',
         },
         input: {
-            width: 180,
-            height: 40,
+            width: 240,
+            height: 44,
             borderWidth: 1,
-            borderColor: 'white',
+            borderColor: '#999',
             borderRadius: 8,
             padding: 12,
-            color: 'white',
-            marginRight: 10,
+            color: '#000',
+            backgroundColor: "#fff",
             marginBottom: 20,
         },
         addButton: {
