@@ -216,6 +216,7 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(event),
   });
   if (!res.ok) {
@@ -297,22 +298,28 @@ export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
 
 // Fetch all roles (for role changes)
 export async function fetchRoles(): Promise<Role[]> {
-  const res = await fetch(`${ROLES_URL}/all`);
+  const res = await fetch(`${ROLES_URL}/all`, {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to fetch roles");
   return res.json();
 }
 
 // Fetch all users (for role changes)
 export async function fetchUsers(): Promise<User[]> {
-  const res = await fetch(`${USERS_URL}/all`);
+  const res = await fetch(`${USERS_URL}/all`, {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to fetch users");
   return res.json();
 }
 
 // Fetch all user preferences (for notification settings)
 export async function fetchUserPreferences(): Promise<UserPreference[]> {
-  const res = await fetch(`${PREFERENCE_URL}/all`);
-  if (!res.ok) throw new Error("Failed to fetch users");
+  const res = await fetch(`${PREFERENCE_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch user preferences");
   return res.json();
 }
 
@@ -334,7 +341,7 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
 }
 
 // Assign the admin role
-export async function assignAdmin(id: number | null): Promise<User> {
+export async function assignAdmin(id: number): Promise<User> {
 const res = await fetch(`${USERS_URL}/${id}/admin`, {
   method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -353,7 +360,7 @@ return res.json();
 }
 
 // Assign the organizer role
-export async function assignOrganizer(id: number | null): Promise<User> {
+export async function assignOrganizer(id: number): Promise<User> {
   const res = await fetch(`${USERS_URL}/${id}/event-organizer`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -372,7 +379,7 @@ export async function assignOrganizer(id: number | null): Promise<User> {
 }
 
 // Assign the user role
-export async function assignUser(id: number | null): Promise<User> {
+export async function assignUser(id: number): Promise<User> {
   const res = await fetch(`${USERS_URL}/${id}/user`, {
     method: "PUT",
     headers: {"Content-Type": "application/json"},
