@@ -128,7 +128,6 @@ export type UpdateEvent = {
 const BACKEND_PORT = 8080;
 
 function resolveBaseUrl(): string {
-
   if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
 
   const configured = process.env.EXPO_PUBLIC_API_URL;
@@ -285,6 +284,20 @@ export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   return res.json();
 }
 
+// Fetch all events (for admin visibility)
+export async function fetchAllEvents(): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/all`, { credentials: "include" });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch all events", res.status, text);
+    throw new Error(text || "Failed to fetch all events");
+  }
+
+  return res.json();
+}
+
+
 // Fetch all photos for an event (for retrieving multiple photos)
 export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
   const res = await fetch(`${PHOTO_URL}/post/${postId}`);
@@ -429,7 +442,7 @@ export async function updatePreferenceToOn(): Promise<UserPreference> {
     throw new Error(
         `Failed to update the user preference (${res.status})${text ? `: ${text}` : ""}`
     );
-  }
+     }
 
   return res.json();
 }

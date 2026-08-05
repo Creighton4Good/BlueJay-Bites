@@ -59,6 +59,14 @@ export default function TabsLayout() {
                 tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
             }}
         />
+      <Tabs.Screen
+        name="admin-events"
+        options={{
+          title: "All Events",
+          tabBarLabel: "Admin",
+          href: isAdmin ? undefined : null,
+        }}
+      />
     </Tabs>
   );
 }

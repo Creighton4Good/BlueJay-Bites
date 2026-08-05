@@ -1,4 +1,4 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -56,12 +56,6 @@ export default function SignInScreen() {
       )}
 
       {!!error && <Text style={styles.errorText}>{error}</Text>}
-
-      <Link href="/sign-up" asChild>
-        <Pressable style={styles.link}>
-          <Text style={styles.linkText}>View prototype sign-up screen</Text>
-        </Pressable>
-      </Link>
     </View>
   );
 }
@@ -101,13 +95,5 @@ const styles = StyleSheet.create({
     color: "red",
     textAlign: "center",
     marginTop: 16,
-  },
-  link: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#005CA9",
-    fontSize: 16,
   },
 });

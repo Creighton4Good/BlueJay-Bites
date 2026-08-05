@@ -1,6 +1,7 @@
 package bjbites.bjbites_springboot.controller;
 
 import bjbites.bjbites_springboot.entity.Post;
+import bjbites.bjbites_springboot.config.EventConstants;
 import bjbites.bjbites_springboot.repository.PostRepository;
 import bjbites.bjbites_springboot.repository.UserRepository;
 import bjbites.bjbites_springboot.service.NotificationService;
@@ -35,9 +36,6 @@ public class PostController {
     @Autowired
     private bjbites.bjbites_springboot.service.UserProvisioningService userProvisioningService;
 
-    // How long an event keeps showing in the feed after its availableUntil time
-    // passes, so the frontend can display a countdown before it disappears.
-    private static final long GRACE_PERIOD_MINUTES = 5;
 
     // Get all active posts (excludes events whose availableUntil passed more than
     // the grace period ago; events with no end time always show)
@@ -47,7 +45,7 @@ public class PostController {
      */
     @GetMapping("/active")
     public ResponseEntity<List<Post>> getAllActivePosts() {
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(GRACE_PERIOD_MINUTES);
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(EventConstants.GRACE_PERIOD_MINUTES);
         List<Post> posts = postRepository.findActiveWithinGrace("active", cutoff);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
@@ -119,11 +117,10 @@ public class PostController {
      */
     @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
-    public ResponseEntity<Post> createPost(@RequestBody Post post) {
+    public ResponseEntity<Post> createPost(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestBody Post post) {
         try {
 
-            User creator = userRepository.findById(post.getCreatedBy().getId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User creator = userProvisioningService.getOrCreateUser(oAuthUser);
 
             post.setCreatedBy(creator);
 

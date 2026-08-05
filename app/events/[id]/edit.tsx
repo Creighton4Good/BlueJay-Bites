@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams, Redirect } from "expo-router";
 import {
     Building,
     Event,
@@ -43,6 +43,7 @@ export default function EditEventScreen() {
     const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [accessDenied, setAccessDenied] = useState(false);
 
     const [servingsMin, setServingsMin] = useState<number | null>(null);
     const [servingsMax, setServingsMax] = useState<number | null>(null);
@@ -125,12 +126,8 @@ export default function EditEventScreen() {
                 const canEdit = isAdmin || (isOrganizer && isCreator);
 
                 if (!canEdit) {
-                    Alert.alert("Not allowed", "Only the event creator can edit this event.", [
-                        {
-                            text: "OK",
-                            onPress: () => router.back(),
-                        },
-                    ]);
+                    setAccessDenied(true);
+                    setLoadingEvent(false);
                     return;
                 }
 
@@ -308,6 +305,10 @@ export default function EditEventScreen() {
             setSubmitting(false);
         }
     };
+
+    if (accessDenied) {
+        return <Redirect href="/" />;
+    }
 
     if (loadingEvent) {
         return (

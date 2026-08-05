@@ -105,6 +105,14 @@ npm start
 
 ---
 
+## Creighton Student Development Team (past and present)
+_Erika Germinario_
+
+_Jerome Bustarga_
+
+_Torin O'Connor_
+* A Creighton University student of the class of 2028, with a major in Data Science. In his free time, he enjoys playing sports, his trombone, and traveling the world. He saw the opportunity this project provided to help the environment and local communities and was excited to make a positive impact.
+
 ## Contributions
 
 For details on contributing to the application, take a look [here](https://github.com/Creighton4Good/BlueJay-Bites?tab=contributing-ov-file)
