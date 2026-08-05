@@ -48,6 +48,7 @@ export default function TabsLayout() {
         name="create-event"
         options={{
           title: "Create Event",
+            tabBarLabel: "Create Event",
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus" color={color} />,
             href: canManageEvents ? undefined : null,
         }}
@@ -56,6 +57,7 @@ export default function TabsLayout() {
             name="settings"
             options={{
                 title: "Settings",
+                tabBarLabel: "Settings",
                 tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
             }}
         />
@@ -64,6 +66,7 @@ export default function TabsLayout() {
         options={{
           title: "All Events",
           tabBarLabel: "Admin",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
           href: isAdmin ? undefined : null,
         }}
       />
