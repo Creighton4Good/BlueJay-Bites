@@ -298,17 +298,21 @@ export default function CreateEventScreen() {
       const createdEvent = await createEvent(payload);
       const nextAvailability = createDefaultAvailability();
 
-      if (photoUrl) {
-        const filename = photoUrl.split("/").pop() ?? "photo.jpg";
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image/jpeg";
+      let photoUploadFailed = false;
 
-        await uploadPhoto({ uri: photoUrl, name: filename, type }, createdEvent.id);
+      if (photoUrl) {
+        try {
+          const filename = photoUrl.split("/").pop() ?? "photo.jpg";
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : "image/jpeg";
+
+          await uploadPhoto({ uri: photoUrl, name: filename, type }, createdEvent.id);
+        } catch (photoError) {
+          photoUploadFailed = true;
+          console.error("Event created, but photo upload failed:", photoError);
+        }
       }
 
-
-      Alert.alert("Success", "Food event created successfully!");
-      
       setTitle("");
       setDescription("");
       setDirections("");
@@ -321,6 +325,19 @@ export default function CreateEventScreen() {
       setAvailableFrom(nextAvailability.from);
       setAvailableUntil(nextAvailability.until);
       setPhotoUrl(null);
+
+      const message = photoUploadFailed
+        ? "The event was created, but the photo could not be uploaded."
+        : "Food event created successfully!";
+
+      if (Platform.OS === "web") {
+        window.alert(message);
+      } else {
+        Alert.alert(
+          photoUploadFailed ? "Event created" : "Success",
+          message
+        );
+      }
     } catch (err: any) {
       console.error("Error creating event:", err);
       Alert.alert(
