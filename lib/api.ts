@@ -40,6 +40,7 @@ export type User = {
   email: string;
   displayName: string;
   role: Role;
+  userPreference: UserPreference;
   entraId?: string;
   authProvider: string;
   createdAt?: string;

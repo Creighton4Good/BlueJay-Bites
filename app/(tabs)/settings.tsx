@@ -197,6 +197,11 @@ export default function SettingsScreen() {
                         editable={!submitting}
                     />
 
+                    {user?.userPreference.notificationPreference && (
+                        <Text style={styles.label}>
+                            Your Current Notification Preference: {user.userPreference.notificationPreference}
+                        </Text>
+                    )}
 
                         <Text style={styles.label}>Update Notification Settings</Text>
                         <View style={styles.pickerWrapper}>
