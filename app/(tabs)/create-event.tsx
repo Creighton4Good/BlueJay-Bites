@@ -29,6 +29,19 @@ import { Picker } from "@react-native-picker/picker";
 import { useSession } from "@/app/contexts/session-context";
 import { OrganizerRouteGuard } from "@/components/organizer-route-guard";
 
+function createDefaultAvailability() {
+  const from = new Date();
+
+  // Start five minutes in the future so it does not become stale while the user completes the form.
+  from.setMinutes(from.getMinutes() + 5);
+  from.setSeconds(0, 0);
+
+  const until = new Date(from);
+  until.setHours(until.getHours() + 1);
+
+  return { from, until };
+}
+
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -45,8 +58,9 @@ export default function CreateEventScreen() {
   const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
   const [servingsMin, setServingsMin] = useState<number | null>(null);
   const [servingsMax, setServingsMax] = useState<number | null>(null);
-  const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
-  const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
+  const [initialAvailability] = useState(() => createDefaultAvailability());
+  const [availableFrom, setAvailableFrom] = useState<Date | null>(initialAvailability.from);
+  const [availableUntil, setAvailableUntil] = useState<Date | null>(initialAvailability.until);
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -282,6 +296,7 @@ export default function CreateEventScreen() {
 
     try {
       const createdEvent = await createEvent(payload);
+      const nextAvailability = createDefaultAvailability();
 
       if (photoUrl) {
         const filename = photoUrl.split("/").pop() ?? "photo.jpg";
@@ -303,8 +318,8 @@ export default function CreateEventScreen() {
       setSelectedDietaryOptionIds([]);
       setServingsMin(null);
       setServingsMax(null);
-      setAvailableFrom(null);
-      setAvailableUntil(null);
+      setAvailableFrom(nextAvailability.from);
+      setAvailableUntil(nextAvailability.until);
       setPhotoUrl(null);
     } catch (err: any) {
       console.error("Error creating event:", err);
@@ -609,7 +624,7 @@ export default function CreateEventScreen() {
 
       {Platform.OS !== "web" && showFromPicker && (
         <DateTimePicker
-          value={availableFrom ?? new Date()}
+          value={availableFrom ?? initialAvailability.from}
           mode="datetime"
           display={Platform.OS === "ios" ? "inline" : "default"}
           onChange={(event, selectedDate) => {
@@ -625,7 +640,7 @@ export default function CreateEventScreen() {
 
       {Platform.OS !== "web" && showUntilPicker && (
         <DateTimePicker 
-          value={availableUntil ?? availableFrom ?? new Date()}
+          value={availableUntil ?? availableFrom ?? initialAvailability.until}
           mode="datetime"
           display={Platform.OS === "ios" ? "inline" : "default"}
           onChange={(event, selectedDate) => {
