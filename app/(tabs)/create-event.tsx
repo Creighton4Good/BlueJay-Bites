@@ -470,7 +470,7 @@ export default function CreateEventScreen() {
                             onPress={() => toggleDietaryOption(idStr)}
                             disabled={
                               submitting || 
-                              loadingBuildings ||
+                              loadingDietaryOptions ||
                               sessionLoading ||
                               !user
                             }

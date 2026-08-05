@@ -52,10 +52,9 @@ export type UpdateUser = {
 
 export type UserPreference = {
   id: number;
-  user: User;
   notificationPreference: string;
+  description?: string | null;
   updatedAt?: string;
-
 }
 
 // Post / Event — matches backend Post entity with @ManyToOne relationships
@@ -159,11 +158,7 @@ const PHOTO_URL = `${BASE_URL}/api/post-photos`
 const UPLOAD_URL = `${BASE_URL}/api/uploads`
 const USERS_URL = `${BASE_URL}/api/users`
 const PREFERENCE_URL = `${BASE_URL}/api/user-preferences`
-const ROLES_URL = `${BASE_URL}/api/roles`
-
-export const PROTOTYPE_CURRENT_USER_ID = Number(
-  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
-);
+const ROLES_URL = `${BASE_URL}/api/roles` 
 
 // Fetch active food events (for home feed)
 // URL that starts the backend's Entra OAuth login flow.

@@ -39,7 +39,7 @@ function InitialLayout() {
 
     const isInAuthGroup = segments[0] === "(auth)";
 
-    // Signed-out users should not remain on sign-in or sign-up
+    // Signed-out users should remain within the auth group
     if (!isAuthenticated && !isInAuthGroup) {
       router.replace("/(auth)/sign-in");
       return;
@@ -51,25 +51,25 @@ function InitialLayout() {
     }
   }, [loading, isAuthenticated, segments, router]);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: MyTheme.colors.card },
-        headerTintColor: "#FFF",
-        contentStyle: { backgroundColor: MyTheme.colors.background },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: MyTheme.colors.card },
+          headerTintColor: "#FFF",
+          contentStyle: { backgroundColor: MyTheme.colors.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      </Stack>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
+    </>
   );
 }
 
@@ -84,8 +84,8 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: MyTheme.colors.background,
