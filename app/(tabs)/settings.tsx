@@ -22,7 +22,7 @@ import {
 import {Stack} from "expo-router";
 import {Picker} from "@react-native-picker/picker";
 import {useSession} from "@/app/contexts/session-context";
-//import { LinearGradient } from 'expo-linear-gradient';
+// TODO: Enforce admin checks when updating user roles
 
 export default function SettingsScreen() {
     const [displayName, setDisplayName] = useState("");
@@ -64,9 +64,8 @@ export default function SettingsScreen() {
         if (!user) return;
 
         setUsers([user]);
-        setSelectedUserId(String(user.id));
 
-        if (!isAdmin) return;
+       // if (!isAdmin) return;
 
         const loadUsers = async () => {
             setLoadingUsers(true);
@@ -79,13 +78,12 @@ export default function SettingsScreen() {
                     ? data
                     : [user, ...data];
     
-                setUsers(data);
+                setUsers(allUsers);
             } catch (err) {
                 console.error("Error fetching users:", err);
                 Alert.alert("Error", "Could not load user options.");
 
                 setUsers([user]);
-                setSelectedUserId(String(user.id));
             } finally {
                 setLoadingUsers(false);
             }
@@ -132,9 +130,8 @@ export default function SettingsScreen() {
         try {
 
             if (displayName != "") {
-            console.log("calling updateUser", payload);
-            const result = await updateUser(payload);
-            console.log("updateUser succeeded", result); }
+            await updateUser(payload);
+             }
 
             if (selectedUserPreferenceId != "") {
                 if (selectedUserPreferenceId == "1") {
@@ -183,6 +180,12 @@ export default function SettingsScreen() {
                 <ScrollView contentContainerStyle={styles.scrollContainer}
                             keyboardShouldPersistTaps="handled">
                     <Text style={styles.bigText}>Edit User Details</Text>
+
+                    {user?.displayName && (
+                        <Text style={styles.label}>
+                            Your Current Display Name: {user.displayName}
+                        </Text>
+                    )}
 
                     <Text style={styles.label}>Update Your Display Name</Text>
                     <TextInput
