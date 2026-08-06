@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Event, fetchAllEvents } from "@/lib/api";
+import { Event, fetchAllEvents, closeEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
 
 export default function AdminEventsScreen() {
@@ -23,6 +23,19 @@ export default function AdminEventsScreen() {
       setLoading(false);
     }
   }, []);
+
+  const handleClose = useCallback(
+    async (eventId: number) => {
+      try {
+        await closeEvent(eventId);
+        await loadAllEvents();
+      } catch (err) {
+        console.error("Error closing event:", err);
+        Alert.alert("Error", "Could not close the event. Please try again.");
+      }
+    },
+    [loadAllEvents]
+  );
 
   // Reload whenever the tab regains focus so newly created, edited, or closed
   // events show without needing a remount.
@@ -136,6 +149,17 @@ export default function AdminEventsScreen() {
                                         : ""}
                                 </Text>
                             )}
+                            {event.status === "active" && (
+                                <Pressable
+                                    style={({ pressed }) => [
+                                        styles.closeButton,
+                                        pressed && styles.closeButtonPressed,
+                                    ]}
+                                    onPress={() => handleClose(event.id)}
+                                >
+                                    <Text style={styles.closeButtonText}>Close event</Text>
+                                </Pressable>
+                            )}
                         </Pressable>
                     ))
                 )}
@@ -219,6 +243,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     fontStyle: "italic",
+  },
+  closeButton: {
+    marginTop: 10,
+    backgroundColor: "#B00020",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  closeButtonPressed: {
+    opacity: 0.85,
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
   section: {
     marginBottom: 24,
