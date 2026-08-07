@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { closeEvent, Event, fetchMyEvents } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
@@ -23,7 +23,7 @@ export default function MyEventsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, []);
 
   // Reload whenever the tab regains focus so newly created, edited, or closed
   // events show without needing a remount.
@@ -41,6 +41,40 @@ export default function MyEventsScreen() {
   };
 
   const handleClose = (event: Event) => {
+    const closeSelectedEvent = async () => {
+      setClosingEventId(event.id);
+
+      try {
+        await closeEvent(event.id);
+        await loadMyEvents();
+      } catch (err) {
+        console.error("Error closing event:", err);
+
+        if (Platform.OS === "web") {
+          window.alert("Something went wrong while closing this event.");
+        } else {
+          Alert.alert(
+            "Could not close event",
+            "Something went wrong while closing this event."
+          );
+        }
+      } finally {
+        setClosingEventId(null);
+      }
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        `Are you sure you want to close "${event.title}"?`
+      );
+
+      if (confirmed) {
+        void closeSelectedEvent();
+      }
+
+      return;
+    }
+
     Alert.alert(
       "Close event?",
       `Are you sure you want to close "${event.title}"?`,
@@ -52,22 +86,7 @@ export default function MyEventsScreen() {
         {
           text: "Close Event",
           style: "destructive",
-          onPress: async () => {
-            setClosingEventId(event.id);
-
-            try {
-              await closeEvent(event.id);
-              await loadMyEvents();
-            } catch (err) {
-              console.error("Error closing event:", err);
-              Alert.alert(
-                "Could not close event",
-                "Something went wrong while closing this event."
-              );
-            } finally {
-              setClosingEventId(null);
-            }
-          },
+          onPress: closeSelectedEvent,
         },
       ]
     );
@@ -112,15 +131,16 @@ export default function MyEventsScreen() {
 
             return(
               <View style={styles.card}>
-              <Pressable
-                style={({ pressed }) => [styles.cardContent, pressed && styles.cardPressed]}
-                onPress={() =>
-                  router.push({
-                    pathname: "/events/[id]",
-                    params: { id: String(item.id), from: "my-events" },
-                  })
-                }
-              >
+                <Pressable
+                  style={({ pressed }) => [styles.cardContent, pressed && styles.cardPressed]}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/events/[id]",
+                      params: { id: String(item.id), from: "my-events" },
+                    })
+                  }
+                >
+
                 <Text style={styles.cardTitle}>{item.title}</Text>
 
                 {!!item.building && (
