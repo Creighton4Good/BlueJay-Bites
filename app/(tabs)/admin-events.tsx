@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Event, fetchAllEvents, closeEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
@@ -24,7 +24,7 @@ export default function AdminEventsScreen() {
     }
   }, []);
 
-  const handleClose = useCallback(
+  const performClose = useCallback(
     async (eventId: number) => {
       try {
         await closeEvent(eventId);
@@ -35,6 +35,27 @@ export default function AdminEventsScreen() {
       }
     },
     [loadAllEvents]
+  );
+
+  const handleClose = useCallback(
+    (eventId: number, eventTitle: string) => {
+      const message = `Close "${eventTitle}"? This will move it to closed for everyone.`;
+      if (Platform.OS === "web") {
+        if (window.confirm(message)) {
+          performClose(eventId);
+        }
+        return;
+      }
+      Alert.alert("Close event?", message, [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Close",
+          style: "destructive",
+          onPress: () => performClose(eventId),
+        },
+      ]);
+    },
+    [performClose]
   );
 
   // Reload whenever the tab regains focus so newly created, edited, or closed
@@ -155,7 +176,7 @@ export default function AdminEventsScreen() {
                                         styles.closeButton,
                                         pressed && styles.closeButtonPressed,
                                     ]}
-                                    onPress={() => handleClose(event.id)}
+                                    onPress={() => handleClose(event.id, event.title)}
                                 >
                                     <Text style={styles.closeButtonText}>Close event</Text>
                                 </Pressable>
