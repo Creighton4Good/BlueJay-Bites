@@ -465,3 +465,14 @@ export async function updatePreferenceToOff(): Promise<UserPreference> {
 
   return res.json();
 }
+
+export async function logout(): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Logout failed (${res.status})`);
+  }
+}
