@@ -99,7 +99,7 @@ public class UserController {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    // Assign the admin
+    // Assign the admin role
     /**
      * Assign the admin
      * @param id the ID of the user to retrieve
@@ -108,8 +108,8 @@ public class UserController {
      *          or {@code 400 Bad Request} if the role name of the user is an admin
      */
     @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/{id}/admin/promote")
-    public ResponseEntity<User> promoteToAdmin(@PathVariable Integer id) {
+    @PutMapping("/{id}/admin")
+    public ResponseEntity<User> assignAdmin(@PathVariable Integer id) {
         Optional<User> userData = userRepository.findById(id);
 
         if (userData.isPresent()) {
@@ -129,56 +129,30 @@ public class UserController {
         }
     }
 
-    // Demote the admin
-    /**
-     * Demote the admin
-     * @param id the ID of the user to retrieve
-     * @return a {@code ResponseEntity} containing the newly demoted admin with {@code 200 OK},
-     *          or {@code 404 Not Found} if no user exists with specified ID,
-     *          or {@code 400 Bad Request} if there is only one total user with admin role when making the request,
-     *          or if the role name of the user is not an admin
-     */
-    @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/{id}/admin/demote")
-    public ResponseEntity<User> demoteAdmin(@PathVariable Integer id) {
-        long adminCount = userRepository.countByRoleRoleName("admin");
-        if (adminCount <= 1) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Optional<User> userData = userRepository.findById(id);
-
-        if (userData.isPresent()) {
-            User user = userData.get();
-
-            if (!Objects.equals("admin", user.getRole().getRoleName())) {
-                return ResponseEntity.badRequest().build();
-            }
-
-            Role userRole = roleRepository.findByRoleName("user")
-                    .orElseThrow(() -> new RuntimeException("user role not found"));
-            user.setRole(userRole);
-            return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    // Assign the organizer
+    // Assign the organizer role
     /**
      * Assign the organizer
      * @param id the ID of the user to retrieve
      * @return a {@code ResponseEntity} containing the newly assigned organizer with {@code 200 OK},
      *          or {@code 404 Not Found} if no user exists with specified ID,
-     *          or {@code 400 Bad Request} if the role name of the user is an event organizer
+     *          or {@code 400 Bad Request} if there is only one total user with admin role when making the request,
+     *          or if the role name of the user is an event organizer
      */
     @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/{id}/event-organizer/promote")
-    public ResponseEntity<User> promoteToOrganizer(@PathVariable Integer id) {
+    @PutMapping("/{id}/event-organizer")
+    public ResponseEntity<User> assignOrganizer(@PathVariable Integer id) {
+        long adminCount = userRepository.countByRoleRoleName("admin");
+
         Optional<User> userData = userRepository.findById(id);
 
         if (userData.isPresent()) {
             User user = userData.get();
+
+            if (Objects.equals("admin", user.getRole().getRoleName())) {
+                if (adminCount <= 1) {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
 
             if (Objects.equals("event_organizer", user.getRole().getRoleName())) {
                 return ResponseEntity.badRequest().build();
@@ -194,34 +168,44 @@ public class UserController {
         }
     }
 
-    // Demote the organizer
+    // Assign the user role
     /**
-     * Demote the organizer
+     * Assign the user
      * @param id the ID of the user to retrieve
-     * @return a {@code ResponseEntity} containing the newly demoted organizer with {@code 200 OK},
+     * @return a {@code ResponseEntity} containing the newly assigned user with {@code 200 OK},
      *          or {@code 404 Not Found} if no user exists with specified ID,
-     *          or {@code 400 Bad Request} if the role name of the user is not an organizer
+     *          or {@code 400 Bad Request} if there is only one total user with admin role when making the request,
+     *          or if the role name of the user is a user
      */
     @PreAuthorize("hasAuthority('admin')")
-    @PutMapping("/{id}/event-organizer/demote")
-    public ResponseEntity<User> demoteOrganizer(@PathVariable Integer id) {
+    @PutMapping("/{id}/user")
+    public ResponseEntity<User> assignUser(@PathVariable Integer id) {
+        long adminCount = userRepository.countByRoleRoleName("admin");
+
         Optional<User> userData = userRepository.findById(id);
 
         if (userData.isPresent()) {
             User user = userData.get();
 
-            if (!Objects.equals("event_organizer", user.getRole().getRoleName())) {
+            if (Objects.equals("admin", user.getRole().getRoleName())) {
+                if (adminCount <= 1) {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+
+            if (Objects.equals("user", user.getRole().getRoleName())) {
                 return ResponseEntity.badRequest().build();
             }
 
             Role userRole = roleRepository.findByRoleName("user")
-                            .orElseThrow(() -> new RuntimeException("user role not found"));
+                    .orElseThrow(() -> new RuntimeException("user role not found"));
             user.setRole(userRole);
             return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
+
 
     // Create new user (admin only)
     /**

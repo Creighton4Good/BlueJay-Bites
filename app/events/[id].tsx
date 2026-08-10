@@ -38,7 +38,12 @@ export default function EventDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { user, isOrganizer, isAdmin } = useSession();
+    const { 
+        user, 
+        loading: sessionLoading,
+        isOrganizer, 
+        isAdmin,
+    } = useSession();
 
     const loadEvent = React.useCallback(async () => {
         if (!id) {
@@ -169,10 +174,12 @@ export default function EventDetailsScreen() {
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
-    const isCreator = event.createdBy?.id === user.id;
+    const isCreator = event.createdBy?.id === user?.id;
 
     const canManage =
-        isAdmin || (isOrganizer && isCreator);
+        !sessionLoading &&
+        !!user &&
+        (isAdmin || (isOrganizer && isCreator));
 
     return (
         <>
@@ -276,13 +283,15 @@ export default function EventDetailsScreen() {
                         />
                     </View>
                     
-                    <View style={styles.buttonWrapper}>
-                      <Button
-                        title="Close Event"
-                        onPress={handleCloseEvent}
-                        color="#C62828"
-                      />
-                    </View>
+                    {event.status === "active" && (
+                        <View style={styles.buttonWrapper}>
+                            <Button
+                                title="Close Event"
+                                onPress={handleCloseEvent}
+                                color="#C62828"
+                            />
+                        </View>
+                    )}
                   </>
                 )}
             </ScrollView>

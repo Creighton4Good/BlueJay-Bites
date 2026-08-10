@@ -40,10 +40,23 @@ export type User = {
   email: string;
   displayName: string;
   role: Role;
+  userPreference: UserPreference;
   entraId?: string;
   authProvider: string;
   createdAt?: string;
 };
+
+export type UpdateUser = {
+  displayName: string;
+  updatedAt?: string;
+};
+
+export type UserPreference = {
+  id: number;
+  notificationPreference: string;
+  description?: string | null;
+  updatedAt?: string;
+}
 
 // Post / Event — matches backend Post entity with @ManyToOne relationships
 export type Event = {
@@ -143,10 +156,9 @@ const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
 const DIETARY_URL = `${BASE_URL}/api/dietary-options`;
 const PHOTO_URL = `${BASE_URL}/api/post-photos`
 const UPLOAD_URL = `${BASE_URL}/api/uploads`
-
-export const PROTOTYPE_CURRENT_USER_ID = Number(
-  process.env.EXPO_PUBLIC_TEST_USER_ID ?? 1
-);
+const USERS_URL = `${BASE_URL}/api/users`
+const PREFERENCE_URL = `${BASE_URL}/api/user-preferences`
+const ROLES_URL = `${BASE_URL}/api/roles` 
 
 // Fetch active food events (for home feed)
 // URL that starts the backend's Entra OAuth login flow.
@@ -272,10 +284,51 @@ export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   return res.json();
 }
 
+// Fetch all events (for admin visibility)
+export async function fetchAllEvents(): Promise<Event[]> {
+  const res = await fetch(`${POSTS_URL}/all`, { credentials: "include" });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch all events", res.status, text);
+    throw new Error(text || "Failed to fetch all events");
+  }
+
+  return res.json();
+}
+
+
 // Fetch all photos for an event (for retrieving multiple photos)
 export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
   const res = await fetch(`${PHOTO_URL}/post/${postId}`);
   if (!res.ok) throw new Error("Failed to fetch event photos");
+  return res.json();
+}
+
+// Fetch all roles (for role changes)
+export async function fetchRoles(): Promise<Role[]> {
+  const res = await fetch(`${ROLES_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch roles");
+  return res.json();
+}
+
+// Fetch all users (for role changes)
+export async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(`${USERS_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
+// Fetch all user preferences (for notification settings)
+export async function fetchUserPreferences(): Promise<UserPreference[]> {
+  const res = await fetch(`${PREFERENCE_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch user preferences");
   return res.json();
 }
 
@@ -296,13 +349,118 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
   return res.json();
 }
 
-export async function fetchAllEvents(): Promise<Event[]> {
-  const res = await fetch(`${POSTS_URL}/all`, { credentials: "include" });
+// Assign the admin role
+export async function assignAdmin(id: number): Promise<User> {
+const res = await fetch(`${USERS_URL}/${id}/admin`, {
+  method: "PUT",
+      headers: { "Content-Type": "application/json" },
+  credentials: "include",
+});
+
+if (!res.ok) {
+  const text = await res.text();
+  console.error("Assign to admin failed", res.status, text);
+  throw new Error(
+      `Failed to assign the admin role (${res.status})${text ? `: ${text}` : ""}`
+  );
+}
+
+return res.json();
+}
+
+// Assign the organizer role
+export async function assignOrganizer(id: number): Promise<User> {
+  const res = await fetch(`${USERS_URL}/${id}/event-organizer`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("Failed to fetch all events", res.status, text);
-    throw new Error(text || "Failed to fetch all events");
+    console.error("Assign to organizer failed", res.status, text);
+    throw new Error(
+        `Failed to assign the organizer role (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Assign the user role
+export async function assignUser(id: number): Promise<User> {
+  const res = await fetch(`${USERS_URL}/${id}/user`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Assign to user failed", res.status, text);
+    throw new Error(
+        `Failed to assign the user role (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Update the user details (display name)
+export async function updateUser(
+    user: UpdateUser
+): Promise<User> {
+  const res = await fetch(`${USERS_URL}/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(user),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update user failed", res.status, text);
+    throw new Error(
+        `Failed to update user (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Update the user preference to on
+export async function updatePreferenceToOn(): Promise<UserPreference> {
+  const res = await fetch(`${PREFERENCE_URL}/me/update/on`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update preference failed", res.status, text);
+    throw new Error(
+        `Failed to update the user preference (${res.status})${text ? `: ${text}` : ""}`
+    );
+     }
+
+  return res.json();
+}
+
+// Update the user preference to off
+export async function updatePreferenceToOff(): Promise<UserPreference> {
+  const res = await fetch(`${PREFERENCE_URL}/me/update/off`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Update preference failed", res.status, text);
+    throw new Error(
+        `Failed to update the user preference (${res.status})${text ? `: ${text}` : ""}`
+    );
   }
 
   return res.json();

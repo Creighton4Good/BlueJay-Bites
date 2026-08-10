@@ -52,7 +52,7 @@ export default function CreateEventScreen() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
 
   useEffect(() => {
     const loadBuildings = async () => {
@@ -203,6 +203,22 @@ export default function CreateEventScreen() {
 
 
   const handleSubmit = async () => {
+    if (sessionLoading) {
+      Alert.alert(
+        "Please wait",
+        "Your account information is still loading."
+      );
+      return;
+    }
+
+    if (!user) {
+      Alert.alert(
+        "Sign-in required",
+        "You must be signed in to create an event."
+      );
+      return;
+    }
+
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
       return;
@@ -229,7 +245,8 @@ export default function CreateEventScreen() {
       Alert.alert(
           "Invalid entry",
           "Please enter a positive whole number for serving sizes.",
-      )
+      );
+      return;
     }
 
     if (max < min && servingsMax != null) {
@@ -356,7 +373,9 @@ export default function CreateEventScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.bigText}>Create Food Event</Text>
         <Text style={styles.subText}>
-          Prototype mode: posting as test organizer
+          {user
+            ? `Posting as ${user.displayName}`
+            : "Loading account information..."}
         </Text>
 
         <TextInput
@@ -449,7 +468,12 @@ export default function CreateEventScreen() {
                         <Pressable
                             key={option.id}
                             onPress={() => toggleDietaryOption(idStr)}
-                            disabled={submitting || loadingDietaryOptions}
+                            disabled={
+                              submitting || 
+                              loadingDietaryOptions ||
+                              sessionLoading ||
+                              !user
+                            }
                             style={{
                                 paddingVertical: 6,
                                 paddingHorizontal: 12,

@@ -24,7 +24,7 @@ public class RoleController {
      * @return a {@code ResponseEntity} containing all the roles with {@code 200 OK}
      */
     @PreAuthorize("hasAuthority('admin')")
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<Role>> getAllRoles() {
         return new ResponseEntity<>(roleRepository.findAll(), HttpStatus.OK);
     }

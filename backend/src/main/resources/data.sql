@@ -4,14 +4,15 @@ INSERT IGNORE INTO roles (id, role_name, description) VALUES
 (2, 'event_organizer', 'Can create and manage their own food events'),
 (3, 'admin', 'Full platform oversight and management');
 
--- Test Users
-INSERT IGNORE INTO users (id, auth_provider, created_at, display_name, email, password_hash, role_id) VALUES
-(1, 'local', NOW(), 'Test Organizer', 'testorganizer@example.com', 'placeholder', 2),
-(2, 'local', NOW(), 'Test User', 'testuser@example.com', 'placeholder', 1);
+-- User Notification Preferences
+INSERT IGNORE INTO user_preferences(id, notification_preference, description, updated_at) VALUES
+(1, 'on', 'User will receive all new event notifications', NOW()),
+(2, 'off', 'User will not receive any new event notifications', NOW());
 
--- User Preferences
-INSERT IGNORE INTO user_preferences(user_id, notification_preference, updated_at) VALUES
-(2, 'on', NOW());
+-- Test Users
+INSERT IGNORE INTO users (id, auth_provider, created_at, display_name, email, password_hash, role_id, preference_id) VALUES
+(1, 'local', NOW(), 'Test Organizer', 'testorganizer@example.com', 'placeholder', 2, 1),
+(2, 'local', NOW(), 'Test User', 'testuser@example.com', 'placeholder', 1, 1);
 
 -- Buildings (Creighton campus)
 INSERT IGNORE INTO buildings (id, building_name, latitude, longitude) VALUES

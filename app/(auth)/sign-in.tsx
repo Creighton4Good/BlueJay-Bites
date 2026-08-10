@@ -8,10 +8,12 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { ENTRA_LOGIN_URL, fetchCurrentUser } from "@/lib/api";
+import { ENTRA_LOGIN_URL } from "@/lib/api";
+import { useSession } from "@/app/contexts/session-context";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { refreshSession } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,7 @@ export default function SignInScreen() {
       await WebBrowser.openAuthSessionAsync(ENTRA_LOGIN_URL);
 
       // After the browser flow, confirm the session by asking the backend who we are.
-      const user = await fetchCurrentUser();
+      const user = await refreshSession();
       if (user) {
         router.replace("/(tabs)");
       } else {
