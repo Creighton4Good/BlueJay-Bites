@@ -21,6 +21,7 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 - Credentials loaded from environment variables (`DB_USERNAME`, `DB_PASSWORD`) — never hardcoded
 - `spring.jpa.hibernate.ddl-auto=update` so the schema auto-creates from entity classes
 - Seed data loaded via `data.sql` on startup using `spring.sql.init.mode=always`
+- Because `data.sql` runs on every startup, the sample events use `INSERT ... ON DUPLICATE KEY UPDATE` scoped to their availability window and status. This refreshes their pickup times on each restart instead of skipping rows that already exist, so seeded events do not silently expire on a database that has been running for a while. Other fields are left alone, so edits made to a seeded event during testing survive a restart
 
 ## Schema
 
@@ -91,6 +92,18 @@ Admins and organizers can both edit and delete their own event, but admins can e
 
 Admins can do anything that an organizer can do, so they will also be able to see the page of events only they created. Admin only views are supported in conroller classes, such as get all closed posts, get a post by id, or recover a post. This helps to ensure that admins do not need to be assigned the organizer role separately.
 
+Screens that are admin-only, such as the all-events view, are restricted on the frontend by a route guard that checks the admin role alone rather than organizer-or-admin, so an organizer cannot reach them by navigating directly. The corresponding tab is also hidden for non-admins. This is a usability layer on top of the backend checks, not a replacement for them, since the backend still authorizes every request against the session user.
+
+### Closing events on a schedule rather than at read time
+
+Status only changed to `closed` when a post was explicitly closed or deleted, so an event that simply ran out of time stayed `active` in the database. It would drop out of the active feed once it aged past the grace window, but never appear under closed posts, leaving expired events in a gap.
+
+`EventStatusService` runs on a schedule (`@Scheduled`, with `@EnableScheduling` on the application class) and closes any post whose `availableUntil` has passed while its status is still `active`.
+
+A scheduled job was chosen over treating "expired" as a read-time filter so the stored status stays the single source of truth. Deriving expiry at read time would mean every query that reads status has to repeat the same time comparison, and the stored value would stay permanently inaccurate.
+
+The job compares against `availableUntil` plus the grace period rather than the current time, so an event is not pulled out of the active feed before its countdown finishes. The grace period lives in `EventConstants.GRACE_PERIOD_MINUTES` so the active-events query and the scheduled job cannot drift apart.
+
 ### Buildings table = indoor structures only
 
 Outdoor event specifics (e.g., "by the fountain on the north side") live in the `directions` field on Post, not as separate Building entries. Keeps the lookup table clean while still supporting outdoor events.
@@ -155,14 +168,16 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 
 - `@PreAuthorize` annotations on endpoints define role requirements before a view/action
 - Uses `hasAuthority('admin')` or `hasAuthority('event_organizer')` — matches lowercase seed values
-- Currently `SecurityConfig` permits all `/api/**` requests for development so the frontend can connect without auth
-- Will switch to Microsoft Entra SSO before production (see User entity's `entraId` and `authProvider` fields)
+- `SecurityConfig` requires an authenticated session for API requests. Public lookup and active-event reads are permitted; anything that identifies or acts on behalf of a user requires a signed-in session
+- CORS is configured globally to allow the frontend origin with credentials, so browser requests can carry the session cookie. Frontend calls to session-based endpoints must send `credentials: "include"`
 
 ## Authentication
 - Logging in and logging out of the application will be done using a Microsoft Entra Account through OAUTH
   - Using the documentation provided by Microsoft [here](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configure-spring-boot-starter-java-app-with-entra), which includes dependencies and configuration information
   - OAUTH was chosen over SAML due to being more compatible with Spring-Boot
-- Endpoints are temporarily all accessible for local development
+- Sign-in is handled by the backend's OAuth2 flow. The frontend opens the backend login endpoint, Entra authenticates the user, and the backend establishes a session. The frontend then calls `/api/users/me` to load the authenticated user
+- `CustomOidcUserService` handles the OIDC user on login, and `UserProvisioningService.getOrCreateUser` looks the user up by their Entra ID and creates a record on first sign-in, defaulting them to the `user` role. Roles are elevated afterward through role management, not at provisioning time
+- Because authorization is session-based, the authenticated user is taken from the session rather than passed in by the client. Endpoints that act on behalf of a user (creating, updating, or closing an event, listing a user's own events) resolve the user from the session
 - `@AuthenticatedPrincipal` annotations on endpoints in order to get the authenticated OAuth2 user for checks involving type of user, ownership, or actions involving a particular user
 
 ## Repository Patterns
@@ -175,7 +190,6 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 ## Pending Work
 
 - Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce (currently the annotations exist but aren't checked because method security is not enabled)
-- Integrate Microsoft Entra SSO for real authentication for signing in/out
 - Continue building notification system (delivery method — in-app vs email — pending IT meeting)
   - Current approach: SSE (Single-Server Events, websockets)
 - Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
