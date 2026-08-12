@@ -57,11 +57,12 @@ The backend is a Spring Boot application that exposes a REST API for the BlueJay
 
 ### @ManyToOne foreign keys (not int FKs)
 
-User has a `Role` object, not a `roleId int`. Post has `Building`, `FoodType`, and `User createdBy` objects. Notification has `User` and `Post` objects. UserPreference has a `User` object. Photo has a `Post` object. This:
+User has a `Role` object, not a `roleId int`. User has a `UserPreference` object, instead of the UserPreference entity having a `userId int`.  Post has `Building`, `FoodType`, and `User createdBy` objects. Notification has `User` and `Post` objects. UserPreference has a `User` object. Photo has a `Post` object. This:
 
 - Enforces relationships at the entity level
 - Allows navigating object references in repository queries (e.g., `findByCreatedBy_Id(Integer userId)`)
 - Aligns with proper JPA practices and database design feedback
+- Allows for smooth seed data integration
 
 ### @ManyToMany
 
@@ -114,10 +115,9 @@ Roles are stored lowercase with underscores: `user`, `event_organizer`, `admin`.
 
 ### Notifications
 
-Notifications are sent using SSE (Server-Sent Events). This is because data does not need to be sent two-way in this application, but directly to the user is the objective. There are entities for Notification and UserPreference
-- Notifications are only sent to those with the "user" role
+Notifications are sent using Expo notifications through Firebase. There are entities for Notification and UserPreference (entity for notifications to be on or off)
+- Notifications are only sent to those with a user preference of "on"
 - They are triggered when an event-organizer/admin creates a post
-- Notifications are sent using SSE emitters, streaming real-time data
 - Endpoints exist to get certain notifications, such as by read status, support the user enabling or disabling notifications, and for user to subscribe to notifications
 
 ### Photos
@@ -155,6 +155,7 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 - `api/post-photos` - photo lookup
 - `api/uploads` - photo upload
 - `api/notifications` - noitification lookup
+- `api/user_preferences` - notification preference lookup
 
 ### Standard endpoints used in controllers
 
@@ -190,9 +191,10 @@ Notifications are sent using SSE (Server-Sent Events). This is because data does
 ## Pending Work
 
 - Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce (currently the annotations exist but aren't checked because method security is not enabled)
-- Continue building notification system (delivery method — in-app vs email — pending IT meeting)
-  - Current approach: SSE (Single-Server Events, websockets)
+- Build notification system (delivery method = push notifications)
+  - Current approach: Expo Notifications through Firebase
 - Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
 - Support for uploading and converting photos end-to-end
 - Add `servingsRemaining` tracking for "running low" UI
+- Integrate photo storage through AWS
 
