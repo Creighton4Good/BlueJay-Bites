@@ -8,7 +8,7 @@ import React, {
     useState,
 } from "react";
 
-import { fetchCurrentUser, logout as logoutApi, type User } from "@/lib/api";
+import { fetchCurrentUser, LOGOUT_URL, type User } from "@/lib/api";
 
 type SessionContextValue = {
     user: User | null;
@@ -45,7 +45,11 @@ export function SessionProvider({
     }, []);
 
     const signOut = useCallback(async () => {
-        await logoutApi();
+        if (typeof window !== "undefined") {
+            window.location.href = LOGOUT_URL;
+            return;
+        }
+        
         setUser(null);
     }, []);
 
