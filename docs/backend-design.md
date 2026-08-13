@@ -75,7 +75,7 @@ Posts use `availableFrom` and `availableUntil` instead of a single `expirationTi
 
 ### Lookup tables for stable values
 
-Roles, buildings, food types, and dietary options live in their own tables instead of as enums or free-text strings on Post. Reasons:
+Roles, buildings, food types, and dietary options live in their own tables instead of as enums or free-text strings on User or Post. Reasons:
 
 - Single source of truth (e.g., building's lat/long stored once)
 - Can add/edit values without code changes — just update `data.sql`
@@ -176,7 +176,7 @@ Notifications are sent using Expo notifications through Firebase. There are enti
 - Logging in and logging out of the application will be done using a Microsoft Entra Account through OAUTH
   - Using the documentation provided by Microsoft [here](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configure-spring-boot-starter-java-app-with-entra), which includes dependencies and configuration information
   - OAUTH was chosen over SAML due to being more compatible with Spring-Boot
-- Sign-in is handled by the backend's OAuth2 flow. The frontend opens the backend login endpoint, Entra authenticates the user, and the backend establishes a session. The frontend then calls `/api/users/me` to load the authenticated user
+- Sign-in is handled by the backend's OAuth2 flow. The frontend opens the backend login endpoint (`/oauth2/authorization/azure`), Entra authenticates the user, and the backend redirects to the callback (`/login/oauth2/code/azure`) and establishes a session. The frontend then calls `/api/users/me` to load the authenticated user
 - `CustomOidcUserService` handles the OIDC user on login, and `UserProvisioningService.getOrCreateUser` looks the user up by their Entra ID and creates a record on first sign-in, defaulting them to the `user` role. Roles are elevated afterward through role management, not at provisioning time
 - Because authorization is session-based, the authenticated user is taken from the session rather than passed in by the client. Endpoints that act on behalf of a user (creating, updating, or closing an event, listing a user's own events) resolve the user from the session
 - `@AuthenticatedPrincipal` annotations on endpoints in order to get the authenticated OAuth2 user for checks involving type of user, ownership, or actions involving a particular user
@@ -190,11 +190,12 @@ Notifications are sent using Expo notifications through Firebase. There are enti
 
 ## Pending Work
 
-- Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce (currently the annotations exist but aren't checked because method security is not enabled)
+- Enable `@EnableMethodSecurity` in `SecurityConfig` so `@PreAuthorize` annotations actually enforce. The annotations exist throughout the controllers but are not checked until method security is turned on, which is in progress in a separate PR
 - Build notification system (delivery method = push notifications)
   - Current approach: Expo Notifications through Firebase
 - Add analytics endpoints for admin dashboard -> might be more nice to have for metrics tracking, so this would be more of a way to view upcoming events
 - Support for uploading and converting photos end-to-end
-- Add `servingsRemaining` tracking for "running low" UI
+- Add `servingsRemaining` tracking for "running low" UI. Worth discussing first, since keeping this accurate would require the organizer to be at the event updating it as food is taken
+- Add a block user endpoint, so a removed user cannot sign back in and be re-provisioned on their next login
 - Integrate photo storage through AWS
 
