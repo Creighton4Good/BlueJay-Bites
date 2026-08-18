@@ -51,25 +51,28 @@ function InitialLayout() {
     }
   }, [loading, isAuthenticated, segments, router]);
 
-  return (
-    <>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: MyTheme.colors.card },
-          headerTintColor: "#FFF",
-          contentStyle: { backgroundColor: MyTheme.colors.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack>
+  if (loading) {
+    return ( 
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-        </View>
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: MyTheme.colors.card },
+        headerTintColor: "#FFF",
+        contentStyle: { backgroundColor: MyTheme.colors.background },
+      }}
+    >
+      {isAuthenticated ? (
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      ) : (
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       )}
-    </>
+    </Stack>
   );
 }
 
