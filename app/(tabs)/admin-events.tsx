@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { Event, fetchAllEvents, closeEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
 
@@ -131,21 +131,9 @@ export default function AdminEventsScreen() {
                     </Text>
                 ) : (
                     section.events.map((event) => (
-                        <Pressable
-                            key={event.id}
-                            style={({ pressed }) => [
-                                styles.card,
-                                pressed && styles.cardPressed,
-                            ]}
-                            onPress={() =>
-                                router.push({
-                                    pathname: "/events/[id]",
-                                    params: {
-                                        id: String(event.id),
-                                        from: "admin-events",
-                                    },
-                                })
-                            }
+                        <View
+                          key={event.id}
+                          style={styles.card}
                         >
                             <Text style={styles.cardTitle}>{event.title}</Text>
                             
@@ -181,7 +169,7 @@ export default function AdminEventsScreen() {
                                     <Text style={styles.closeButtonText}>Close event</Text>
                                 </Pressable>
                             )}
-                        </Pressable>
+                        </View>
                     ))
                 )}
             </View>
