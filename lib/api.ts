@@ -263,6 +263,28 @@ export async function closeEvent(
   }
 }
 
+//Re-open a previously closed event.
+export async function reopenEvent(
+  id: number
+) : Promise<void> {
+  const res = await fetch(`${POSTS_URL}/${id}/recover`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+
+    console.error("Re-open event failed", res.status, text);
+
+    throw new Error(
+      `Failed to re-open event (${res.status})${
+        text ? `: ${text}` : ""
+      }`
+    );
+  }
+}
+
 // Fetch all buildings (for create event dropdown)
 export async function fetchBuildings(): Promise<Building[]> {
   const res = await fetch(`${BUILDINGS_URL}/all`);

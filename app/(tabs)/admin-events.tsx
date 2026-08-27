@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Event, fetchAllEvents } from "@/lib/api";
+import { Event, fetchAllEvents, reopenEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
 
 export default function AdminEventsScreen() {
@@ -23,6 +23,53 @@ export default function AdminEventsScreen() {
       setLoading(false);
     }
   }, []);
+
+  const performReopen = useCallback(
+    async (eventId: number) => {
+      try {
+        await reopenEvent(eventId);
+        await loadAllEvents();
+      } catch (err) {
+        console.error("Error re-opening event:", err);
+
+        if (Platform.OS === "web") {
+          window.alert("Could not re-open the event. Please try again.")
+        } else {
+          Alert.alert(
+            "Error",
+            "Could not re-open the event. Please try again."
+          );
+        }
+      }
+    },
+    [loadAllEvents]
+  );
+
+  const handleReopen = useCallback(
+    (eventId: number, eventTitle: string) => {
+      const message =
+        `Re-open "${eventTitle}"? This will make it active for everyone again.`;
+
+      if (Platform.OS === "web") {
+        if (window.confirm(message)) {
+          performReopen(eventId);
+        }
+        return;
+      }
+
+      Alert.alert("Re-open event?", message, [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Re-open",
+          onPress: () => performReopen(eventId),
+        },
+      ]);
+    },
+    [performReopen]
+  );
 
   // Reload whenever the tab regains focus so newly created, edited, or closed
   // events show without needing a remount.
@@ -136,6 +183,23 @@ export default function AdminEventsScreen() {
                                         : ""}
                                 </Text>
                             )}
+
+                            {event.status === "closed" && (
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.reopenButton,
+                                  pressed && styles.reopenButtonPressed,
+                                ]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  handleReopen(event.id, event.title);
+                                }}
+                              >
+                                <Text style={styles.reopenButtonText}>
+                                  Re-open event
+                                </Text>
+                              </Pressable>
+                            )}
                         </Pressable>
                     ))
                 )}
@@ -228,5 +292,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#00235D",
     marginBottom: 10,
+  },
+  reopenButton: {
+    marginTop: 10,
+    backgroundColor: "#005CA9",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  reopenButtonPressed: {
+    opacity: 0.85,
+  },
+  reopenButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
