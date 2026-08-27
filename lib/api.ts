@@ -199,10 +199,16 @@ export async function fetchMyEvents(): Promise<Event[]> {
 
 // Fetch a single event by ID
 export async function fetchEventById(id: number): Promise<Event> {
-  const res = await fetch(`${POSTS_URL}/${id}`);
+  const res = await fetch(`${POSTS_URL}/${id}`, {
+    credentials: "include",
+  });
+
   if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch event", res.status, text);
     throw new Error(`Failed to fetch event ${id}`);
   }
+
   return res.json();
 }
 
