@@ -1,9 +1,26 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 
+/**
+ * Frontend API client and shared backend data types.
+ * 
+ * This file is the main boundary between the React Native frontend and the
+ * Spring Boot backend. It defines:
+ * 
+ * - TypeScript types that mirror backend entitites / request payloads
+ * - backend base-URL resolution for web, simulators, and physical devices
+ * - authentication/session requests
+ * - event, lookup, photo, user, role, and preference API helpers
+ * 
+ * Keep these types and endpoint paths synchronized with the backend whenever
+ * backend entitites, DTOs, or controller route change.
+ */
+
 export type EventStatus = "active" | "closed";
 
-// Lookup table types — match the backend entities
+/*
+  Lookup-table types returned by the backend.
+*/
 export type Building = {
   id: number;
   buildingName: string;
@@ -58,7 +75,11 @@ export type UserPreference = {
   updatedAt?: string;
 }
 
-// Post / Event — matches backend Post entity with @ManyToOne relationships
+/*
+  Full event representation returned by the backend.
+
+  Relationship fields contain expanded backend objects rather than only IDs.
+*/
 export type Event = {
   id: number;
   title: string;
@@ -80,7 +101,12 @@ export type Event = {
   updatedAt?: string;
 };
 
-// What we send when creating a new event
+/*
+  Payload sent when creating a new event.
+
+  Related entities are sent as ID-only objects because the backend resolves
+  those IDs to the corresponding Building, FoodType, DietaryOption, and User.
+*/
 export type NewEvent = {
   title: string;
   description: string;
@@ -101,6 +127,11 @@ export type NewEvent = {
   updatedAt?: string;
 };
 
+/*
+  Payload sent when editing an existing event.
+
+  Relationship fields use the same ID-only format as NewEvent.
+*/
 export type UpdateEvent = {
   title: string;
   description: string;
@@ -119,21 +150,32 @@ export type UpdateEvent = {
   updatedAt?: string;
 }
 
-// Resolve the backend host automatically so the same code works on web,
-// simulators, and physical devices without editing .env:
-//   - EXPO_PUBLIC_API_URL always wins when it is set
-//   - web talks to localhost
-//   - a physical device reuses the LAN IP of the Expo dev server
-//   - simulators fall back to their usual loopback addresses
+// Backend port used during local development.
 const BACKEND_PORT = 8080;
 
+/*
+  Resolve the Spring Boot backend URL for the current runtime.
+
+  Resolution order:
+  - web always uses localhost
+  - EXPO_PUBLIC_API_URL overrides native auto-detection when configured
+  - physical devices reuse the LAN host running the Expo dev server
+  - Android emulator falls back to 10.0.2.2
+  - iOS simulator falls back to localhost
+
+  This allows the same frontend code to run across web, simulators, and
+  physical devices without manually changing the backend host each time.
+*/
 function resolveBaseUrl(): string {
   if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
 
   const configured = process.env.EXPO_PUBLIC_API_URL;
   if (configured) return configured;
 
-  // hostUri looks like "192.168.86.154:8081" when served to a device.
+  /*
+    Expo's host URI typically looks like "192.168.x.x:8081" when the app is
+    being served to a physical device on the same local network.
+  */
   const hostUri =
     Constants.expoConfig?.hostUri ??
     (Constants.expoGoConfig as { debuggerHost?: string } | undefined)?.debuggerHost;
@@ -144,12 +186,13 @@ function resolveBaseUrl(): string {
   }
 
   return Platform.OS === "android"
-    ? `http://10.0.2.2:${BACKEND_PORT}` // Android emulator
-    : `http://localhost:${BACKEND_PORT}`; // iOS simulator
+    ? `http://10.0.2.2:${BACKEND_PORT}`
+    : `http://localhost:${BACKEND_PORT}`;
 }
 
 export const BASE_URL = resolveBaseUrl();
 
+// Shared endpoint roots.
 const POSTS_URL = `${BASE_URL}/api/posts`;
 const BUILDINGS_URL = `${BASE_URL}/api/buildings`;
 const FOODTYPES_URL = `${BASE_URL}/api/foodtypes`;
@@ -160,11 +203,17 @@ const USERS_URL = `${BASE_URL}/api/users`
 const PREFERENCE_URL = `${BASE_URL}/api/user-preferences`
 const ROLES_URL = `${BASE_URL}/api/roles` 
 
-// Fetch active food events (for home feed)
-// URL that starts the backend's Entra OAuth login flow.
+// Backend endpoint that starts the Microsoft Entra OAuth/OIDC login flow.
 export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
 
-// Fetch the currently authenticated user. Returns null if not logged in (401).
+/*
+  Fetch the currently authenticated user.
+
+  The backend session cookie is included with the request.
+  A 401 is treated as "not signed in" and returns null rather than throwing.
+
+  SessionContext uses this endpoint to determine the app's authentication state.
+*/
 export async function fetchCurrentUser(): Promise<User | null> {
   const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include" });
   if (res.status === 401) {
@@ -176,6 +225,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
   return res.json();
 }
 
+// Fetch active food events for the main feed and map.
 export async function fetchEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/active`);
   if (!res.ok) {
@@ -186,7 +236,12 @@ export async function fetchEvents(): Promise<Event[]> {
   return res.json();
 }
 
-// Fetch events created by a specific user (their "My Events")
+/*
+  Fetch events created by the currently authenticated user.
+
+  Ownership is determined by the backend session; no user ID is supplied by
+  the frontend.
+*/
 export async function fetchMyEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/created`, { credentials: "include" });
   if (!res.ok) {
@@ -197,7 +252,7 @@ export async function fetchMyEvents(): Promise<Event[]> {
   return res.json();
 }
 
-// Fetch a single event by ID
+// Fetch one event by its backend ID
 export async function fetchEventById(id: number): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/${id}`);
   if (!res.ok) {
@@ -206,7 +261,11 @@ export async function fetchEventById(id: number): Promise<Event> {
   return res.json();
 }
 
-// Create a new event
+/*
+  Create a new event.
+
+  This request is authenticated through the backend session cookie.
+*/
 export async function createEvent(event: NewEvent): Promise<Event> {
   const res = await fetch(`${POSTS_URL}/create`, {
     method: "POST",
@@ -222,7 +281,12 @@ export async function createEvent(event: NewEvent): Promise<Event> {
   return res.json();
 }
 
-// Update an existing event
+/*
+  Update an existing event.
+
+  Backend authorization determines whether the current user may edit
+  the requested event.
+*/
 export async function updateEvent(
   id: number,
   event: UpdateEvent
@@ -245,7 +309,12 @@ export async function updateEvent(
   return res.json();
 }
 
-// Close an event
+/*
+  Close an event.
+
+  The backend uses DELETE as the close-event action. The event remains in the 
+  system with a closed status rather than being removed from admin/history views.
+*/
 export async function closeEvent(
   id: number
 ): Promise<void> {
@@ -263,28 +332,28 @@ export async function closeEvent(
   }
 }
 
-// Fetch all buildings (for create event dropdown)
+// Fetch all buildings for event forms.
 export async function fetchBuildings(): Promise<Building[]> {
   const res = await fetch(`${BUILDINGS_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch buildings");
   return res.json();
 }
 
-// Fetch all food types (for create event dropdown)
+// Fetch all food types for event forms.
 export async function fetchFoodTypes(): Promise<FoodType[]> {
   const res = await fetch(`${FOODTYPES_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch food types");
   return res.json();
 }
 
-// Fetch all dietary options (for create event dropdown)
+// Fetch all dietary-option tags for event forms.
 export async function fetchDietaryOptions(): Promise<DietaryOption[]> {
   const res = await fetch(`${DIETARY_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch dietary options");
   return res.json();
 }
 
-// Fetch all events (for admin visibility)
+// Fetch active and closed events for admin management.
 export async function fetchAllEvents(): Promise<Event[]> {
   const res = await fetch(`${POSTS_URL}/all`, { credentials: "include" });
 
@@ -298,41 +367,19 @@ export async function fetchAllEvents(): Promise<Event[]> {
 }
 
 
-// Fetch all photos for an event (for retrieving multiple photos)
+// Fetch all photos associated with an event.
 export async function fetchPhotosForEvent(postId: number): Promise<Photo[]> {
   const res = await fetch(`${PHOTO_URL}/post/${postId}`);
   if (!res.ok) throw new Error("Failed to fetch event photos");
   return res.json();
 }
 
-// Fetch all roles (for role changes)
-export async function fetchRoles(): Promise<Role[]> {
-  const res = await fetch(`${ROLES_URL}/all`, {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Failed to fetch roles");
-  return res.json();
-}
+/*
+  Upload a photo for an event using multipart form data.
 
-// Fetch all users (for role changes)
-export async function fetchUsers(): Promise<User[]> {
-  const res = await fetch(`${USERS_URL}/all`, {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Failed to fetch users");
-  return res.json();
-}
-
-// Fetch all user preferences (for notification settings)
-export async function fetchUserPreferences(): Promise<UserPreference[]> {
-  const res = await fetch(`${PREFERENCE_URL}/all`, {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Failed to fetch user preferences");
-  return res.json();
-}
-
-// Upload a photo for an event
+  Do not manually set the Content-Type header here; fetch/FormData supplies the
+  multipart boundary automatically.
+*/
 export async function uploadPhoto(file: { uri: string; name: string; type: string }, postId: number): Promise<Photo> {
   const formData = new FormData();
   formData.append("file", file as any);
@@ -349,7 +396,25 @@ export async function uploadPhoto(file: { uri: string; name: string; type: strin
   return res.json();
 }
 
-// Assign the admin role
+// Fetch all available roles for role-management controls.
+export async function fetchRoles(): Promise<Role[]> {
+  const res = await fetch(`${ROLES_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch roles");
+  return res.json();
+}
+
+// Fetch all users for admin role-management controls.
+export async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(`${USERS_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
+// Assign the admin role to a user.
 export async function assignAdmin(id: number): Promise<User> {
 const res = await fetch(`${USERS_URL}/${id}/admin`, {
   method: "PUT",
@@ -368,7 +433,7 @@ if (!res.ok) {
 return res.json();
 }
 
-// Assign the organizer role
+// Assign the event-organizer role to a user.
 export async function assignOrganizer(id: number): Promise<User> {
   const res = await fetch(`${USERS_URL}/${id}/event-organizer`, {
     method: "PUT",
@@ -387,7 +452,7 @@ export async function assignOrganizer(id: number): Promise<User> {
   return res.json();
 }
 
-// Assign the user role
+// Assign the regular-user role to a user.
 export async function assignUser(id: number): Promise<User> {
   const res = await fetch(`${USERS_URL}/${id}/user`, {
     method: "PUT",
@@ -406,7 +471,7 @@ export async function assignUser(id: number): Promise<User> {
   return res.json();
 }
 
-// Update the user details (display name)
+// Update the currently authenticated user's editable profile information.
 export async function updateUser(
     user: UpdateUser
 ): Promise<User> {
@@ -428,7 +493,16 @@ export async function updateUser(
   return res.json();
 }
 
-// Update the user preference to on
+// Fetch all preference lookup values used by the settings screen.
+export async function fetchUserPreferences(): Promise<UserPreference[]> {
+  const res = await fetch(`${PREFERENCE_URL}/all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch user preferences");
+  return res.json();
+}
+
+// Turn notifications on for the currently authenticated user.
 export async function updatePreferenceToOn(): Promise<UserPreference> {
   const res = await fetch(`${PREFERENCE_URL}/me/update/on`, {
     method: "PATCH",
@@ -447,7 +521,7 @@ export async function updatePreferenceToOn(): Promise<UserPreference> {
   return res.json();
 }
 
-// Update the user preference to off
+// Turn notifications off for the currently authenticated user.
 export async function updatePreferenceToOff(): Promise<UserPreference> {
   const res = await fetch(`${PREFERENCE_URL}/me/update/off`, {
     method: "PATCH",
