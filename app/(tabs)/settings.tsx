@@ -71,6 +71,7 @@ export default function SettingsScreen() {
         the updated database-backed user information.
     */
     const { user, isAdmin, refreshSession } = useSession();
+    const { user, isAdmin, refreshSession, signOut } = useSession();
 
     /*
         Load available application roles from the backend.
@@ -260,6 +261,20 @@ export default function SettingsScreen() {
         }
     };
 
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+        } catch (error) {
+            console.error("Error signing out:", error);
+
+            if (Platform.OS === "web") {
+                window.alert("Sign out failed. Please try again.");
+            } else {
+                Alert.alert("Sign out failed", "Please try again.");
+            }
+        }
+    };
+
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -374,6 +389,14 @@ export default function SettingsScreen() {
             disabled={submitting}
         />
     </View>
+
+    <View style={styles.signOutWrapper}>
+        <Button
+            title="Sign Out"
+            onPress={handleSignOut}
+            color="#B00020"
+        />
+    </View>
 </ScrollView>
 </>
 </KeyboardAvoidingView>
@@ -472,6 +495,9 @@ export default function SettingsScreen() {
         },
         buttonWrapper: {
             marginTop: 16,
+        },
+        signOutWrapper: {
+            marginTop: 24,
         },
         errorText: {
             fontSize: 16,

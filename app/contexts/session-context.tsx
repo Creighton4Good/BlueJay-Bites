@@ -8,7 +8,7 @@ import React, {
     useState,
 } from "react";
 
-import { fetchCurrentUser, type User } from "@/lib/api";
+import { fetchCurrentUser, LOGOUT_URL, type User } from "@/lib/api";
 
 /**
  * Shared authentication/session state for the frontend.
@@ -34,6 +34,7 @@ type SessionContextValue = {
 
     // Re-fetch the current user from the backend and update SessionContext.
     refreshSession: () => Promise<User | null>;
+    signOut: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | undefined>(
@@ -74,6 +75,15 @@ export function SessionProvider({
         }
     }, []);
 
+    const signOut = useCallback(async () => {
+        if (typeof window !== "undefined") {
+            window.location.href = LOGOUT_URL;
+            return;
+        }
+        
+        setUser(null);
+    }, []);
+
     /*
         Check for an existing authenticated session when the app first loads.
 
@@ -108,8 +118,9 @@ export function SessionProvider({
             isOrganizer: user?.role.roleName === "event_organizer",
             isAdmin: user?.role.roleName === "admin",
             refreshSession,
+            signOut,
         }),
-        [user, loading, refreshSession]
+        [user, loading, refreshSession, signOut]
     );
 
     return (

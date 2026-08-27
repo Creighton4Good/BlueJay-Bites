@@ -72,9 +72,16 @@ function InitialLayout() {
     }
   }, [loading, isAuthenticated, segments, router]);
 
+  if (loading) {
+    return ( 
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
-    <>
-      {/*
+    {/*
         These are the two top-level route groups in the app:
 
         `(tabs)` contains the authenticated application.
@@ -83,28 +90,19 @@ function InitialLayout() {
         The actual redirect logic is handled above rather than by these
         Stack.Screen declarations themselves.
       */}
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: MyTheme.colors.card },
-          headerTintColor: "#FFF",
-          contentStyle: { backgroundColor: MyTheme.colors.background },
-        }}
-      >
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: MyTheme.colors.card },
+        headerTintColor: "#FFF",
+        contentStyle: { backgroundColor: MyTheme.colors.background },
+      }}
+    >
+      {isAuthenticated ? (
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      ) : (
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack>
-
-      {/*
-        Cover the navigator while SessionContext performs its intiial backend
-        session check. This prevents the wrong route from briefly flashing
-        before authentication state is known.
-      */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-        </View>
       )}
-    </>
+    </Stack>
   );
 }
 
