@@ -105,7 +105,7 @@ npm start
 
 ---
 
-## Creighton Student Development Team (past and present)
+## Creighton4Good BlueJay Bites Development Team (past and present)
 _Erika Germinario_
 
 _Jerome Bustarga_
