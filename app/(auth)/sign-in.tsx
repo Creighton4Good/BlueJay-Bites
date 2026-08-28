@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { ENTRA_LOGIN_URL } from "@/lib/api";
+import { MOBILE_LOGIN_URL, exchangeMobileAuthCode, } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
 export default function SignInScreen() {
@@ -20,19 +20,36 @@ export default function SignInScreen() {
   const handleSignIn = async () => {
     setLoading(true);
     setError(null);
-    try {
-      // Open the backend's Entra OAuth login in a browser. The backend handles
-      // the OAuth flow and establishes the session.
-      await WebBrowser.openAuthSessionAsync(ENTRA_LOGIN_URL);
 
-      // After the browser flow, confirm the session by asking the backend who we are.
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(
+        MOBILE_LOGIN_URL,
+        "bjbites://auth/callback"
+      );
+
+      if (result.type !== "success" || !result.url) {
+        setError("Sign-in was cancelled or did not complete.");
+        return;
+      }
+
+      const callbackUrl = new URL(result.url);
+      const code = callbackUrl.searchParams.get("code");
+
+      if (!code) {
+        setError("Sign-in did not return an authentication code.");
+        return;
+      }
+
+      await exchangeMobileAuthCode(code);
+
       const user = await refreshSession();
+
       if (user) {
         router.replace("/(tabs)");
       } else {
-        setError("Sign-in did not complete. Please try again.");
+        setError("Sign-in completed, but the app session could not be loaded.");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Sign-in error:", err);
       setError("Something went wrong during sign-in.");
     } finally {

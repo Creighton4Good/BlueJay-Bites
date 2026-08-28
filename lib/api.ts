@@ -164,6 +164,30 @@ const ROLES_URL = `${BASE_URL}/api/roles`
 // URL that starts the backend's Entra OAuth login flow.
 export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
 
+export const MOBILE_LOGIN_URL = `${BASE_URL}/api/mobile-auth/login`;
+
+export async function exchangeMobileAuthCode(
+  code: string
+) : Promise<void> {
+  const res = await fetch(
+    `${BASE_URL}/api/mobile-auth/exchange`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "applications/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ code }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      `Mobile authentication failed (${res})`
+    )
+  }
+}
+
 // Fetch the currently authenticated user. Returns null if not logged in (401).
 export async function fetchCurrentUser(): Promise<User | null> {
   const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include" });
