@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.sprignframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,7 +67,7 @@ public class MobileAuthController {
             SecurityContextHolder.createEmptyContext();
 
         context.setAuthentication(authentication);
-        SecurityContextHodler.setContext(context);
+        SecurityContextHolder.setContext(context);
 
         HttpSessionSecurityContextRepository repository =
             new HttpSessionSecurityContextRepository();
