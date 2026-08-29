@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { MOBILE_LOGIN_URL, exchangeMobileAuthCode, } from "@/lib/api";
+import { MOBILE_LOGIN_URL } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
 export default function SignInScreen() {
@@ -27,32 +27,13 @@ export default function SignInScreen() {
         "bjbites://auth/callback"
       );
 
-      if (result.type !== "success" || !result.url) {
-        setError("Sign-in was cancelled or did not complete.");
-        return;
-      }
-
-      const callbackUrl = new URL(result.url);
-      const code = callbackUrl.searchParams.get("code");
-
-      if (!code) {
-        setError("Sign-in did not return an authentication code.");
-        return;
-      }
-
-      await exchangeMobileAuthCode(code);
-
-      const user = await refreshSession();
-
-      if (user) {
-        router.replace("/(tabs)");
-      } else {
-        setError("Sign-in completed, but the app session could not be loaded.");
+      if (result.type === "cancel" || result.type === "dismiss") {
+        setError("Sign-in was cancelled.");
+        setLoading(false);
       }
     } catch (err) {
       console.error("Sign-in error:", err);
       setError("Something went wrong during sign-in.");
-    } finally {
       setLoading(false);
     }
   };
