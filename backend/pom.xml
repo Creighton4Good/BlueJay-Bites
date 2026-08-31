@@ -112,7 +112,21 @@
 			<artifactId>spring-cloud-azure-starter-active-directory</artifactId>
 		</dependency>
 
+		<!-- dependency for getting a git project into the build-->
+		<dependency>
+			<groupId>com.github.hlspablo</groupId>
+			<artifactId>expo-server-sdk-java</artifactId>
+			<version>3.1.6-1</version>
+		</dependency>
+
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
