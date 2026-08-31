@@ -16,8 +16,27 @@ import { Stack, router, useLocalSearchParams, useFocusEffect } from "expo-router
 import { Event, closeEvent, fetchEventById } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
-// Format a building's coordinates into a maps URL that opens the
-// native maps app (Apple Maps on iOS, Google Maps on Android).
+/**
+ * Shared event-details screen.
+ * 
+ * Displays the full details for a single food event. This route can be opened
+ * from several places in the app, including the dashboard and map views.
+ * 
+ * The event is reloaded whenever this screen regains focus so edits made on
+ * another screen are immediately reflected when the user returns.
+ * 
+ * Event-management controls are shown based on the authenticated user's role
+ * and relationship to the event. Backend autheorization remains the final
+ * source of truth for edit/close operations.
+ */
+
+/*
+    Build a platform-specific maps URL from a building's coordinates.
+
+    - iOS opens Apple Maps
+    - Android opens the device's map handler
+    - Web falls back to Google Maps
+*/
 function getDirectionsUrl(latitude: number, longitude: number, label?: string) {
     const latLng = `${latitude},${longitude}`;
     const encodedLabel = label ? encodeURIComponent(label) : "Food Event";
@@ -29,6 +48,12 @@ function getDirectionsUrl(latitude: number, longitude: number, label?: string) {
 }
 
 export default function EventDetailsScreen() {
+    /*
+        `id` identifies the event to load.
+
+        `from` is optional navigation context supplied by the screen that opened
+        this route. It is currently used to customize the back-button label.
+    */
     const { id, from } = useLocalSearchParams<{
         id: string;
         from?: string;
@@ -38,6 +63,10 @@ export default function EventDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    /*
+        Session data is used to determine whether the current user may see
+        event-management controls.
+    */
     const { 
         user, 
         loading: sessionLoading,
@@ -45,6 +74,12 @@ export default function EventDetailsScreen() {
         isAdmin,
     } = useSession();
 
+    /*
+        Fetch the latest version of the event from the backend.
+
+        Memoized because it is called by useFocusEffect whenever the screen
+        becomes active again.
+    */
     const loadEvent = React.useCallback(async () => {
         if (!id) {
             setError("Missing event id.");
@@ -65,12 +100,18 @@ export default function EventDetailsScreen() {
         }
     }, [id]);
 
+    /*
+        Reload whenever the user returns to this screen.
+
+        This prevents stale event information after editing an event elsewhere.
+    */
     useFocusEffect(
         React.useCallback(() => {
             loadEvent();
         }, [loadEvent])
     );
 
+    // Format backend date-time strings using the user's local date/time settings.
     const formatDateTime = (value?: string | null) => {
         if (!value) return "";
         try {
@@ -80,6 +121,10 @@ export default function EventDetailsScreen() {
         }
     };
 
+    /*
+        Open the event building in the device's map application.
+        The button is only rendered when both latitude and longitude exist.
+    */
     const handleGetDirections = () => {
         const lat = event?.building?.latitude;
         const lng = event?.building?.longitude;
@@ -90,6 +135,14 @@ export default function EventDetailsScreen() {
         );
     };
 
+    /*
+        Close an active event after confirmation.
+
+        Web uses browser confirm/alert dialogs, while native platforms use
+        React Native Alert dialogs.
+
+        After a successful close, the user is returned to the main dashboard.
+    */
     const handleCloseEvent = async () => {
         if (!event) return;
 
@@ -146,6 +199,7 @@ export default function EventDetailsScreen() {
         );
     };
 
+    // Render dedicated states before attempting to display event content.
     if (loading) {
         return (
             <View style={styles.centered}>
@@ -171,11 +225,23 @@ export default function EventDetailsScreen() {
         );
     }
 
+    // Directions are available only when both coordinates were saved.
     const hasCoordinates =
         event.building?.latitude != null && event.building?.longitude != null;
 
+    // Organizers may manage only events that they created.
     const isCreator = event.createdBy?.id === user?.id;
 
+    /*
+        Determine whether management controls should be visible.
+
+        Current behavior:
+        - admins may manage any event
+        - organizers may manage only events they created
+
+        This frontend check controls visibility only; backend authorization
+        should still enforce the same permissions.
+    */
     const canManage =
         !sessionLoading &&
         !!user &&
@@ -186,6 +252,11 @@ export default function EventDetailsScreen() {
             <Stack.Screen
                 options={{
                     title: "Event Details",
+
+                    /*
+                        Preserve naviagtion context in the back-button label.
+                        Currently only map is treated specially.
+                    */
                     headerBackTitle: from === "map" ? "Map" : "Dashboard",
                 }}
             />
@@ -269,6 +340,10 @@ export default function EventDetailsScreen() {
                     </>
                 )}
 
+                {/*
+                    Management actions are shown only when canManage is true.
+                    Closed events cannot be closed again.
+                */}
                 {canManage && (
                   <>
                     <View style={styles.buttonWrapper}>

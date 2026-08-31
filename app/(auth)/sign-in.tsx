@@ -11,6 +11,18 @@ import * as WebBrowser from "expo-web-browser";
 import { ENTRA_LOGIN_URL } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
+/**
+ * Sign-in screen for Microsoft Entra authentication.
+ * 
+ * The frontend does not authenticate directly with Microsoft. Instead, it opens 
+ * the Spring Boot backend's OAuth/OIDC login endpoint in a browser session.
+ * The backend completes the Entra flow, creates the authenticated session, and 
+ * redirects back to the app.
+ * 
+ * After the browser flow finishes, `refreshSession()` calls `/api/users/me`
+ * to confirm that the backend session was successfully established.
+ */
+
 export default function SignInScreen() {
   const router = useRouter();
   const { refreshSession } = useSession();
@@ -21,13 +33,23 @@ export default function SignInScreen() {
     setLoading(true);
     setError(null);
     try {
-      // Open the backend's Entra OAuth login in a browser. The backend handles
-      // the OAuth flow and establishes the session.
+      /*
+        Open the backend's Entra OAuth/OIDC login flow.
+
+        Authentication is handled by Spring Security rather than by the Expo 
+        app itself. A successful login establishes the backend session used by 
+        authenticated API requests.
+      */
       await WebBrowser.openAuthSessionAsync(ENTRA_LOGIN_URL);
 
-      // After the browser flow, confirm the session by asking the backend who we are.
+      /*
+        The browser flow returning does not by itself guarantee that login 
+        succeeded. Refresh the shared SessionContext and ask the backend for 
+        the currently authenticated user.
+      */
       const user = await refreshSession();
       if (user) {
+        // Replace the auth route so the user cannot navigate back to sign-in.
         router.replace("/(tabs)");
       } else {
         setError("Sign-in did not complete. Please try again.");
@@ -47,6 +69,7 @@ export default function SignInScreen() {
         Sign in with your Creighton account to continue.
       </Text>
 
+      {/* Prevent duplicate login attempts while the browser flow is running. */}
       {loading ? (
         <ActivityIndicator />
       ) : (

@@ -3,11 +3,24 @@ import { FlatList, Pressable, StyleSheet, Text, View, Image } from "react-native
 import {router, useFocusEffect} from "expo-router";
 import { BASE_URL, Event, fetchEvents } from "@/lib/api";
 
+/**
+ * Main dashboard / home feed for authenticated users.
+ * 
+ * This screen loads the currently active food events from the backend and 
+ * displays them as cards. Selecting an event opens the shared event-details
+ * route.
+ * 
+ * The list reloads whenever the tab regains focus so newly created, eited, 
+ * or closed events appear without requiring the app to remount.
+ */
 export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+    Fetch the active-event feed from the backend.
+  */
   const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -23,12 +36,22 @@ export default function HomeScreen() {
     }
   }, []);
 
+  /*
+    Refresh the feed whenever the Dashboard tab becomes active again.
+
+    This is preferred over a one-time `useEffect` because event data may have
+    changed while the user was on another screen.
+  */
   useFocusEffect(
     useCallback(() => {
       loadEvents();
     }, [loadEvents])
   );
 
+  /*
+    Format backend date/time values for display using the device's locale.
+    Falls back to the original string if parsing fails.
+  */
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
     try {
@@ -47,6 +70,7 @@ export default function HomeScreen() {
 
       <Text style={styles.sectionTitle}>Available Food Events</Text>
 
+      {/* Handle loading, error, and empty state before rendering event cards. */}
       {loading ? (
         <View style={styles.stateContainer}>
           <Text style={styles.statusText}>Loading events...</Text>
@@ -65,8 +89,14 @@ export default function HomeScreen() {
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
+            /*
+              Photo URLs may currently be stored as backend-relative paths.
+              Prefix those with BASE_URL so they can be loaded by the frontend.
+
+              TODO: Revisit this when event photos are stored in cloud storage,
+              where photoUrl should likely already be a complete public URL.
+            */
             const displayUrl = item.photoUrl
-                // TODO: Update URL when storing in cloud
             ? (item.photoUrl.startsWith("http") ? item.photoUrl : `${BASE_URL}${item.photoUrl}`)
             : undefined;
             return (
@@ -75,6 +105,10 @@ export default function HomeScreen() {
                 styles.card,
                 pressed && styles.cardPressed,
               ]}
+              /*
+                Open the shared event-details screen. The `from` parameter 
+                tells that screen that navigation originated on Dashboard.
+              */
               onPress={() =>
                 router.push({
                   pathname: "/events/[id]",
