@@ -254,10 +254,16 @@ export async function fetchMyEvents(): Promise<Event[]> {
 
 // Fetch one event by its backend ID
 export async function fetchEventById(id: number): Promise<Event> {
-  const res = await fetch(`${POSTS_URL}/${id}`);
+  const res = await fetch(`${POSTS_URL}/${id}`, {
+    credentials: "include",
+  });
+
   if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to fetch event", res.status, text);
     throw new Error(`Failed to fetch event ${id}`);
   }
+
   return res.json();
 }
 
@@ -332,7 +338,29 @@ export async function closeEvent(
   }
 }
 
-// Fetch all buildings for event forms.
+//Re-open a previously closed event.
+export async function reopenEvent(
+  id: number
+) : Promise<void> {
+  const res = await fetch(`${POSTS_URL}/${id}/recover`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+
+    console.error("Re-open event failed", res.status, text);
+
+    throw new Error(
+      `Failed to re-open event (${res.status})${
+        text ? `: ${text}` : ""
+      }`
+    );
+  }
+}
+
+// Fetch all buildings (for create event dropdown)
 export async function fetchBuildings(): Promise<Building[]> {
   const res = await fetch(`${BUILDINGS_URL}/all`);
   if (!res.ok) throw new Error("Failed to fetch buildings");
