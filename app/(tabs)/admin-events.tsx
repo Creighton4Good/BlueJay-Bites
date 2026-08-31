@@ -4,11 +4,26 @@ import { router, useFocusEffect } from "expo-router";
 import { Event, fetchAllEvents, reopenEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
 
+/**
+ * Admin-only screen for viewing all events in the system.
+ * 
+ * Unlike the regular event feed or "My Events" screen, this page loads events 
+ * created by every organizer and separates them into active and closed groups.
+ * 
+ * Access is wrapped in `AdminRouteGuard`, which prevents non-admin users from
+ * using the screen event if they navigate directly to the route.
+ */
 export default function AdminEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+    Fetch the complete event list from the backend.
+
+    This function is wrapped in `useCallback` because it is used insie
+    `useFocusEffect` below.
+   */
   const loadAllEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -79,6 +94,7 @@ export default function AdminEventsScreen() {
     }, [loadAllEvents])
   );
 
+  // Split the backend response into the two sections shown on this screen.
   const activeEvents = events.filter(
     (event) => event.status === "active"
   );
@@ -87,6 +103,10 @@ export default function AdminEventsScreen() {
     (event) => event.status === "closed"
   );
 
+  /*
+    Convert backend date/time strings into a readable local date/time. 
+    Falls back to the original value if parsing fails.
+  */
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
     try {
@@ -106,6 +126,7 @@ export default function AdminEventsScreen() {
 
       <View style={styles.separator} />
 
+      {/* Handle loading, error, and empty states before rendering the list. */}
       {loading ? (
         <View style={styles.stateContainer}>
           <Text style={styles.statusText}>Loading events...</Text>
@@ -120,6 +141,8 @@ export default function AdminEventsScreen() {
         </View>
       ) : (
         <FlatList
+          // The FlatList contains two logical sections rather than individual
+          // events: one for active events and one for closed events.
           data={[
             {
                 title: "Active Events",
@@ -150,6 +173,9 @@ export default function AdminEventsScreen() {
                                 styles.card,
                                 pressed && styles.cardPressed,
                             ]}
+                            // Open the shared event-details route. The `from`
+                            // parameter allows the details screen to know that the 
+                            // user arrived from the admin event list.
                             onPress={() =>
                                 router.push({
                                     pathname: "/events/[id]",

@@ -1,6 +1,14 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+/**
+ * Web-specific fallback for the campus event map.
+ * 
+ * Expo automatically uses this `.web.tsx` file in the browser instead of
+ * `EventMap.tsx`, which contains the native `react-native-maps` implementation.
+ * 
+ * The interactive campus map is currently supported only on the mobile app.
+ */
 export default function EventMap() {
   return (
     <View style={styles.fallback}>
