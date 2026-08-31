@@ -131,7 +131,7 @@ function resolveBaseUrl(): string {
   if (Platform.OS === "web") return `http://localhost:${BACKEND_PORT}`;
 
   const configured = process.env.EXPO_PUBLIC_API_URL;
-  if (configured) return configured;
+  if (configured) return configured.replace(/\/+$/, "");
 
   // hostUri looks like "192.168.86.154:8081" when served to a device.
   const hostUri =
@@ -164,15 +164,77 @@ const ROLES_URL = `${BASE_URL}/api/roles`
 // URL that starts the backend's Entra OAuth login flow.
 export const ENTRA_LOGIN_URL = `${BASE_URL}/oauth2/authorization/azure`;
 
+export const MOBILE_LOGIN_URL = `${BASE_URL}/api/mobile-auth/login`;
+
+export async function exchangeMobileAuthCode(
+  code: string
+): Promise<void> {
+  const url = `${BASE_URL}/api/mobile-auth/exchange`;
+
+  console.log("Mobile auth exchange URL:", url);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ code }),
+  });
+
+  console.log("Exchange status:", res.status);
+  console.log("Exchange response URL:", res.url);
+  console.log(
+    "Exchange content-type:",
+    res.headers.get("content-type")
+  );
+
+  if (
+    !res.ok ||
+    !res.url.startsWith(BASE_URL)
+  ) {
+    const text = await res.text();
+    console.error(
+      "Mobile auth exchange failed:",
+      text.slice(0, 300)
+    );
+
+    throw new Error(
+      `Mobile authentication failed (${res.status})`
+    );
+  }
+}
+
 // Fetch the currently authenticated user. Returns null if not logged in (401).
 export async function fetchCurrentUser(): Promise<User | null> {
-  const res = await fetch(`${BASE_URL}/api/users/me`, { credentials: "include" });
+  const res = await fetch(`${BASE_URL}/api/users/me`, {
+    credentials: "include",
+  });
+
+  console.log("users/me status:", res.status);
+  console.log("users/me URL:", res.url);
+  console.log(
+    "users/me content-type:",
+    res.headers.get("content-type")
+  );
+
   if (res.status === 401) {
     return null;
   }
-  if (!res.ok) {
-    throw new Error("Failed to fetch current user");
+
+  const contentType = res.headers.get("content-type");
+
+  if (!res.ok || !contentType?.includes("application/json")) {
+    const text = await res.text();
+
+    console.log(
+      "users/me non-JSON body:",
+      text.slice(0, 200)
+    );
+
+    return null;
   }
+
   return res.json();
 }
 
