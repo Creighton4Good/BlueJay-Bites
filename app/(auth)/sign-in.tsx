@@ -37,8 +37,6 @@ export default function SignInScreen() {
     const callbackUrl = new URL(result.url);
     const code = callbackUrl.searchParams.get("code");
 
-    console.log("Mobile auth code received:", code);
-
     if (!code) {
       setError("Sign-in did not return an authentication code.");
       return;
@@ -50,8 +48,6 @@ export default function SignInScreen() {
 
     console.log("Refreshing session...");
     const user = await refreshSession();
-
-    console.log("Authenticated user:", user);
 
     if (!user) {
       setError("Sign-in completed, but the app session could not be loaded.");
