@@ -22,11 +22,24 @@ Take a look [here](https://creighton4good.github.io/BlueJay-Bites/prototype.html
 ---
 
 ## Tech Stack:
+
+**Frontend**
+* React Native with Expo, targeting iOS, Android, and web
+* TypeScript
+* Expo Router for navigation
+
+**Backend**
 * Spring Boot 3.5.7 (Java 21)
 * MySQL 9.x for persistence
 * Spring Data JPA / Hibernate for ORM
 * Spring Security for role-based authorization
 * Maven for dependency management
+
+**Authentication**
+* Microsoft Entra ID single sign-on, so users log in with their Creighton accounts
+
+**Infrastructure**
+* AWS ECS Fargate for the backend, RDS for the database, S3 for photos, and an application load balancer
 
 ---
 
@@ -39,7 +52,7 @@ Follow the steps below to run the app either on Expo Go or on the web.
 * Node.js
 * Maven
 * MySQL Server
-* Java JDK 17+
+* Java JDK 21
 
 ---
 
@@ -79,15 +92,19 @@ npm install
 ### For mobile version of application:
 * Ensure phone is on same wifi as computer
 
-Find your IP address from terminal:
+The app works out the backend address automatically. On a physical device it uses the LAN address of the Expo dev server, and on simulators it falls back to the usual loopback addresses, so you normally do not need to configure anything.
+
+If you do need to point the app at a specific backend, find your IP address from a terminal:
 * Mac: `ipconfig getifaddr en0`
 * Windows: `ipconfig` -> look for IPv4 address
 * Linux: `hostname -I`
 
-Then implement it by writing in a .env file:
+Then set EXPO_PUBLIC_API_URL in a .env file:
 ```
-BASE_URL=http://YOUR_IP_ADDRESS:8080
+EXPO_PUBLIC_API_URL=http://YOUR_IP_ADDRESS:8080
 ```
+
+Note that this only applies to native. On web the app always uses http://localhost:8080 and ignores this variable. Remember to remove a stale value if you set one, since pointing at the wrong host causes confusing authentication errors.
 
 **3. Run the frontend (for mobile or web)**
 
@@ -105,10 +122,11 @@ npm start
 
 ---
 
-## Creighton Student Development Team (past and present)
+## Creighton4Good BlueJay Bites Development Team (past and present)
 _Erika Germinario_
 
 _Jerome Bustarga_
+* A Creighton University alum, class of 2026. He loves building web applications, and working on something that creates real impact is close to his heart. On BlueJay Bites he focused on backend development and building out the app's cloud infrastructure.
 
 _Torin O'Connor_
 * A Creighton University student of the class of 2028, with a major in Data Science. In his free time, he enjoys playing sports, his trombone, and traveling the world. He saw the opportunity this project provided to help the environment and local communities and was excited to make a positive impact.
