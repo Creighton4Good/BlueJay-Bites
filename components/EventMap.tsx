@@ -4,6 +4,12 @@ import MapView, { Callout, Marker } from "react-native-maps";
 import { Event, fetchEvents } from "@/lib/api";
 import { useFocusEffect, router } from "expo-router";
 
+/*
+  Default map viewport centered on Creighton University's campus.
+
+  This is used only as the initial map region; users can still pan and zoom
+  normally after the map loads.
+*/
 const CREIGHTON_REGION = {
   latitude: 41.2627,
   longitude: -95.9491,
@@ -11,7 +17,13 @@ const CREIGHTON_REGION = {
   longitudeDelta: 0.01,
 };
 
-// A building with all the active events located there.
+/*
+  Represents one map marker and all active events associated with that building.
+
+  Multiple events may share the same building, so the map groups them into a
+  single marker instead of rendering several overlapping markers at the same
+  coordinates.
+*/
 type BuildingGroup = {
   buildingId: number;
   buildingName?: string;
@@ -20,7 +32,12 @@ type BuildingGroup = {
   events: Event[];
 };
 
-// Group events that share a building into one entry per building.
+/*
+  Group active events by building for map display.
+
+  Events without a building ID or valid coordinates are skipped because they
+  cannot be placed on the map.
+*/
 function groupEventsByBuilding(events: Event[]): BuildingGroup[] {
   const groups = new Map<number, BuildingGroup>();
 
@@ -51,10 +68,20 @@ function groupEventsByBuilding(events: Event[]): BuildingGroup[] {
   return Array.from(groups.values());
 }
 
+/*
+  Interactive map of currently active food events.
+
+  Events are grouped by building so each building has a single marker.
+
+  Marker behavior:
+  - one event at a building -> opens that event's details directly
+  - multiple events at a building -> opens the building-specific event list
+*/
 export default function EventMap() {
   const [groups, setGroups] = useState<BuildingGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch active events and convert them into building marker groups.
   const loadEvents = useCallback(async () => {
     setError(null);
 
@@ -67,12 +94,24 @@ export default function EventMap() {
       }
   }, []);
 
+  /*
+    Refresh the map whenever this screen regains focus.
+
+    This ensures newly created, edited, or closed events are reflected without
+    requiring the Map tab to be remounted.
+  */
   useFocusEffect(
     useCallback(() => {
       loadEvents();
     }, [loadEvents])
   );
     
+  /*
+    Navigate based on how many events are associated with the selected building.
+
+    Single-event buildings can go directly to event details.
+    Multi-event buildings first show the building's event list.
+  */
   const handleGroupPress = (group: BuildingGroup) => {
     if (group.events.length === 1) {
       // Only one event here, go straight to its details
@@ -112,6 +151,10 @@ export default function EventMap() {
                 isMulti ? `${count} events here` : group.events[0].title
               }
             >
+              {/*
+                Multi-event buildings show a count badge so users can tell
+                immediately that more than one event is available there.
+              */}
               {isMulti ? (
                 <View style={styles.markerBadgeWrap}>
                   <View style={styles.markerPin} />
@@ -122,6 +165,11 @@ export default function EventMap() {
               ) : (
                 <View style={styles.markerPin} />
               )}
+              {/*
+                The callout provides a short preview before navigation.
+                For multi-event buildings, only the first three event titles
+                are shown to keep the callout compact.
+              */}
               <Callout onPress={() => handleGroupPress(group)}>
                 <View style={styles.callout}>
                   <Text style={styles.calloutTitle}>
@@ -161,6 +209,10 @@ export default function EventMap() {
           );
         })}
       </MapView>
+      {/*
+        Keep the map visible if loading fails and display the error as an
+        overlay rather than replacing the whole screen.
+      */}
       {error && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{error}</Text>

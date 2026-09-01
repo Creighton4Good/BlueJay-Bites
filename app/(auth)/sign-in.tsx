@@ -11,6 +11,18 @@ import * as WebBrowser from "expo-web-browser";
 import { MOBILE_LOGIN_URL, exchangeMobileAuthCode } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
+/**
+ * Sign-in screen for Microsoft Entra authentication.
+ * 
+ * The frontend does not authenticate directly with Microsoft. Instead, it opens 
+ * the Spring Boot backend's OAuth/OIDC login endpoint in a browser session.
+ * The backend completes the Entra flow, creates the authenticated session, and 
+ * redirects back to the app.
+ * 
+ * After the browser flow finishes, `refreshSession()` calls `/api/users/me`
+ * to confirm that the backend session was successfully established.
+ */
+
 export default function SignInScreen() {
   const router = useRouter();
   const { refreshSession } = useSession();
@@ -70,6 +82,7 @@ export default function SignInScreen() {
         Sign in with your Creighton account to continue.
       </Text>
 
+      {/* Prevent duplicate login attempts while the browser flow is running. */}
       {loading ? (
         <ActivityIndicator />
       ) : (

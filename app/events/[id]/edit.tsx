@@ -24,14 +24,30 @@ import {
 } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
+/**
+ * Edit-event screen for organizers and admins.
+ * 
+ * The event ID comes from the dynamic route `/events/[id]/edit`.
+ * 
+ * Access rules:
+ * - admins may edit any event
+ * - organziers may edit only events they created
+ * - everyone else is redirected away from this screen
+ * 
+ * This screen also loads lookup data for buildings, food types, and dietary
+ * options, then pre-populates the form using the existing event data.
+ */
 export default function EditEventScreen() {
+    // Dynamic event ID supplied by the route.
     const { id } = useLocalSearchParams<{ id: string }>();
 
+    // Editable event fields.
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [directions, setDirections] = useState("");
     const [roomNumber, setRoomNumber] = useState("");
 
+    // Lookup data and selections.
     const [buildings, setBuildings] = useState<Building[]>([]);
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
     const [loadingBuildings, setLoadingBuildings] = useState(false);
@@ -41,24 +57,35 @@ export default function EditEventScreen() {
     const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
     const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
     const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
+    
+    // Event loading/access state.
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [accessDenied, setAccessDenied] = useState(false);
 
+    // Optional serving estimates.
     const [servingsMin, setServingsMin] = useState<number | null>(null);
     const [servingsMax, setServingsMax] = useState<number | null>(null);
 
+    // Event availability state.
     const [availableFrom, setAvailableFrom] = useState<Date | null>(null);
     const [availableUntil, setAvailableUntil] = useState<Date | null>(null);
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showUntilPicker, setShowUntilPicker] = useState(false);
+    
     const [submitting, setSubmitting] = useState(false);
 
+    // User-facing save results.
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    /*
+        Role and ownership checks use the authenticated user from SessionContext.
+        Backend authorization should still remain the final source of truth.
+    */
     const { user, isOrganizer, isAdmin } = useSession();
 
+    // Load building options once when the screen mounts.
     useEffect(() => {
         const loadBuildings = async () => {
             setLoadingBuildings(true);
@@ -76,6 +103,7 @@ export default function EditEventScreen() {
         loadBuildings();
     }, []);
 
+    // Load food-type options once when the screen mounts.
     useEffect(() => {
         const loadFoodTypes = async () => {
             setLoadingFoodTypes(true);
@@ -93,6 +121,7 @@ export default function EditEventScreen() {
         loadFoodTypes();
     }, []);
 
+    // Load dietary-option tags once when the screen mounts.
     useEffect(() => {
         const loadDietaryOptions = async () => {
             setLoadingDietaryOptions(true);
@@ -111,6 +140,13 @@ export default function EditEventScreen() {
         loadDietaryOptions();
     }, []);
 
+    /*
+        Load the event, verify edit access, and populate the form.
+
+        Organizers may edit only their own events. Admins may edit any event.
+        The dependency list includes user/role state because access cannot be 
+        determined until SessionContext has resolved the authenticated user.
+    */
     useEffect(() => {
         const loadEvent = async () => {
             if (!id) {
@@ -131,6 +167,7 @@ export default function EditEventScreen() {
                     return;
                 }
 
+                // Populate the edit form with the event's current values.
                 setTitle(event.title ?? "");
                 setDescription(event.description ?? "");
                 setDirections(event.directions ?? "");
@@ -153,12 +190,17 @@ export default function EditEventScreen() {
         loadEvent();
     }, [id, user?.id, isOrganizer, isAdmin]);
 
+    // Dietary options are stored as a set of selected lookup IDs.
     const toggleDietaryOption = (id: string) => {
         setSelectedDietaryOptionIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
     };
 
+    /*
+        Web uses native HTML date/time inputs, while iOS/Android use 
+        DateTimePicker with Date objects.
+    */
     const pad = (n: number) => String(n).padStart(2, "0");
 
     const formatDateForWebInput = (date: Date | null) => {
@@ -171,6 +213,10 @@ export default function EditEventScreen() {
         return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
     };
 
+    /*  
+        Update only the date portion of an existing Date.
+        This preserves the previously selected time.
+    */
     const updateDatePart = (current: Date | null, dateValue: string) => {
         if (!dateValue) return null;
         const [year, month, day] = dateValue.split("-").map(Number);
@@ -180,6 +226,10 @@ export default function EditEventScreen() {
         return base;
     };
 
+    /*
+        Update only the time portion of an existing Date.
+        This preserves the previously selected calendar date.
+    */
     const updateTimePart = (current: Date | null, timeValue: string) => {
         if (!timeValue) return current;
         const [hours, minutes] = timeValue.split(":").map(Number);
@@ -189,6 +239,7 @@ export default function EditEventScreen() {
         return base;
     };
 
+    // Human-readable display value for native date/time buttons.
     const formatDisplayDateTime = (date: Date | null) => {
         if (!date) return "";
 
@@ -201,12 +252,21 @@ export default function EditEventScreen() {
         });
     };
 
+    /*
+        Convert Date objects to the local date-time string expected by the backend.
+
+        Do not replace this with `toISOString()` unless backend timezone handling
+        is intentionally changed, because `toISOString()` converts to UTC.
+    */
     const toLocalDateTimeString = (date: Date) => {
         const pad = (n: number) => String(n).padStart(2, "0");
 
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
+    /*
+        Validate the form and send the opdated event to the backend.
+    */
     const handleSubmit = async () => {
         setSaveMessage(null);
         setSaveError(null);
@@ -241,7 +301,8 @@ export default function EditEventScreen() {
             Alert.alert(
                 "Invalid entry",
                 "Please enter a positive whole number for serving sizes.",
-            )
+            );
+            return;
         }
 
         if (max < min && servingsMax != null) {
@@ -270,6 +331,13 @@ export default function EditEventScreen() {
 
         const now = new Date().toISOString();
 
+        /*
+            Lookup relationships are sent as ID-only objects. The backend resolves
+            those IDs to the associated entitites.
+
+            Editing preserves the event as active. Closing an event is handled
+            separately through the close-event flow.
+        */
         const payload: UpdateEvent = {
             title: title.trim(),
             description: description.trim(),
@@ -293,6 +361,10 @@ export default function EditEventScreen() {
             await updateEvent(Number(id), payload);
             setSaveMessage("Food event updated successfully!");
 
+            /*
+                Briefly show the success message before returning to the previous 
+                screen, usually My Events or the shared event-details screen.
+            */
             setTimeout(() => {
                 router.back();
             }, 800);
@@ -306,6 +378,7 @@ export default function EditEventScreen() {
         }
     };
 
+    // Users without edit permission are sent back to the main app route.
     if (accessDenied) {
         return <Redirect href="/" />;
     }
@@ -326,6 +399,10 @@ export default function EditEventScreen() {
         );
     }
 
+    /*
+        HTML date/time input used only on web.
+        Native paltforms use DateTimePicker below.
+    */
     const WebNativeInput = ({
         type,
         value,

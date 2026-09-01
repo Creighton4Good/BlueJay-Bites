@@ -29,10 +29,30 @@ import { Picker } from "@react-native-picker/picker";
 import { useSession } from "@/app/contexts/session-context";
 import { OrganizerRouteGuard } from "@/components/organizer-route-guard";
 
+/**
+ * Event creation screen for organizers and admins.
+ * 
+ * This screen:
+ * - loads building, food-type, and dietary-option lookup data from the backend
+ * - associates the new event with the currently authenticated user
+ * - supports optional photo capture/upload
+ * - uses separate date/time controls for web and native platforms
+ * - validates required fields and event availability before submission
+ * 
+ * Access is wrapped in `OrganizerRouteGuard`, so regular users should not be
+ * able to use this screen even if they navigate directly to the route.
+ */
+
+/*
+  Creates a safe default availability window for a new event.
+
+  The start time is intentionally five minutes in the future rather than "now".
+  This prevents the default time from becoming stale/invalid while the user is 
+  filling out the rest of the form. The end time defaults to one hour later.
+ */
 function createDefaultAvailability() {
   const from = new Date();
 
-  // Start five minutes in the future so it does not become stale while the user completes the form.
   from.setMinutes(from.getMinutes() + 5);
   from.setSeconds(0, 0);
 
@@ -43,31 +63,56 @@ function createDefaultAvailability() {
 }
 
 export default function CreateEventScreen() {
+  // Basic event fields.
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [directions, setDirections] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
+
+  //Building lookup data.
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [loadingBuildings, setLoadingBuildings] = useState(false);
+  
+  // Food-type lookup data.
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
   const [selectedFoodTypeId, setSelectedFoodTypeId] = useState<string>("");
   const [loadingFoodTypes, setLoadingFoodTypes] = useState(false);
+ 
+  // Dietary options are multi-select rather than a single Picker value.
   const [dietaryOptionsList, setDietaryOptionsList] = useState<DietaryOption[]>([]);
   const [selectedDietaryOptionIds, setSelectedDietaryOptionIds] = useState<string[]>([]);
   const [loadingDietaryOptions, setLoadingDietaryOptions] = useState(false);
+  
+  // Optional serving estimate.
   const [servingsMin, setServingsMin] = useState<number | null>(null);
   const [servingsMax, setServingsMax] = useState<number | null>(null);
+  
+  /*
+    Preserve one initial default availability object for the lifetime of this 
+    mounted form. Native date/time pickers use these values as safe fallbacks.
+  */
   const [initialAvailability] = useState(() => createDefaultAvailability());
   const [availableFrom, setAvailableFrom] = useState<Date | null>(initialAvailability.from);
   const [availableUntil, setAvailableUntil] = useState<Date | null>(initialAvailability.until);
+  
+  // Native date/time picker visibility.
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
+  
+  // Local URI selected from the camera or photo library.
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  
   const [submitting, setSubmitting] = useState(false);
 
+  /*
+    The authenticated user is used as `createdBy` in the event payload.
+    `sessionLoading` prevents submission before SessionContext finishes
+    confirming the current user with the backend.
+  */
   const { user, loading: sessionLoading } = useSession();
 
+  // Load building options once when the screen mounts.
   useEffect(() => {
     const loadBuildings = async () => {
       setLoadingBuildings(true);
@@ -85,6 +130,7 @@ export default function CreateEventScreen() {
     loadBuildings();
   }, []);
 
+  // Load food-type options once when the screen mounts.
   useEffect(() => {
     const loadFoodTypes = async () => {
       setLoadingFoodTypes(true);
@@ -102,6 +148,7 @@ export default function CreateEventScreen() {
     loadFoodTypes();
   }, []);
 
+    // Load dietary-option tags once when the screen mounts.
     useEffect(() => {
         const loadDietaryOptions = async () => {
             setLoadingDietaryOptions(true);
@@ -120,13 +167,17 @@ export default function CreateEventScreen() {
     loadDietaryOptions();
 }, []);
 
-
+    //Dietary options are stored as an array of selected lookup IDs.
     const toggleDietaryOption = (id: string) => {
         setSelectedDietaryOptionIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
     };
 
+    /*
+      Web date/time inputs need manually formatted string values, while native
+      uses Date objects directly through DateTimePicker.
+    */
     const pad = (n: number) => String(n).padStart(2, "0");
 
   const formatDateForWebInput = (date: Date | null) => {
@@ -139,6 +190,11 @@ export default function CreateEventScreen() {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+  /*
+    Web presents date and time as separate inputs. These helpers update only
+    one portion of the existing Date object so changing the date does not erase
+    the selected time and vice versa.
+  */
   const updateDatePart = (current: Date | null, dateValue: string) => {
     if (!dateValue) return null;
     const [year, month, day] = dateValue.split("-").map(Number);
@@ -157,10 +213,16 @@ export default function CreateEventScreen() {
     return base;
   };
 
+  /*
+    Convert the selected Date into the local date-time format expected by the 
+    backend. This intentionally avoids `toISOString()`, which would convert the 
+    value to UTC and could shift the displayed event time.
+  */
   const toLocalDateTimeString = (date: Date) => {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   };
 
+  // User-facing date/time formatting for native picker buttons.
   const formatDisplayDateTime = (date: Date | null) => {
     if (!date) return "";
 
@@ -173,6 +235,10 @@ export default function CreateEventScreen() {
     });
   };
 
+  /*
+    Select an existing image from the device photo library.
+    The selected URI is stored locally until the event itself has been created.
+  */
   const pickFromLibrary = async () => {
     const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -195,6 +261,10 @@ export default function CreateEventScreen() {
     }
   };
 
+  /*
+    Capture a new image using the device camera.
+    As with library images, upload is deferred until after event creation.
+  */
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -216,7 +286,17 @@ export default function CreateEventScreen() {
   };
 
 
+  /*
+    Validate the form, create the event, optionally upload its photo, and then
+    reset the form.
+
+    Event creation and photo upload are intentionaly treated separately.
+    If the event is created successfully but the optional image upload fails,
+    the event remains valid and the user receives a warning about the photo 
+    rather than being told the entire submission failed.
+  */
   const handleSubmit = async () => {
+    // Wait until the authenticated session has finished loading .
     if (sessionLoading) {
       Alert.alert(
         "Please wait",
@@ -233,6 +313,7 @@ export default function CreateEventScreen() {
       return;
     }
 
+    // Required field validation.
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a title for the post.");
       return;
@@ -248,6 +329,7 @@ export default function CreateEventScreen() {
       return;
     }
 
+    // Serving estimates, when provided, must be non-negative whole numbers.
     const min = servingsMin ?? 0;
     const max = servingsMax ?? 0;
     let validType: boolean = true;
@@ -271,6 +353,7 @@ export default function CreateEventScreen() {
       return;
     }
 
+    // Both ends of the availability window are required.
     if (!availableFrom || !availableUntil) {
       Alert.alert(
         "Missing availability",
@@ -289,7 +372,10 @@ export default function CreateEventScreen() {
 
     const now = new Date().toISOString();
     
-   // Prototype-only: hardcoded organizer until auth is wired in
+   /*
+    Lookup relationships are sent as objects containing only their database
+    IDs. The backend resolves those IDs to the related entitites.
+   */
     const payload: NewEvent = {
       title: title.trim(),
       description: description.trim(),    
@@ -312,11 +398,21 @@ export default function CreateEventScreen() {
     setSubmitting(true);
 
     try {
+      /*
+        Create the event first because the photo upload endpoint requires the 
+        newly created event ID.
+      */
       const createdEvent = await createEvent(payload);
+
+      // Generate fresh defaults for the next event after this one succeeds.
       const nextAvailability = createDefaultAvailability();
 
       let photoUploadFailed = false;
 
+      /*
+        Photo upload is optional and happens after event creation. A failed
+        upload must not roll back or invalidate the successfully created event.
+      */
       if (photoUrl) {
         try {
           const filename = photoUrl.split("/").pop() ?? "photo.jpg";
@@ -330,6 +426,7 @@ export default function CreateEventScreen() {
         }
       }
 
+      // Clear the form only after the event has been created successfully.
       setTitle("");
       setDescription("");
       setDirections("");
@@ -347,6 +444,10 @@ export default function CreateEventScreen() {
         ? "The event was created, but the photo could not be uploaded."
         : "Food event created successfully!";
 
+      /*
+        React Native's Alert API is not reliable on web, so use the browser's
+        native alert there and React Native Alert on iOS/Android.
+      */
       if (Platform.OS === "web") {
         window.alert(message);
       } else {
@@ -366,6 +467,12 @@ export default function CreateEventScreen() {
     }
   };
 
+  /*
+    Thin wrapper around native HTML `<input>` elements for web.
+
+    React Native's DateTimePicker is used on iOS/Android, but web uses the
+    browser's built-in date and time inputs instead.
+  */
   const WebNativeInput = ({
     type,
     value,
@@ -404,6 +511,8 @@ export default function CreateEventScreen() {
       >
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.bigText}>Create Food Event</Text>
+        
+        {/* Makes it clear which authenticated account owns the new event. */}
         <Text style={styles.subText}>
           {user
             ? `Posting as ${user.displayName}`
@@ -491,6 +600,7 @@ export default function CreateEventScreen() {
             </Picker>
           </View>
 
+            {/* Dietary options support multiple simultaneous selections. */}
             <Text style={styles.label}>Dietary Option Tags {loadingDietaryOptions ? "(loading...)" : "(optional)"}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 {dietaryOptionsList.map((option) => {
@@ -533,6 +643,7 @@ export default function CreateEventScreen() {
         </View>
       </View>
 
+      {/* Preview the local image before it is uploaded. */}
       {photoUrl && (
           <View style={{ marginBottom: 12, alignItems: "center" }}>
             <Image
@@ -580,7 +691,10 @@ export default function CreateEventScreen() {
               editable={!submitting}
               keyboardType="numeric"
           />
-    
+      {/*
+        Web and native intentionally use different date/time controls.
+        Web uses HTML date/time inputs; native uses DateTimePicker.
+      */}
       {Platform.OS === "web" ? (
         <>
           <Text style={styles.label}>Available from *</Text>
@@ -663,6 +777,7 @@ export default function CreateEventScreen() {
         </Pressable>
       )}
 
+      {/* Native date/time pickers are mounted only while they are open. */}
       {Platform.OS !== "web" && showFromPicker && (
         <DateTimePicker
           value={availableFrom ?? initialAvailability.from}
