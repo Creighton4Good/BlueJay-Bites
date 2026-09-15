@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { ENTRA_LOGIN_URL } from "@/lib/api";
+import { MOBILE_LOGIN_URL, exchangeMobileAuthCode } from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
 /**
@@ -30,37 +30,50 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSignIn = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      /*
-        Open the backend's Entra OAuth/OIDC login flow.
+  setLoading(true);
+  setError(null);
 
-        Authentication is handled by Spring Security rather than by the Expo 
-        app itself. A successful login establishes the backend session used by 
-        authenticated API requests.
-      */
-      await WebBrowser.openAuthSessionAsync(ENTRA_LOGIN_URL);
+  try {
+    const result = await WebBrowser.openAuthSessionAsync(
+      MOBILE_LOGIN_URL,
+      "bjbites://auth/callback"
+    );
 
-      /*
-        The browser flow returning does not by itself guarantee that login 
-        succeeded. Refresh the shared SessionContext and ask the backend for 
-        the currently authenticated user.
-      */
-      const user = await refreshSession();
-      if (user) {
-        // Replace the auth route so the user cannot navigate back to sign-in.
-        router.replace("/(tabs)");
-      } else {
-        setError("Sign-in did not complete. Please try again.");
-      }
-    } catch (err: any) {
-      console.error("Sign-in error:", err);
-      setError("Something went wrong during sign-in.");
-    } finally {
-      setLoading(false);
+    console.log("Auth session result:", result);
+
+    if (result.type !== "success" || !result.url) {
+      setError("Sign-in was cancelled or did not complete.");
+      return;
     }
-  };
+
+    const callbackUrl = new URL(result.url);
+    const code = callbackUrl.searchParams.get("code");
+
+    if (!code) {
+      setError("Sign-in did not return an authentication code.");
+      return;
+    }
+
+    console.log("Exchanging mobile auth code...");
+    await exchangeMobileAuthCode(code);
+    console.log("Mobile auth exchange succeeded");
+
+    console.log("Refreshing session...");
+    const user = await refreshSession();
+
+    if (!user) {
+      setError("Sign-in completed, but the app session could not be loaded.");
+      return;
+    }
+
+    router.replace("/(tabs)");
+  } catch (err) {
+    console.error("Sign-in error:", err);
+    setError("Something went wrong during sign-in.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>

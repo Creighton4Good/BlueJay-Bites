@@ -27,6 +27,9 @@ import bjbites.bjbites_springboot.service.CustomOidcUserService;
 public class SecurityConfig {
 
     @Autowired
+    private MobileAuthSuccessHandler mobileAuthSuccessHandler;
+
+    @Autowired
     private CustomOidcUserService customOidcUserService;
 
     @Autowired
@@ -58,7 +61,7 @@ public class SecurityConfig {
                     .oidcUserService(customOidcUserService))
                 // Send the user back to the app after login instead of falling
                 // through to the backend root, which has no page mapped.
-                .defaultSuccessUrl(frontendUrl, true))
+                .successHandler(mobileAuthSuccessHandler))
             .logout(logout -> logout
                 .logoutRequestMatcher(
                     PathPatternRequestMatcher.withDefaults()
