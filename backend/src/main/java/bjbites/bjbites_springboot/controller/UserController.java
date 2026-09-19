@@ -248,6 +248,29 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
+    // Add user push token
+    /**
+     * Add a user's push token
+     * @param oAuthUser the authenticated user
+     * @param userDetails the updated user details
+     * @return a {@code ResponseEntity} containing the updated user with {@code 200 OK},
+     *      or {@code 404 Not Found} if the user data does not exist
+     */
+    @PutMapping("/push")
+    public ResponseEntity<User> addPushToken(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestBody User userDetails) {
+        User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
+
+        Optional<User> userData = userRepository.findById(currentUser.getId());
+        if (userData.isPresent()) {
+            User user = userData.get();
+            user.setPushToken(userDetails.getPushToken());
+            return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+
+
     // Delete user (admin only)
     /**
      * Delete user

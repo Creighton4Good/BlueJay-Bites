@@ -4,9 +4,7 @@ import bjbites.bjbites_springboot.entity.Post;
 import bjbites.bjbites_springboot.config.EventConstants;
 import bjbites.bjbites_springboot.repository.PostRepository;
 import bjbites.bjbites_springboot.repository.UserRepository;
-import bjbites.bjbites_springboot.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,7 +25,6 @@ import com.niamedtech.expo.exposerversdk.response.TicketResponse;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -43,12 +40,7 @@ public class PostController {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private NotificationService notificationService;
-    @Autowired
     private bjbites.bjbites_springboot.service.UserProvisioningService userProvisioningService;
-    @Value("${expo.push}")
-    private String expoPushToken;
-
 
     // Get all active posts (excludes events whose availableUntil passed more than
     // the grace period ago; events with no end time always show)
@@ -128,7 +120,7 @@ public class PostController {
      * @return a {@code ResponseEntity} containing the created post with {@code 201 Created},
      *      or {@code 500 Internal Server Error} if an unexpected error occurs
      */
-    // TODO: Add back preauthorize check
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('event_organizer')")
     @PostMapping("/create")
     public ResponseEntity<Post> createPost(@AuthenticationPrincipal OAuth2User oAuthUser, @RequestBody Post post) {
         try {
@@ -139,28 +131,29 @@ public class PostController {
 
             try {
                 List<String> to = new ArrayList<>();
-                CloseableHttpClient httpClient = HttpClients.createDefault();
-                to.add(expoPushToken);
-                // TODO: Add all users' push tokens
+                try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                    for (User user : userRepository.findAll()) {
+                        to.add(user.getPushToken());
+                    }
 
-                ExpoPushNotificationClient client = ExpoPushNotificationClient
-                        .builder()
-                        .setHttpClient(httpClient)
-                        .build();
+                    ExpoPushNotificationClient client = ExpoPushNotificationClient
+                            .builder()
+                            .setHttpClient(httpClient)
+                            .build();
 
-                PushNotification pushNotification = new PushNotification();
-                pushNotification.setTo(to);
-                pushNotification.setTitle("New Food Event");
-                pushNotification.setBody(savedPost.getTitle());
+                    PushNotification pushNotification = new PushNotification();
+                    pushNotification.setTo(to);
+                    pushNotification.setTitle("New Food Event");
+                    pushNotification.setBody(savedPost.getTitle());
 
-                // Play Sound - iOS Only ( Android uses Channels to configure Sounds )
-                // pass the sound name ( the sound must be already available on the project )
-                // Check: https://docs.expo.dev/versions/latest/sdk/notifications/#configurable-properties
-                // and https://docs.expo.dev/versions/latest/sdk/notifications/#set-custom-notification-sounds
-                pushNotification.setSound("default");
+                    // Play Sound - iOS Only ( Android uses Channels to configure Sounds )
+                    // pass the sound name ( the sound must be already available on the project )
+                    // Check: https://docs.expo.dev/versions/latest/sdk/notifications/#configurable-properties
+                    // and https://docs.expo.dev/versions/latest/sdk/notifications/#set-custom-notification-sounds
+                    pushNotification.setSound("default");
 
-                List<PushNotification> notifications = new ArrayList<>();
-                notifications.add(pushNotification);
+                    List<PushNotification> notifications = new ArrayList<>();
+                    notifications.add(pushNotification);
 
                     List<TicketResponse.Ticket> response = client.sendPushNotifications(notifications);
 
@@ -169,20 +162,21 @@ public class PostController {
                         System.out.println(ticket.getStatus());
 
                     }
+                }
+                } catch (Exception e) {
+                    // TODO: Can add proper logger
+                    System.err.println("Failed to send push notifications for post " + savedPost.getId());
+                    e.printStackTrace();
+                }
 
-            }
-            catch (Exception e) {
-                // TODO: Can add proper logger
-                System.err.println("Failed to send push notifications for post " + savedPost.getId());
-                e.printStackTrace();
-            }
 
 
                 return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
 
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().build();
+            }
+
     }
 
     // Update a post or creator's post

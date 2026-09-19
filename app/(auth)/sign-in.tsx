@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { MOBILE_LOGIN_URL, exchangeMobileAuthCode } from "@/lib/api";
+import {MOBILE_LOGIN_URL, exchangeMobileAuthCode, registerForPushNotificationsAsync, addPushToken} from "@/lib/api";
 import { useSession } from "@/app/contexts/session-context";
 
 export default function SignInScreen() {
@@ -56,6 +56,13 @@ export default function SignInScreen() {
     if (!user) {
       setError("Sign-in completed, but the app session could not be loaded.");
       return;
+    }
+    // TODO: Implement a way to handle users who turn on notifications after sign in
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (token) await addPushToken({ pushToken: token });
+    } catch (e) {
+      console.error("Push registration failed:", e);
     }
 
     router.replace("/(tabs)");
