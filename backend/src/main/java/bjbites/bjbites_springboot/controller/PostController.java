@@ -133,7 +133,9 @@ public class PostController {
                 List<String> to = new ArrayList<>();
                 try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                     for (User user : userRepository.findAll()) {
-                        to.add(user.getPushToken());
+                        String pushToken = user.getPushToken();
+                        if (pushToken != null) {
+                        to.add(pushToken); }
                     }
 
                     ExpoPushNotificationClient client = ExpoPushNotificationClient
