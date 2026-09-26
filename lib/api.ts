@@ -211,14 +211,19 @@ export async function exchangeMobileAuthCode(
   }
 }
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 function handleRegistrationError(errorMessage: string) {
   alert(errorMessage);
   throw new Error(errorMessage);
 }
-
-
-
 
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === "web") return null; // no Expo push tokens on web
