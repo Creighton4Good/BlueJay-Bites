@@ -26,6 +26,7 @@ Everything lives in the **us-east-2 (Ohio)** region. If something looks missing 
 | Execution role | ecsTaskExecutionRole |
 | Log group | /ecs/bjbites-staging |
 | Budget | bjbites-monthly, $25, alerts at 50% |
+| TZ | America/Chicago |
 
 Credentials are not in this file. The database password and the Entra client secret are environment variables on the ECS task definition, visible in the console.
 
@@ -57,7 +58,7 @@ Instance `bjbites-staging`, database `bluejaybites`, user `admin`.
 
 **This is a separate database from anyone's local one.** It was created fresh and seeded from `data.sql`. Accounts are created here on first sign-in by `UserProvisioningService`, and everyone defaults to the `user` role regardless of what their local database says. To grant organizer or admin, either edit the database directly or use the settings screen from an account that is already an admin.
 
-The security group only allows connections from specific IP addresses. To connect from your own machine you have to add your IPv4 address to it first: EC2 → Security Groups → `bjbites-staging-db` → add an inbound rule for MySQL on port 3306 from your address with `/32` on the end. IPv6 addresses will not work, since the database endpoint is IPv4.
+The security group only allows connections from specific IP addresses. To connect from your own machine you have to add your IPv4 address to it first: EC2 → Security Groups → `bjbites-staging-db` → add an inbound rule for MySQL on port 3306 from your address with `/32` on the end. IPv6 addresses will not work, since the database endpoint is IPv4. When adding a connection on MySQL, make sure you use the correct IP address, DB password/username, and load balancer hostname.
 
 ### Load balancer — the stable address
 
@@ -83,7 +84,7 @@ Photos used to be written to local disk inside the container. Containers get rep
 
 ## Deploying a change
 
-Docker Desktop has to be running first. If you get "failed to connect to the docker API", open Docker Desktop and wait for it to start.
+Docker Desktop has to be running first. If you get "failed to connect to the docker API", open Docker Desktop and wait for it to start. Setting up AWS CLI first helps to run commands on PowerShell.
 
 ```bash
 cd backend
@@ -95,7 +96,7 @@ docker push 908136806182.dkr.ecr.us-east-2.amazonaws.com/bjbites-backend:latest 
 aws ecs update-service --cluster bjbites-staging --service bjbites-backend --force-new-deployment --region us-east-2
 ```
 
-The commands are chained with `&&` so a failed build stops the sequence rather than pushing a stale image.
+The commands are chained with `&&` so a failed build stops the sequence rather than pushing a stale image. Also, may need to upgrade to PowerShell x64 for these chained commands.
 
 The `--platform linux/amd64` flag matters. Macs are ARM, Fargate is x86. Without it the image builds but will not start on Fargate, with an unhelpful error.
 
