@@ -10,7 +10,18 @@ import {
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Event, fetchEvents } from "@/lib/api";
 
+/**
+ * Building-specific event list opened from the campus map.
+ * 
+ * The building ID comes from the dynamic route `/buildings/[id]`.
+ * This screen currently fetches the active-event feed and filters it
+ * client-side to only events associated with the selected building.
+ * 
+ * If a dedicated backend endpoint for building events is added later,
+ * this screen can be updated to fetch only the relevant events directly.
+ */
 export default function BuildingEventsScreen() {
+    // Dynamic route parameter supplied by `/buildings/[id]`.
     const { id } = useLocalSearchParams<{ id: string }>();
 
     const [events, setEvents] = useState<Event[]>([]);
@@ -18,6 +29,12 @@ export default function BuildingEventsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    /*
+        Load active events and keep only those assigned to this building.
+
+        The building name is taken from the first matching event because this
+        screen currently receives only the building ID through the route.
+    */
     useEffect(() => {
         const loadEvents = async () => {
             if (!id) {
@@ -46,6 +63,10 @@ export default function BuildingEventsScreen() {
         loadEvents();
     }, [id]);
 
+    /*
+        Format backend date/time values using the device's local display format.
+        Falls back to the original vlaue if parsing fails.
+    */
     const formatDateTime = (value?: string | null) => {
         if (!value) return "";
         try {
@@ -55,6 +76,13 @@ export default function BuildingEventsScreen() {
         }
     };
 
+    /*
+        Open the shared event-details screen.
+
+        The `from: "map"` parameter tells the event-details route that navigation
+        originated from the map/building flow so it can preserve appropriate
+        back-navigation behavior.
+    */
     const openEvent = (eventId: number) => {
         router.push({
             pathname: "/events/[id]",
@@ -81,6 +109,10 @@ export default function BuildingEventsScreen() {
 
     return (
         <>
+            {/*
+                Configure the route header dynamically once the building name is known.
+                The back title reflects that this screen is normally reached from Map.
+            */}
             <Stack.Screen
                 options={{
                     title: buildingName || "Building Events",

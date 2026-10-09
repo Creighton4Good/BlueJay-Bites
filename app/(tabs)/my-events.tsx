@@ -2,15 +2,30 @@ import React, { useCallback, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { closeEvent, Event, fetchMyEvents } from "@/lib/api";
-import { useSession } from "@/app/contexts/session-context";
 
+/**
+ * Organizer/admin screen for managing events created by the current user.
+ * 
+ * This screen:
+ * - loads only events owned by the authenticated user
+ * - refreshes whenever the tab regains focus
+ * - allows active events to be edited or closed
+ * - allows closed events to remain visible for reference
+ * 
+ * Ownership is determined by the backend session through `fetchMyEvents()`;
+ * the frontend does not pass a user ID when requesting this list.
+ */
 export default function MyEventsScreen() {
-  const { user } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Tracks which event is currently being closed so only that action is disabled.
   const [closingEventId, setClosingEventId] = useState<number | null>(null);
 
+  /*
+    Fetch events created by the current authenticated user.
+  */
   const loadMyEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -25,14 +40,24 @@ export default function MyEventsScreen() {
     }
   }, []);
 
-  // Reload whenever the tab regains focus so newly created, edited, or closed
-  // events show without needing a remount.
+  /*
+    Reload whenever this tab regains focus.
+
+    This keeps the list current after an event is created, edited, or closed
+    elsewhere in the app without requiring the screen to remount.
+  */
   useFocusEffect(
     useCallback(() => {
       loadMyEvents();
     }, [loadMyEvents])
   );
 
+  /*
+    Open the shared edit-event route.
+
+    The `from` parameter lets the destination screen know that navigation
+    originated from My Events.
+  */
   const handleEdit = (eventId: number) => {
     router.push({
       pathname: "/events/[id]/edit",
@@ -40,6 +65,15 @@ export default function MyEventsScreen() {
     });
   };
 
+  /*
+    Confirm and clsoe an active event.
+
+    Web uses `window.confirm()` because React Native's `Alert.alert()` does not 
+    reliably provide confirmation dialogs in the browser. Native platforms use the standard React Native Alert API.
+
+    After the backend closes the event, the list is refreshed so the new status 
+    appears immediately.
+  */
   const handleClose = (event: Event) => {
     const closeSelectedEvent = async () => {
       setClosingEventId(event.id);
@@ -92,6 +126,10 @@ export default function MyEventsScreen() {
     );
   };
 
+  /*
+    Format backend date/time values using the device's local display format.
+    Falls back to the original value if parsing fails.
+  */
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
     try {
@@ -108,6 +146,7 @@ export default function MyEventsScreen() {
 
       <View style={styles.separator} />
 
+      {/* Handle loading, error, and empty states before rendering event cards. */}
       {loading ? (
         <View style={styles.stateContainer}>
           <Text style={styles.statusText}>Loading your events...</Text>
@@ -133,6 +172,7 @@ export default function MyEventsScreen() {
               <View style={styles.card}>
                 <Pressable
                   style={({ pressed }) => [styles.cardContent, pressed && styles.cardPressed]}
+                  // Open the shared event-details screen.
                   onPress={() =>
                     router.push({
                       pathname: "/events/[id]",
@@ -172,6 +212,11 @@ export default function MyEventsScreen() {
                   <Text style={styles.editButtonText}>Edit</Text>
                 </Pressable>
 
+                {/*
+                  Closed events remain visible, but cannot be closed again.
+                  While a close request is running, only that event's button
+                  is disabled and shows "Closing...".
+                */}
                 {!isClosed && (
                   <Pressable
                     style={({ pressed }) => [

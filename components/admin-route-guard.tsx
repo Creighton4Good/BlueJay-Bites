@@ -6,13 +6,21 @@ type AdminRouteGuardProps = {
     children: ReactNode;
 };
 
+/**
+ * Frontend route guard for admin-only screens.
+ * 
+ * If the current user is not an admin, they are redirected to the main app
+ * route instead of seeing the wrapped screen.
+ * 
+ * This guard controls frontend navigation only. Backend endpoints used by
+ * admin screens must still enforce admin authorization independently.
+ */
 export function AdminRouteGuard({
     children,
 }: AdminRouteGuardProps) {
     const { isAdmin } = useSession();
 
-    // Admin-only: unlike the organizer guard, this does NOT allow organizers.
-    // Only users with the admin role may access the wrapped screen.
+    // Unlike OrganizerRouteGuard, organizer access alone is not sufficient here.
     if (!isAdmin) {
         return <Redirect href="/" />;
     }

@@ -6,6 +6,18 @@ type OrganizerRouteGuardProps = {
     children: ReactNode;
 };
 
+/**
+ * Frontend route guard for organizer-level screens.
+ * 
+ * Access is allowed to:
+ * - event organizers
+ * - admins
+ * 
+ * Users without either role are redirected to the main app route.
+ * 
+ * This guard controls frontend navigation only. Backend endpoints used by
+ * organizer/admin screens must still enforce authorization independently.
+ */
 export function OrganizerRouteGuard({
     children,
 }: OrganizerRouteGuardProps) {

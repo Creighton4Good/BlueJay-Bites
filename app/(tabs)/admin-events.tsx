@@ -1,14 +1,29 @@
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Event, fetchAllEvents } from "@/lib/api";
+import { Event, fetchAllEvents, reopenEvent } from "@/lib/api";
 import { AdminRouteGuard } from "@/components/admin-route-guard";
 
+/**
+ * Admin-only screen for viewing all events in the system.
+ * 
+ * Unlike the regular event feed or "My Events" screen, this page loads events 
+ * created by every organizer and separates them into active and closed groups.
+ * 
+ * Access is wrapped in `AdminRouteGuard`, which prevents non-admin users from
+ * using the screen event if they navigate directly to the route.
+ */
 export default function AdminEventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+    Fetch the complete event list from the backend.
+
+    This function is wrapped in `useCallback` because it is used insie
+    `useFocusEffect` below.
+   */
   const loadAllEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -24,6 +39,53 @@ export default function AdminEventsScreen() {
     }
   }, []);
 
+  const performReopen = useCallback(
+    async (eventId: number) => {
+      try {
+        await reopenEvent(eventId);
+        await loadAllEvents();
+      } catch (err) {
+        console.error("Error re-opening event:", err);
+
+        if (Platform.OS === "web") {
+          window.alert("Could not re-open the event. Please try again.")
+        } else {
+          Alert.alert(
+            "Error",
+            "Could not re-open the event. Please try again."
+          );
+        }
+      }
+    },
+    [loadAllEvents]
+  );
+
+  const handleReopen = useCallback(
+    (eventId: number, eventTitle: string) => {
+      const message =
+        `Re-open "${eventTitle}"? This will make it active for everyone again.`;
+
+      if (Platform.OS === "web") {
+        if (window.confirm(message)) {
+          performReopen(eventId);
+        }
+        return;
+      }
+
+      Alert.alert("Re-open event?", message, [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Re-open",
+          onPress: () => performReopen(eventId),
+        },
+      ]);
+    },
+    [performReopen]
+  );
+
   // Reload whenever the tab regains focus so newly created, edited, or closed
   // events show without needing a remount.
   useFocusEffect(
@@ -32,6 +94,7 @@ export default function AdminEventsScreen() {
     }, [loadAllEvents])
   );
 
+  // Split the backend response into the two sections shown on this screen.
   const activeEvents = events.filter(
     (event) => event.status === "active"
   );
@@ -40,6 +103,10 @@ export default function AdminEventsScreen() {
     (event) => event.status === "closed"
   );
 
+  /*
+    Convert backend date/time strings into a readable local date/time. 
+    Falls back to the original value if parsing fails.
+  */
   const formatDateTime = (value?: string | null) => {
     if (!value) return "";
     try {
@@ -59,6 +126,7 @@ export default function AdminEventsScreen() {
 
       <View style={styles.separator} />
 
+      {/* Handle loading, error, and empty states before rendering the list. */}
       {loading ? (
         <View style={styles.stateContainer}>
           <Text style={styles.statusText}>Loading events...</Text>
@@ -73,6 +141,8 @@ export default function AdminEventsScreen() {
         </View>
       ) : (
         <FlatList
+          // The FlatList contains two logical sections rather than individual
+          // events: one for active events and one for closed events.
           data={[
             {
                 title: "Active Events",
@@ -103,6 +173,9 @@ export default function AdminEventsScreen() {
                                 styles.card,
                                 pressed && styles.cardPressed,
                             ]}
+                            // Open the shared event-details route. The `from`
+                            // parameter allows the details screen to know that the 
+                            // user arrived from the admin event list.
                             onPress={() =>
                                 router.push({
                                     pathname: "/events/[id]",
@@ -135,6 +208,23 @@ export default function AdminEventsScreen() {
                                         ? ` To: ${formatDateTime(event.availableUntil)}`
                                         : ""}
                                 </Text>
+                            )}
+
+                            {event.status === "closed" && (
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.reopenButton,
+                                  pressed && styles.reopenButtonPressed,
+                                ]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  handleReopen(event.id, event.title);
+                                }}
+                              >
+                                <Text style={styles.reopenButtonText}>
+                                  Re-open event
+                                </Text>
+                              </Pressable>
                             )}
                         </Pressable>
                     ))
@@ -228,5 +318,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#00235D",
     marginBottom: 10,
+  },
+  reopenButton: {
+    marginTop: 10,
+    backgroundColor: "#005CA9",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  reopenButtonPressed: {
+    opacity: 0.85,
+  },
+  reopenButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

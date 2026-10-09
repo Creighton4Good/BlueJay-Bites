@@ -22,27 +22,62 @@ import {
 import {Stack} from "expo-router";
 import {Picker} from "@react-native-picker/picker";
 import {useSession} from "@/app/contexts/session-context";
-// TODO: Enforce admin checks when updating user roles
 
+/**
+ * User settings and role-management screen.
+ * 
+ * All authenticated users can update their own:
+ * - display name
+ * - notification preference
+ * 
+ * The screen also contains user/role selectors used to change account roles.
+ * Role-management authorization should ultimately be enforced for admins only.
+ * 
+ * IMPORTANT:
+ * The frontend currently exposes the role controls to all users for testing.
+ * Backend authorization should remain the source of truth for privileged
+ * operations. When testing is complere, restore the frontend admin restriction
+ * so non-admin users do not see role-management controls.
+ */
 export default function SettingsScreen() {
+    // Personal profile settings for the currently authenticated user.
     const [displayName, setDisplayName] = useState("");
+
+    // Role-management lookup and selection state.
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoleId, setSelectedRoleId] = useState<string>("");
     const [loadingRoles, setLoadingRoles] = useState(false);
+    
     const [users, setUsers] = useState<User[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [loadingUsers, setLoadingUsers] = useState(false);
+    
+    // Notification-preference lookup and selection state.
     const [userPreference, setUserPreference] = useState<UserPreference[]>([]);
     const [selectedUserPreferenceId, setSelectedUserPreferenceId] = useState<string>("");
     const [loadingUserPreferences, setLoadingUserPreferences] = useState(false);
+    
     const [submitting, setSubmitting] = useState(false);
 
+    // User-facing result messages shown after Save Changes.
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    /*
+        `user` is the authenticated user stored in SessionContext.
+
+        `refreshSession()` should be called after changing the current user's
+        profile, preference, or role so the rest of the frontend immediately sees 
+        the updated database-backed user information.
+    */
+    const { user, isAdmin, refreshSession } = useSession();
     const { user, isAdmin, refreshSession, signOut } = useSession();
 
+    /*
+        Load available application roles from the backend.
 
+        These values populate the role-management Picker below.
+    */
     useEffect(() => {
         const loadRoles = async () => {
             setLoadingRoles(true);
@@ -60,11 +95,23 @@ export default function SettingsScreen() {
         loadRoles();
     }, []);
 
+    /*
+        Load users available for role management.
+
+        The authenticated user is inserted into the local list first so Settings
+        still has useful account data if loading the complere user list fails.
+
+        TODO:
+        Role-management visibility is intetionally unrestricted in the frontend
+        during testing. Restore `if (!isAdmin) return;` when only admins should be
+        able to view these controls.
+    */
     useEffect(() => {
         if (!user) return;
 
         setUsers([user]);
 
+       // TODO: Re-enable after role-management testing is complete.
        // if (!isAdmin) return;
 
         const loadUsers = async () => {
@@ -72,12 +119,14 @@ export default function SettingsScreen() {
             try {
                 const data = await fetchUsers();
 
+                // Avoid duplicating the current user if the backend already returned it.
                 const allUsers = data.some(
                     (userOption) => userOption.id === user.id
                 )
                     ? data
                     : [user, ...data];
     
+                // Fall back to the authenticated user if the full lookup fails.
                 setUsers(allUsers);
             } catch (err) {
                 console.error("Error fetching users:", err);
@@ -92,6 +141,12 @@ export default function SettingsScreen() {
         loadUsers();
     }, [user, isAdmin]);
 
+    /*
+        Load the lookup values used by the notification-preference Picker.
+
+        The backend currently provides shared preference values such as "on"
+        and "off"; the authenticated user references one of those values.
+    */
     useEffect(() => {
         const loadUserPreferences = async () => {
             setLoadingUserPreferences(true);
@@ -109,10 +164,24 @@ export default function SettingsScreen() {
         loadUserPreferences();
     }, []);
 
+    /*
+        Save any settings that the user changes.
+
+        The form allows several independent updates in one submission:
+        - current user's display name
+        - current user's notification preference
+        - selected user's role
+
+        Blank fields are ignored rather than overwriting existing values.
+    */
     const handleSubmit = async () => {
         setSaveMessage(null);
         setSaveError(null);
 
+        /*
+            Role cahnges require both a target user and a new role.
+            Prevent accidentally submitting only half of that relationship.
+        */
         if (
             (selectedRoleId && !selectedUserId) ||
             (!selectedRoleId && selectedUserId) 
@@ -128,11 +197,19 @@ export default function SettingsScreen() {
         setSubmitting(true);
 
         try {
-
+            // Update the currently authenticated user's display name.
             if (displayName != "") {
             await updateUser(payload);
              }
 
+            /*
+                Notification preferences currently depend on seeded databse IDs:
+                    1 = on
+                    2 = off
+                
+                If preference IDs ever become dynamic, this should instead use the
+                preference value returned by the backend rather than fixed IDs.
+            */
             if (selectedUserPreferenceId != "") {
                 if (selectedUserPreferenceId == "1") {
                     await updatePreferenceToOn()
@@ -141,6 +218,15 @@ export default function SettingsScreen() {
                 }
             }
 
+            /*
+                Role assignment currently depends on seeded role IDs:
+                    1 = user
+                    2 = event_organizer
+                    3 = admin
+
+                If role IDs become dynamic, use the selected Role's `roleName`
+                instead of relying on these fixed numeric IDs.
+            */
             if (selectedRoleId && selectedUserId != "") {
                 const userId = Number(selectedUserId);
                 if (selectedRoleId == "3") {
@@ -150,11 +236,16 @@ export default function SettingsScreen() {
                 else if (selectedRoleId == "1") {
                     await assignUser(userId); } }
 
+            /*
+                Re-fetch `/api/users/me` after updates so SessionContext reflects any
+                changes to the current user's name, preference, or role immediately.
+            */
             await refreshSession();
 
             if (selectedRoleId || selectedUserId || selectedUserPreferenceId || displayName != "") {
             setSaveMessage("User details updated successfully!"); }
 
+            // Clear selections after a successful save.
             setDisplayName("");
             setSelectedUserPreferenceId("");
             setSelectedUserId("");

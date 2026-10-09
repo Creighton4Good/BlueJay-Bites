@@ -124,6 +124,7 @@ npm start
 
 ## Creighton4Good BlueJay Bites Development Team (past and present)
 _Erika Germinario_
+* A Creighton University alum, class of 2026, with a double major in Psychology and Computer Science. On BlueJay Bites, she worked across frontend development, authentication, and user roles, with a focus on making the app practical and easy to use.
 
 _Jerome Bustarga_
 * A Creighton University alum, class of 2026. He loves building web applications, and working on something that creates real impact is close to his heart. On BlueJay Bites he focused on backend development and building out the app's cloud infrastructure.

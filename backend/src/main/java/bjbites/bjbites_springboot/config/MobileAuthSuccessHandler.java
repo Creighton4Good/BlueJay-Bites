@@ -18,7 +18,7 @@ public class MobileAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     private final MobileAuthService mobileAuthService;
 
-    @Value("${app.frontend-url:http//localhost:8081}")
+    @Value("${app.frontend-url:http://localhost:8081}")
     private String frontendUrl;
 
     public MobileAuthSuccessHandler(MobileAuthService mobileAuthService) {
