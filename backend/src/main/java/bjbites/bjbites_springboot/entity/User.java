@@ -37,6 +37,9 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "push_token")
+    private String pushToken;
+
     protected User() {}
 
     public User(String email, String passwordHash, String displayName, Role role, UserPreference userPreference) {
@@ -86,4 +89,7 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getPushToken() { return pushToken; }
+    public void setPushToken(String pushToken) { this.pushToken = pushToken; }
 }

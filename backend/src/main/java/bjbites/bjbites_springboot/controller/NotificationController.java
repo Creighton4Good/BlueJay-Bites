@@ -3,17 +3,14 @@ package bjbites.bjbites_springboot.controller;
 import bjbites.bjbites_springboot.entity.Notification;
 import bjbites.bjbites_springboot.entity.User;
 import bjbites.bjbites_springboot.repository.NotificationRepository;
-import bjbites.bjbites_springboot.service.NotificationSseService;
 import bjbites.bjbites_springboot.service.UserProvisioningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +21,6 @@ public class NotificationController {
 
     @Autowired
     private NotificationRepository notificationRepository;
-    @Autowired
-    private NotificationSseService notificationSseService;
     @Autowired
     private UserProvisioningService userProvisioningService;
 
@@ -100,28 +95,6 @@ public class NotificationController {
             return ResponseEntity.ok().build(); }
         else
             return ResponseEntity.notFound().build();
-    }
-
-    // User subscribes to notifications
-   @PreAuthorize("hasAuthority('user')")
-    @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@AuthenticationPrincipal OAuth2User oAuthUser) {
-       User currentUser = userProvisioningService.getOrCreateUser(oAuthUser);
-
-       return notificationSseService.subscribe(currentUser.getId()); }
-
-    // TODO: Add GET /user endpoint for user to receive notifications that
-    //  they missed when they were not on app/inactive
-
-    // Temporary endpoint for testing SSE functionality
-    @PostMapping("/test/{userId}")
-    public ResponseEntity<String> testNotification(@PathVariable Integer userId) {
-
-       Notification notification = new Notification();
-
-       notificationSseService.publishNotification(userId, notification);
-
-        return new ResponseEntity<>("Sent", HttpStatus.OK);
     }
 
 }

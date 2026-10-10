@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 
 /**
  * Frontend API client and shared backend data types.
@@ -67,6 +68,11 @@ export type UpdateUser = {
   displayName: string;
   updatedAt?: string;
 };
+
+export type AddPushToUser = {
+  pushToken: string;
+  updatedAt?: string,
+}
 
 export type UserPreference = {
   id: number;
@@ -240,6 +246,61 @@ export async function exchangeMobileAuthCode(
   }
 }
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+function handleRegistrationError(errorMessage: string) {
+  alert(errorMessage);
+  throw new Error(errorMessage);
+}
+
+export async function registerForPushNotificationsAsync() {
+  if (Platform.OS === "web") return null; // no Expo push tokens on web
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') {
+    handleRegistrationError('Permission not granted to get push token for push notification!');
+    return;
+  }
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+  if (!projectId) {
+    handleRegistrationError('Project ID not found');
+  }
+  try {
+    const pushTokenString = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId,
+        })
+    ).data;
+    console.log(pushTokenString);
+    return pushTokenString;
+  } catch (e: unknown) {
+    handleRegistrationError(`${e}`);
+  }
+}
+
+
+// Fetch the currently authenticated user. Returns null if not logged in (401).
 /*
  * Fetch the currently authenticated user.
  *
@@ -264,38 +325,6 @@ export async function fetchCurrentUser(): Promise<User | null> {
 
     console.error(
       "users/me returned non-JSON:",
-      text.slice(0, 200)
-    );
-
-    return null;
-  }
-
-  return res.json();
-}
-
-export async function fetchCurrentUser(): Promise<User | null> {
-  const res = await fetch(`${BASE_URL}/api/users/me`, {
-    credentials: "include",
-  });
-
-  console.log("users/me status:", res.status);
-  console.log("users/me URL:", res.url);
-  console.log(
-    "users/me content-type:",
-    res.headers.get("content-type")
-  );
-
-  if (res.status === 401) {
-    return null;
-  }
-
-  const contentType = res.headers.get("content-type");
-
-  if (!res.ok || !contentType?.includes("application/json")) {
-    const text = await res.text();
-
-    console.log(
-      "users/me non-JSON body:",
       text.slice(0, 200)
     );
 
@@ -594,6 +623,28 @@ export async function updateUser(
     console.error("Update user failed", res.status, text);
     throw new Error(
         `Failed to update user (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+// Add expo push token to user
+export async function addPushToken(
+    user: AddPushToUser
+): Promise<User> {
+   const res = await fetch(`${USERS_URL}/push`, {
+     method: "PUT",
+     headers: { "Content-Type": "application/json" },
+     credentials: "include",
+     body: JSON.stringify(user),
+});
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Add push token failed", res.status, text);
+    throw new Error(
+        `Failed to add push token user (${res.status})${text ? `: ${text}` : ""}`
     );
   }
 
