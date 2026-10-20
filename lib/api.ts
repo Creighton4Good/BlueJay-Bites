@@ -232,6 +232,7 @@ export async function exchangeMobileAuthCode(
   if (
     !res.ok ||
     !res.url.startsWith(BASE_URL)
+      // Guards against exchange outside the application
   ) {
     const text = await res.text();
 
