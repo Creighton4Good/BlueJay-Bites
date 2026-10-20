@@ -697,6 +697,6 @@ export async function updatePreferenceToOff(): Promise<UserPreference> {
 
   return res.json();
 }
-}
+
 
 export const LOGOUT_URL = `${BASE_URL}/api/logout`;

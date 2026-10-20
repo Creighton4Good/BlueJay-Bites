@@ -70,7 +70,6 @@ export default function SettingsScreen() {
         profile, preference, or role so the rest of the frontend immediately sees 
         the updated database-backed user information.
     */
-    const { user, isAdmin, refreshSession } = useSession();
     const { user, isAdmin, refreshSession, signOut } = useSession();
 
     /*
