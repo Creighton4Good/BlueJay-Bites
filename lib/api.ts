@@ -288,13 +288,11 @@ export async function registerForPushNotificationsAsync() {
     handleRegistrationError('Project ID not found');
   }
   try {
-    const pushTokenString = (
+    return (
         await Notifications.getExpoPushTokenAsync({
-          projectId,
+            projectId,
         })
     ).data;
-    console.log(pushTokenString);
-    return pushTokenString;
   } catch (e: unknown) {
     handleRegistrationError(`${e}`);
   }
