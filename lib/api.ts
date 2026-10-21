@@ -232,6 +232,7 @@ export async function exchangeMobileAuthCode(
   if (
     !res.ok ||
     !res.url.startsWith(BASE_URL)
+      // Guards against exchange outside the application
   ) {
     const text = await res.text();
 
@@ -287,13 +288,11 @@ export async function registerForPushNotificationsAsync() {
     handleRegistrationError('Project ID not found');
   }
   try {
-    const pushTokenString = (
+    return (
         await Notifications.getExpoPushTokenAsync({
-          projectId,
+            projectId,
         })
     ).data;
-    console.log(pushTokenString);
-    return pushTokenString;
   } catch (e: unknown) {
     handleRegistrationError(`${e}`);
   }
@@ -697,6 +696,6 @@ export async function updatePreferenceToOff(): Promise<UserPreference> {
 
   return res.json();
 }
-}
+
 
 export const LOGOUT_URL = `${BASE_URL}/api/logout`;

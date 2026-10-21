@@ -79,17 +79,17 @@ function InitialLayout() {
       </View>
     );
   }
+  /*
+          These are the two top-level route groups in the app:
 
+          `(tabs)` contains the authenticated application.
+          `(auth)` contains sign-in and other unauthenticated routes.
+
+          The actual redirect logic is handled above rather than by these
+          Stack.Screen declarations themselves.
+        */
   return (
-    {/*
-        These are the two top-level route groups in the app:
 
-        `(tabs)` contains the authenticated application.
-        `(auth)` contains sign-in and other unauthenticated routes.
-
-        The actual redirect logic is handled above rather than by these
-        Stack.Screen declarations themselves.
-      */}
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: MyTheme.colors.card },

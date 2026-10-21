@@ -39,7 +39,7 @@ export default function SignInScreen() {
       "bjbites://auth/callback"
     );
 
-    console.log("Auth session result:", result);
+    //console.log("Auth session result:", result);
 
     if (result.type !== "success" || !result.url) {
       setError("Sign-in was cancelled or did not complete.");
@@ -54,11 +54,11 @@ export default function SignInScreen() {
       return;
     }
 
-    console.log("Exchanging mobile auth code...");
+    //console.log("Exchanging mobile auth code...");
     await exchangeMobileAuthCode(code);
-    console.log("Mobile auth exchange succeeded");
+    //console.log("Mobile auth exchange succeeded");
 
-    console.log("Refreshing session...");
+    //console.log("Refreshing session...");
     const user = await refreshSession();
 
     if (!user) {
