@@ -79,6 +79,7 @@ Photos used to be written to local disk inside the container. Containers get rep
 - The container gets S3 access through the IAM task role `bjbitesTaskRole`, scoped to that bucket only, with get, put, and delete. This is separate from the execution role, which ECS uses to pull images and write logs.
 - The bucket name comes from the `PHOTO_BUCKET` environment variable.
 - Locally the app uses your own AWS credentials from `aws login`, so uploads from a dev machine go to the same staging bucket.
+- Photo objects available to access/download in the `bjbites-staging-photos` bucket after they are used to create an event on the app
 
 ---
 
@@ -224,8 +225,6 @@ Around $30 to $35 a month: load balancer $16 to $18, database $12 to $15, Fargat
 ## Known gaps
 
 **Database password and Entra secret are in plaintext** in the task definition, visible to anyone with ECS read access. They should be in Secrets Manager.
-
-**Photo uploads are not fully tested.** The S3 code is deployed and the app runs cleanly with it, but an end to end upload has not been verified.
 
 **No CI/CD.** Deploys are manual. Stories for building this out are tracked separately.
 
