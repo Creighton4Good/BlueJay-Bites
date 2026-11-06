@@ -59,7 +59,7 @@ Follow the steps below to run the app either on Expo Go or on the web.
 ## Step 1: Setup
 Clone the repository:
 ```
-git clone https://github.com/Creighton4Good/bluejay-bites.git
+git clone https://github.com/Creighton4Good/BlueJay-Bites.git
 cd bluejay-bites
 ```
 
@@ -78,6 +78,22 @@ Then:
 mvn spring-boot:run
 ```
 After running, can view backend endpoints at `localhost:8080`
+
+### Troubleshooting Maven Challenges with VSCode
+
+**1. Ensure that Java Developer Kit (JDK) is installed on your device.**
+
+* To do this, run `java --version`
+
+**2. Ensure that Maven is installed on your device.**
+
+* To do this, run `mvn -v`
+
+**3. Ensure that the "Extension Pack for Java" is installed within your VisualStudio Code application.**
+
+* To do this, click the Extensions icon and search for "Extension Pack for Java."
+   * If not installed, click the "Install" button.
+   * If installed, do not take any action.
 
 ---
 
