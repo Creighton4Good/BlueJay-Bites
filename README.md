@@ -123,6 +123,35 @@ After running, can view backend endpoints at `localhost:8080`
   * If your shell file is a `~/.zshrc`, run `nano ~/.zshrc`
   * If your shell file is a `~/.bash_profile`, run `nano ~/.bash_profile`
 
+**3. Write the following lines in your shell file to set the environment variable for Maven.**
+
+* NOTE: replace 'your-path-to-maven' with the path to the location where you saved your Maven download.
+* To find and copy this path location, right click the folder, press and hold the option key, then click "Copy Folder Name as Pathname."
+
+```
+export M2_HOME=/your-path-to-maven
+export PATH=$PATH:$M2_HOME/bin
+```
+**4. Save changes on the shell.**
+
+* Press `Ctrl + 0`
+* Then press `Enter`
+* Then, if prompted, press `Y`
+* Then, if necessary, press `Enter` again.
+* Lastly, press `Ctrl + X`
+
+**5. Reload changes on Terminal.**
+* Run `source ~/.zshrc` or `source ~/.bash_profile`
+
+**6. Ensure that Maven was properly installed.**
+
+* Run `mvn -v`
+* If no errors arise, then it has been correctly installed!
+
+---
+
+#### Step 3: Set Environment Variables for Maven on Windows
+
 </details>
 
 ---
