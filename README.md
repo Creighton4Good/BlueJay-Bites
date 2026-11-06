@@ -95,6 +95,36 @@ After running, can view backend endpoints at `localhost:8080`
    * If not installed, click the "Install" button.
    * If installed, do not take any action.
 
+### Manual Installation of Maven
+
+<details>
+<summary><b>Click to expand Section</b></summary>
+  
+---
+
+#### Step 1: Download Software 
+
+**1. Navigate to the Apache Maven [website](https://maven.apache.org/download.cgi) to download the software.**
+
+**2. Under the "Binary Zip Archive" section, find the "Link" sub-section.** 
+
+* Click to download the "apache-maven-x.xx.x-bin.zip" file, in which the "x" acts as a placeholder for the most current version of Maven.
+
+**3. Extract the ZIP file and move the file to your preferred location on your device.**
+
+---
+
+#### Step 2: Set Environment Variables for Maven on Mac
+
+**1. Open a window in your Terminal.**
+
+**2. Determine shell file type.**
+* To do this, run `echo $0`
+  * If your shell file is a `~/.zshrc`, run `nano ~/.zshrc`
+  * If your shell file is a `~/.bash_profile`, run `nano ~/.bash_profile`
+
+</details>
+
 ---
 
 ## Step 3: Start the frontend
